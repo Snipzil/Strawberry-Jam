@@ -1,4 +1,3 @@
-const HTTPClient = require('../../services/HttpClient')
 const axios = require('axios')
 const path = require('path')
 const fs = require('fs')

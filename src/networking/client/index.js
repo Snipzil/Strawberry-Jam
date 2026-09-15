@@ -49,7 +49,6 @@ module.exports = class Client {
      * @type {TLSSocket | Socket}
      * @private
      */
-    const secureConnection = this._server.application.settings.get('secureConnection')
     this._aj = null // Will be created during connection attempt
 
     /**
@@ -523,7 +522,7 @@ module.exports = class Client {
 
     return new Promise((resolve, reject) => {
       const timeoutDuration = 5000;
-      let operationTimeout = setTimeout(() => {
+      const operationTimeout = setTimeout(() => {
         cleanup();
         reject(new Error('Message send attempt timed out'));
       }, timeoutDuration);
@@ -559,7 +558,6 @@ module.exports = class Client {
       if (writable) {
         cleanup();
         resolve(messageBuffer.length);
-      } else {
       }
     });
   }

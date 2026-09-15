@@ -17,7 +17,6 @@ const totalRuns = document.getElementById('totalRuns');
 
 const autoRetryCheckbox = document.getElementById('autoRetryCheckbox');
 const soundNotificationCheckbox = document.getElementById('soundNotificationCheckbox');
-const connectionFailureSoundCheckbox = document.getElementById('connectionFailureSoundCheckbox');
 const dontLogRecycledCheckbox = document.getElementById('dontLogRecycledCheckbox');
 const efficientModeCheckbox = document.getElementById('efficientModeCheckbox');
 const specialModeCheckbox = document.getElementById('specialModeCheckbox');
@@ -79,17 +78,14 @@ let stats = {
     failed: 0,
     total: 0
 };
-let retryCount = 0;
 let questStartTime = null; // Track when quest started
 let currentLoopCount = 0;
 let totalLoopsToRun = 1;
 let isLooping = false;
-let knownDenInvIds = new Set();
-let knownClothingInvIds = new Set();
-let isFirstDiPacket = true;
+const knownDenInvIds = new Set();
+const knownClothingInvIds = new Set();
 let hasCapturedInitialDenState = false;
 let hasCapturedInitialClothingState = false;
-const QUEST_DURATION_MS = 17 * 60 * 1000; // 17 minutes in milliseconds
 
 // Function to get wait time based on user selection
 function getWaitTimeMs() {
@@ -121,17 +117,6 @@ function getWaitTimeLabel() {
 // Efficient Mode Variables
 let isEfficientMode = false;
 let isSpecialMode = false;
-let efficientSniffing = false;
-let efficientSeqActive = false;
-let efficientCurrentInterval = null;
-let efficientQueue = [];
-let joinStepTimers = [];
-let giftCollectorTimers = [];
-let joinRetryTimer = null;
-let giftRetryTimer = null;
-let specialGiftSlots = [];
-let lastDetectedGoodies = [];
-let totalGoodies = 0;
 let efficientCrystalDelay = 10;
 
 // Efficient Mode Helper Functions
@@ -206,7 +191,7 @@ const generateEfficientCrystalPackets = (crystalData) => {
                         delay: efficientCrystalDelay / 1000 // Convert to seconds
                     };
                     break;
-                case '3water':
+                case '3water': {
                     const idx = Math.ceil(i / 2);
                     const isPailPacket = (i % 2) === 1;
                     packet = {
@@ -218,6 +203,7 @@ const generateEfficientCrystalPackets = (crystalData) => {
                             Math.max(efficientCrystalDelay / 1000, 0.6)   // Water collection can be faster
                     };
                     break;
+                }
                 case '3crystal':
                     packet = {
                         content: `%xt%o%qat%{room}%3crystal_${pad(i)}${variant}%0%`,
@@ -698,7 +684,6 @@ async function sendPacket(packet, isRaw = false, isGemPacket = false) {
     await refreshRoom();
     
     let content = isRaw ? packet : packet.content;
-    const type = isRaw ? 'aj' : packet.type; // Assume 'aj' for raw packets
     const baseDelay = isRaw ? 0 : parseFloat(packet.delay) * 1000; // No delay for raw sends unless specified
     const delay = getRandomizedDelay(baseDelay, isGemPacket);
 
@@ -799,13 +784,11 @@ async function runSingleAutomation() {
     const packetsToUse = (isEfficientMode && efficientCrystalPackets.length > 0) ? 
         efficientCrystalPackets : TFD_packets.packets;
     totalSteps = 5 + packetsToUse.length; // 5 main steps + packet count
-    retryCount = 0;
     currentLoopCount++;
     
     // Reset state for the new run
     knownDenInvIds.clear();
     knownClothingInvIds.clear();
-    isFirstDiPacket = true;
     hasCapturedInitialClothingState = false;
     hasCapturedInitialDenState = false; // Reset for each new adventure
     
@@ -864,7 +847,6 @@ async function runSingleAutomation() {
         if (!isAutomationRunning) return;
 
         await refreshRoom();
-        const adventureRoomId = getRoomIdToUse();
 
         if (isEfficientMode && efficientCrystalPackets.length > 0) {
             console.log(`[TFD Automation] Efficient mode: Using ${efficientCrystalPackets.length} optimized packets from qs response`);

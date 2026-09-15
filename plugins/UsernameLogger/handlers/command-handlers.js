@@ -3,9 +3,6 @@
  * @author glvckoma
  */
 
-const path = require('path');
-const { getFilePaths } = require('../utils/path-utils');
-
 /**
  * Class for handling user commands
  */
@@ -58,11 +55,7 @@ class CommandHandlers {
     try {
       // Always resume from the last processed index by default
       let limit = Infinity;
-      let startIndex = this.configModel.getLeakCheckIndex() + 1;
-      
-      const isDevMode = this._isDevMode();
-      
-      // Removed verbose saved-index log to reduce console noise
+      const startIndex = this.configModel.getLeakCheckIndex() + 1;
       
       // Build a refined start message and show it with a removable messageId
       const fromText = startIndex <= 0 ? 'from the beginning' : 'from where you left off';

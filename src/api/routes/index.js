@@ -52,6 +52,6 @@ router.post('/api/aj-classic-close', (request, response) => {
  * @public
  */
 router.get(/^\/(\d{4})\/ajclient\.swf$/, async (request, response) => FilesController.game(request, response))
-router.all('*', async (request, response) => FilesController.index(request, response))
+router.all('/{*splat}', async (request, response) => FilesController.index(request, response))
 
 module.exports = router

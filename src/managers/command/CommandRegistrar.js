@@ -8,13 +8,12 @@ class CommandRegistrar {
       app.dispatch.onCommand({
         name: 'servers',
         callback: async (commandData) => {
-          const args = commandData.parameters || (Array.isArray(commandData) ? commandData : [])
           app.consoleMessage({
             type: 'notify',
             message: 'Checking Animal Jam server status...'
           })
           
-          const isOnline = await checkServerStatus()
+          await checkServerStatus()
           return true
         },
         description: 'Check if Animal Jam servers are online and display status information'
@@ -141,7 +140,7 @@ class CommandRegistrar {
             message: 'Checking Animal Jam server status...'
           })
           
-          const isOnline = await checkServerStatus()
+          await checkServerStatus()
           return true
         },
         'Check if Animal Jam servers are online and display status information'

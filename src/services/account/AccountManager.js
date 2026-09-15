@@ -38,7 +38,7 @@ class AccountManager {
     }
 
     try {
-      let savedAccountsMetadata = this.store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+      const savedAccountsMetadata = this.store.get(STORE_KEY_SAVED_ACCOUNTS, []);
       const accountMetadata = { username: accountData.username };
 
       const existingAccountIndex = savedAccountsMetadata.findIndex(
@@ -125,7 +125,7 @@ class AccountManager {
     }
 
     try {
-      let savedAccountsMetadata = this.store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+      const savedAccountsMetadata = this.store.get(STORE_KEY_SAVED_ACCOUNTS, []);
       const accountIndex = savedAccountsMetadata.findIndex(
         acc => acc.username.toLowerCase() === username.toLowerCase()
       );
@@ -151,7 +151,7 @@ class AccountManager {
     }
 
     try {
-      let savedAccountsMetadata = this.store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+      const savedAccountsMetadata = this.store.get(STORE_KEY_SAVED_ACCOUNTS, []);
       let importedCount = 0;
 
       for (const account of accounts) {

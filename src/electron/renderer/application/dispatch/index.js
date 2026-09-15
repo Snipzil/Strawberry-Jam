@@ -1,16 +1,16 @@
 const path = require('path')
 const { PluginManager: PM } = require('live-plugin-manager')
-const logManager = require('../../../../utils/LogManagerPreload');
-logManager.info('DIAGNOSTIC_DISPATCH_LOG_TEST from dispatch/index.js top level');
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 function devLog(...args) {
   if (isDevelopment) console.log(...args);
 }
-const fs = require('fs').promises
+function devError(...args) {
+  if (isDevelopment) console.error(...args);
+}
 const Ajv = new (require('ajv'))({ useDefaults: true })
-const { ConnectionMessageTypes, PluginTypes, getDataPath } = require('../../../../Constants')
+const { ConnectionMessageTypes, PluginTypes } = require('../../../../Constants')
 const StateManager = require('../../../../managers/state/StateManager')
 const PluginManager = require('../../../../managers/plugin/PluginManager')
 const MessageDispatcher = require('../../../../managers/message/MessageDispatcher')

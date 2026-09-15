@@ -16,6 +16,8 @@ function buildAxiosConfig(options) {
     url: options.url || options.uri,
     headers: options.headers || {},
     timeout: options.timeout || 10000,
+    // Prefer the Node adapter so renderer-side requests can set headers that XHR forbids (Origin, Referer, User-Agent).
+    adapter: ["http", "xhr", "fetch"],
     validateStatus: options.simple === false ? () => true : undefined
   }
   if (options.body) {

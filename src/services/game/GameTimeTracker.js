@@ -3,8 +3,6 @@ const path = require('path');
 const { getDataPath } = require('../../Constants');
 const logManager = require('../../utils/LogManager');
 
-const isDevelopment = process.env.NODE_ENV === 'development';
-
 class GameTimeTracker {
   constructor(app, gameStartTimeRef, lastKnownGoodGameTimeRef) {
     this.app = app;

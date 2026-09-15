@@ -10,13 +10,10 @@ module.exports = class StateManager {
 
   setState(key, value) {
     if (this.state[key] === value) {
-      if (key === 'room') {}
       return this
     }
-    
+
     this.state[key] = value
-    if (key === 'room') {}
-    
     return this
   }
 
@@ -42,9 +39,7 @@ module.exports = class StateManager {
   }
 
   getState(key, defaultValue = null) {
-    const value = this.state[key] !== undefined ? this.state[key] : defaultValue
-    if (key === 'room') {} else if (key === 'player') {}
-    return value
+    return this.state[key] !== undefined ? this.state[key] : defaultValue
   }
 
   updateState(key, value) {

@@ -258,8 +258,7 @@ class CacheService {
         try {
           await fsPromises.rm(cachePath, { recursive: true, force: true });
         } catch (error) {
-          if (error.code === 'ENOENT') {
-          } else {
+          if (error.code !== 'ENOENT') {
             console.error(`[Cache Clear Method] Failed to delete ${cachePath}:`, error);
             errors.push(`Failed to delete ${path.basename(cachePath)}: ${error.message}`);
           }

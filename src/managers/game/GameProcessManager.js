@@ -7,8 +7,6 @@ const logManager = require('../../utils/LogManager');
 const { getDataPath } = require('../../Constants');
 const PlatformPaths = require('../../PlatformPaths');
 
-const isDevelopment = process.env.NODE_ENV === 'development';
-
 const resolveCompatLayer = (setting) => {
   if (PlatformPaths.platform !== 'linux') return null
 

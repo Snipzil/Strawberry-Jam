@@ -51,7 +51,7 @@ if (fs.existsSync(latestYmlPath)) {
 
 if (fs.existsSync(electronBuilderPath)) {
   try {
-    let content = fs.readFileSync(electronBuilderPath, 'utf8');
+    const content = fs.readFileSync(electronBuilderPath, 'utf8');
     const regex = new RegExp(oldVersion.replace(/\./g, '\\.'), 'g');
     const updated = content.replace(regex, newVersion);
     if (updated !== content) {

@@ -1,4 +1,3 @@
-const { urlencoded, json } = require('body-parser')
 const express = require('express')
 
 const FilesController = require('./controllers/FilesController')
@@ -10,8 +9,8 @@ const app = express()
 
 let actualApiPort = null
 
-app.use(urlencoded({ extended: true }))
-app.use(json())
+app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 
 app.use('/', ApiRouter)
 

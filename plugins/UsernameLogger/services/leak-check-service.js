@@ -286,17 +286,6 @@ class LeakCheckService {
             // Reset state
             this.stateModel.resetLeakCheckState();
             
-            // Log summary on stop/pause
-            const summary = {
-              processed: processedInThisRun -1, // Don't count the one currently being processed when stopped
-              found: foundCount,
-              notFound: notFoundCount,
-              errors: errorCount,
-              invalidChar: invalidCharCount,
-              startIndex: startIndex,
-              lastIndexProcessed: lastCompletedIndex
-            };
-            
             const breakdownMessage = `[Username Logger] Leak check ${action}.\nBreakdown:\n- AJC Accounts Found: ${foundAjcCount}\n- General Accounts Found: ${foundGeneralCount}\n- No Leaks: ${sessionNoLeaksCount}\n- Total Processed: ${sessionProcessedCount}`;
             
             this.application.consoleMessage({
@@ -386,15 +375,12 @@ class LeakCheckService {
                 const passwords = this.apiService.extractPasswordsFromResult(result);
 
                 let passwordsFoundGeneral = 0;
-                let passwordsFoundAjc = 0;
-                let noPasswordHits = 0;
 
                 for (const { password, isAjc } of passwords) {
                   if (password && String(password).length > 0) {
                     const accountEntry = `${username}:${password}`;
                     if (isAjc) {
                       foundAjcBatch.push(accountEntry);
-                      passwordsFoundAjc++;
                       foundAjcCount++;
                     } else {
                       foundGeneralBatch.push(accountEntry);
@@ -403,7 +389,6 @@ class LeakCheckService {
                     }
                   } else {
                     foundNoPassBatch.push(username);
-                    noPasswordHits++;
                   }
                 }
 

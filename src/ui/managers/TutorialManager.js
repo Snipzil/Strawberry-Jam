@@ -1,5 +1,3 @@
-const { ipcRenderer } = require('electron')
-
 class TutorialManager {
   constructor(application) {
     this.application = application

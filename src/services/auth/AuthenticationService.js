@@ -104,7 +104,7 @@ class AuthenticationService {
   }
 
   async getPlayerSessionData(authToken, clientVersion) {
-    let params = `domain=flash&client_version=${encodeURIComponent(clientVersion)}`
+    const params = `domain=flash&client_version=${encodeURIComponent(clientVersion)}`
 
     try {
       const response = await axios({
@@ -131,7 +131,7 @@ class AuthenticationService {
   }
 
   async fullLogin({ username, password, otp, authToken, refreshToken, df, apiPort, serverPort, localeOverride }) {
-    let request = {}
+    let request
 
     if (refreshToken) {
       request = { refresh_token: refreshToken }

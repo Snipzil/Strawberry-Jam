@@ -51,8 +51,8 @@ async function getItemDetails(pageTitle) {
 
 function extractTableFromRows(rows, $) {
   let headers = []
-  let tableRowsData = []
-  let tableImageUrls = []
+  const tableRowsData = []
+  const tableImageUrls = []
 
   if (rows.length === 0) return null
 
@@ -85,9 +85,9 @@ function extractTableFromRows(rows, $) {
 
   dataRowsTr.each((rowIndex, rowElement) => {
     if (rowIndex === imageRowIndex) return
-    let rowCellsText = []
+    const rowCellsText = []
     $(rowElement).find('td, th').each((cellIndex, cellElement) => {
-      let cellText = $(cellElement).text().replace(/\s+/g, ' ').trim()
+      const cellText = $(cellElement).text().replace(/\s+/g, ' ').trim()
       rowCellsText.push(cellText)
     })
     if (rowCellsText.some(text => text)) {

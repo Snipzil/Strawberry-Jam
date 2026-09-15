@@ -199,7 +199,6 @@ class AuthService {
         
         // Check for rate limit headers
         const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
-        const rateLimitReset = response.headers.get('X-RateLimit-Reset')
         
         if (rateLimitRemaining === '0' || rateLimitRemaining === null) {
           console.log("[AUTH] Rate limiting detected via headers")

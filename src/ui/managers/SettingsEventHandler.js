@@ -1,6 +1,6 @@
 const { ipcRenderer } = require('electron');
 const $ = require('jquery');
-const { hexToCssFilter, normalizeHexColor, isValidHexColor } = require('../../utils/ColorUtils');
+const { hexToCssFilter, normalizeHexColor } = require('../../utils/ColorUtils');
 
 class SettingsEventHandler {
   constructor(toastService, settingsSaver) {
@@ -22,11 +22,8 @@ class SettingsEventHandler {
 
     const $openOutputDirButton = $modal.find('#openOutputDirBtn');
 
-    const $leakCheckOutputDirInput = $modal.find('#leakCheckOutputDirInput');
     const $clearCacheButton = $modal.find('#clearCacheBtn');
     const $uninstallButton = $modal.find('#uninstallBtn');
-    const $cacheSizeValue = $modal.find('#cacheSizeValue');
-    const $cacheSizeDetails = $modal.find('#cacheSizeDetails');
     const $leakCheckThresholdContainer = $modal.find('#leakCheckThresholdContainer');
     const $leakCheckEnableLogging = $modal.find('#leakCheckEnableLogging');
     const $leakCheckCollectionScopes = $modal.find('#leakCheckCollectionScopes');
@@ -597,7 +594,7 @@ class SettingsEventHandler {
           $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false);
           $downloadUpdateBtn.addClass('hidden');
           break;
-        case 'available':
+        case 'available': {
           const availableMessage = version ? `Update v${version} is available.` : message;
           $manualUpdateStatusText.text(availableMessage).removeClass('text-yellow-400 text-red-400').addClass('text-blue-400');
           
@@ -610,13 +607,15 @@ class SettingsEventHandler {
             $downloadUpdateBtn.removeClass('hidden').prop('disabled', false);
           }
           break;
-        case 'downloading':
+        }
+        case 'downloading': {
           const progress = version;
           $manualUpdateStatusText.text(`Downloading update... ${progress.toFixed(1)}%`).removeClass('text-yellow-400 text-red-400').addClass('text-blue-400');
           $downloadProgressBar.css('width', `${progress}%`);
           $downloadUpdateBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Downloading...').prop('disabled', true);
           $downloadProgressContainer.removeClass('hidden');
           break;
+        }
         case 'downloaded':
           $manualUpdateStatusText.text(message || 'Update downloaded. Restart to install.').removeClass('text-yellow-400 text-red-400').addClass('text-purple-400');
           $downloadProgressContainer.addClass('hidden');
@@ -641,10 +640,6 @@ class SettingsEventHandler {
           $downloadProgressContainer.addClass('hidden');
       }
 
-      try {
-        refreshAutoUpdateDiagnostics();
-      } catch (e) {
-      }
     });
   }
 }

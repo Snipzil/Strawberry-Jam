@@ -548,7 +548,7 @@ class Spammer {
     const template = { name, packets }
 
     try {
-      let templates = await jam.readJsonFile('spammer-templates.json', [])
+      const templates = await jam.readJsonFile('spammer-templates.json', [])
       templates.push(template)
       await jam.writeJsonFile('spammer-templates.json', templates)
       this.loadTemplates()
@@ -645,7 +645,7 @@ class Spammer {
     if (!confirm('Are you sure you want to delete this template?')) return
 
     try {
-      let templates = await jam.readJsonFile('spammer-templates.json', [])
+      const templates = await jam.readJsonFile('spammer-templates.json', [])
       templates.splice(index, 1)
       await jam.writeJsonFile('spammer-templates.json', templates)
       this.loadTemplates()
@@ -768,7 +768,7 @@ class Spammer {
         const text = await file.text()
         const importedData = JSON.parse(text)
 
-        let existingTemplates = await jam.readJsonFile('spammer-templates.json', [])
+        const existingTemplates = await jam.readJsonFile('spammer-templates.json', [])
         const existingTemplateNames = new Set(existingTemplates.map(t => t.name))
         let newTemplates = []
 

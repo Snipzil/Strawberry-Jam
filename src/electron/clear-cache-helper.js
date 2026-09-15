@@ -7,7 +7,7 @@ const initialDelayMs = 2000; // Wait 2 seconds for the main app to close before 
 const relaunchDelayMs = 7000; // Wait 7 seconds after deletion before relaunching (Increased delay)
 
 // --- Argument Parsing ---
-let pathsToDelete = [];
+const pathsToDelete = [];
 let shouldRelaunch = false;
 let appExePath = null;
 
@@ -31,7 +31,7 @@ console.log(`[Cache Helper] Started. Initial Wait: ${initialDelayMs}ms. Relaunch
 
 setTimeout(async () => {
   console.log('[Cache Helper] Attempting cache deletion...');
-  let errors = [];
+  const errors = [];
 
   for (const cachePath of pathsToDelete) {
     if (!cachePath || typeof cachePath !== 'string' || cachePath.trim() === '') {

@@ -53,17 +53,21 @@ Want to run Strawberry Jam from its source code, make your own changes, or creat
         ```bash
         npm install
         ```
-4.  **Run in Development Mode:**
+4.  **Lint the Code (Optional):**
+    ```bash
+    npm run lint
+    ```
+5.  **Run in Development Mode:**
     *   To run the application for development (e.g., to test changes as you make them):
         ```bash
         npm run dev
         ```
-5.  **Build for Distribution (Optional):**
+6.  **Build for Distribution (Optional):**
     *   If you want to create a packaged version of the application (like the `.exe` installer or a version for Mac/Linux) that you can share or install:
         ```bash
         npm run build
         ```
-    *   This will create the distributable files in a `dist` or `release` folder (the exact location might vary based on configuration).
+    *   This will create the distributable files in the `build/` folder.
 
 
 ## Legal Notice

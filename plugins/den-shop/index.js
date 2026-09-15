@@ -91,7 +91,6 @@ async function getRoomId () {
   return await dispatch.getState('room')
 }
 
-let pendingPurchase = null
 
 if (jam.onPacket) {
   jam.onPacket(({ raw, direction }) => {
@@ -120,13 +119,11 @@ if (jam.onPacket) {
       const balance = parts[4]
 
       if (status === 1) {
-        pendingPurchase = null
         setStatus('Purchase successful! Balance: ' + balance, false)
         buyBtn.disabled = false
         return
       }
 
-      pendingPurchase = null
       setStatus('Purchase failed. Ensure the slot # is correct otherwise you don\'t have enough gems/diamonds or membership required.', true)
       buyBtn.disabled = false
     }
@@ -170,7 +167,6 @@ buyBtn.addEventListener('click', async () => {
   const unit = currency === 1 ? 'Diamonds' : 'Gems'
 
   buyBtn.disabled = true
-  pendingPurchase = true
   const packet = `%xt%o%db%${roomId}%-1%384%${entry.defId}%${slot}%${currency}%`
   dispatch.sendRemoteMessage(packet)
   setStatus('Trying ' + denName + ' with ' + unit + '...', false)

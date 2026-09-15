@@ -149,7 +149,7 @@ class LogManager {
       } else if (rawWindowTitle.includes('index.html') && !rawWindowTitle.includes('/plugins/')) {
         windowTitleContext = 'main-client-ui';
       } else if (rawWindowTitle.includes('/plugins/')) {
-        const pluginMatch = rawWindowTitle.match(/\/plugins\/([^\/]+)/);
+        const pluginMatch = rawWindowTitle.match(/\/plugins\/([^/]+)/);
         windowTitleContext = pluginMatch && pluginMatch[1] ? `plugin-${pluginMatch[1]}` : `plugin-unknown`;
       } else {
         windowTitleContext = rawWindowTitle.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50) || 'other-window';
@@ -189,8 +189,12 @@ class LogManager {
     };
     window.webContents.on('destroyed', webContentsDestroyedListener);
       
-    window.webContents.on('console-message', (_, level, message, line, sourceId) => {
-        const logLevel = Math.min(Math.max(level, 0), 3);
+    const consoleLevels = { debug: 0, info: 1, warning: 2, error: 3 };
+    window.webContents.on('console-message', (details) => {
+        const { message, lineNumber: line, sourceId } = details;
+        const logLevel = typeof details.level === 'number'
+          ? Math.min(Math.max(details.level, 0), 3)
+          : (consoleLevels[details.level] ?? 1);
         
         let sourceName = `${initialContext}-devtools`; 
         try {

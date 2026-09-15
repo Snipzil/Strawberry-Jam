@@ -173,13 +173,6 @@ const setupAppEvents = () => {
 // Set context for renderer logs
 logManager.setContext('renderer-main');
 
-// Store original console methods
-const originalConsole = {
-  log: console.log,
-  error: console.error,
-  warn: console.warn
-};
-
 // Override console methods with LogManager
 console.log = (message) => {
   const formattedMessage = typeof message === 'object'

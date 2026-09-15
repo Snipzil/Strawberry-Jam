@@ -90,7 +90,7 @@ class IPCManager {
         })
 
         ipcRenderer.on('main-renderer-get-state-async', (event, { key, replyChannel }) => {
-          let value = null
+          let value
           if (this.application.dispatch && typeof this.application.dispatch.getState === 'function') {
             try {
               value = this.application.dispatch.getState(key)

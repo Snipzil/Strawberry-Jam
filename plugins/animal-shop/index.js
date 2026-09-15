@@ -182,7 +182,6 @@ function parseAnimalSelection () {
   return { avTypeId: base.id, customAvId: -1, name: base.name }
 }
 
-let pendingPurchaseRoomId = null
 
 if (jam.onPacket) {
   jam.onPacket(({ raw, direction }) => {
@@ -202,7 +201,6 @@ if (jam.onPacket) {
       } else {
         setStatus('Purchase failed. Not enough gems or membership required.', true)
       }
-      pendingPurchaseRoomId = null
       buyBtn.disabled = false
     }
   })
@@ -240,7 +238,6 @@ buyBtn.addEventListener('click', async () => {
   }
 
   buyBtn.disabled = true
-  pendingPurchaseRoomId = roomId
   const packet = `%xt%o%aa%${roomId}%${n1}%${n2}%${n3}%${animal.avTypeId}%${animal.customAvId}%-1%-1%`
   dispatch.sendRemoteMessage(packet)
   setStatus('Purchasing ' + animal.name + '...', false)

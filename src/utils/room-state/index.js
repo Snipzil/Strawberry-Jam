@@ -9,7 +9,6 @@
  */
 
 const roomTracking = require('../room-tracking');
-const { ipcRenderer } = typeof require === 'function' ? require('electron') : { ipcRenderer: null };
 
 /**
  * Room state access methods

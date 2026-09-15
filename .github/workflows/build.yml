@@ -19,24 +19,24 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build CSS
-        run: npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify
+        run: npm run css
 
       - name: Pack client ASAR
         run: |
           npm install --prefix assets/client
           if (Test-Path "assets/client/node_modules/strawberry-jam") { Remove-Item -Recurse -Force "assets/client/node_modules/strawberry-jam" }
-          npx asar pack assets/client assets/app-client.asar --unpack *.node
+          npx asar pack assets/client assets/app-client.asar --unpack "*.node"
         shell: pwsh
 
       - name: Generate installer script
@@ -48,7 +48,7 @@ jobs:
         run: npx electron-builder build -w ${{ (github.event_name == 'push' || github.event.inputs.publish == 'true') && '-p always' || '' }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-build
           path: |
@@ -59,24 +59,24 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build CSS
-        run: npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify
+        run: npm run css
 
       - name: Pack client ASAR
         run: |
           npm install --prefix assets/client
           rm -rf assets/client/node_modules/strawberry-jam
-          npx asar pack assets/client assets/app-client.asar --unpack *.node
+          npx asar pack assets/client assets/app-client.asar --unpack "*.node"
 
       - name: Build macOS DMG
         env:
@@ -85,7 +85,7 @@ jobs:
         run: npx electron-builder build -m ${{ (github.event_name == 'push' || github.event.inputs.publish == 'true') && '-p always' || '' }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: macos-build
           path: |
@@ -96,24 +96,24 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build CSS
-        run: npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify
+        run: npm run css
 
       - name: Pack client ASAR
         run: |
           npm install --prefix assets/client
           rm -rf assets/client/node_modules/strawberry-jam
-          npx asar pack assets/client assets/app-client.asar --unpack *.node
+          npx asar pack assets/client assets/app-client.asar --unpack "*.node"
 
       - name: Build Linux packages
         env:
@@ -121,7 +121,7 @@ jobs:
         run: npx electron-builder build -l ${{ (github.event_name == 'push' || github.event.inputs.publish == 'true') && '-p always' || '' }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-build
           path: |

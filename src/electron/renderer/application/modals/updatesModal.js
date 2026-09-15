@@ -96,10 +96,7 @@ exports.render = async function (app, data = {}) {
     </div>
   `)
 
-  let activeTab = firstCategory
-
   function switchTab(tabName) {
-    activeTab = tabName
     $modal.find('.updates-tab').removeClass('active')
     $modal.find(`[data-tab="${tabName}"]`).addClass('active')
 

@@ -15,7 +15,6 @@ const MigrationService = require('./services/migration-service');
 const MessageHandlers = require('./handlers/message-handlers');
 const CommandHandlers = require('./handlers/command-handlers');
 const BatchLogger = require('./utils/batch-logger');
-const { getFilePaths } = require('./utils/path-utils');
 
 /**
  * UsernameLogger plugin for collecting and analyzing usernames

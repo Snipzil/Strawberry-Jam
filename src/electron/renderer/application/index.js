@@ -1,8 +1,6 @@
-/* eslint-disable camelcase */
 const { ipcRenderer } = require('electron')
 const { EventEmitter } = require('events')
 
-const isDevelopment = process.env.NODE_ENV === 'development'
 const Server = require('../../../networking/server')
 const Settings = require('./settings')
 const Patcher = require('./patcher')
@@ -11,7 +9,6 @@ const ModalSystem = require('./modals')
 const PluginInfoModalManager = require('../ui/plugin-info-modal-manager')
 const registerCoreCommands = require('./core-commands')
 const Tooltip = require('./components/tooltip')
-const ToastService = require('../../../ui/services/ToastService')
 const TooltipManager = require('../../../ui/managers/TooltipManager')
 const NetworkEventHandler = require('../../../managers/network/NetworkEventHandler')
 const ConsoleManager = require('../../../ui/managers/ConsoleManager')
@@ -654,7 +651,6 @@ module.exports = class Application extends EventEmitter {
     this._checkPortConflicts()
 
     await this._checkVersionAndShowUpdatesModal()
-    ipcRenderer.send('renderer-ready')
 
     // Set up handlers for the minimize and close buttons
     const minimizeButton = document.getElementById('minimizeButton');

@@ -14,13 +14,8 @@ module.exports = class MessageDispatcher {
 
     const hooks = [...ajHooks, ...connectionHooks, ...anyHooks]
 
-    if (hooks.length > 0) {} else {
-    }
-
-    const promises = hooks.map(async (hook, index) => {
+    const promises = hooks.map(async (hook) => {
       try {
-        if (message.type === 'rj' || message.type === 'login') {
-        }
         await hook({ client, type, dispatch: this._dispatch, message })
       } catch (error) {
         this._consoleMessage({
@@ -102,7 +97,6 @@ module.exports = class MessageDispatcher {
     } else {
       hooksMap.set(message, [callback])
     }
-    if (type === 'aj') {}
   }
 
   _registerConnectionHook(hook) {

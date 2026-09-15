@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const textualRoomId = await dispatch.getState('room');
-    let internalRoomIdValue = await dispatch.getState('internalRoomId');
+    const internalRoomIdValue = await dispatch.getState('internalRoomId');
     let parsedInternalRoomId = null;
 
     if (internalRoomIdValue !== null && internalRoomIdValue !== undefined) {
@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const textualRoomId = await dispatch.getState('room');
-    let internalRoomIdValue = await dispatch.getState('internalRoomId');
+    const internalRoomIdValue = await dispatch.getState('internalRoomId');
     let parsedInternalRoomId = null;
 
     if (internalRoomIdValue !== null && internalRoomIdValue !== undefined) {

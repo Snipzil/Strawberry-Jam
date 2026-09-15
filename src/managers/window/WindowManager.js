@@ -1,7 +1,3 @@
-const { BrowserWindow } = require('electron');
-
-const isDevelopment = process.env.NODE_ENV === 'development';
-
 class WindowManager {
   constructor(electronInstance) {
     this.electronInstance = electronInstance;

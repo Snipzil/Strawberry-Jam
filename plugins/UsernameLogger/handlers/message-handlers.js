@@ -180,7 +180,6 @@ class MessageHandlers {
         // Check if there's a part immediately before the UUID (username) and after the UUID (status)
         if (uuidIndex > currentIndex) {
           const username = parts[uuidIndex - 1];
-          const status = parts[uuidIndex + 1] || 'unknown';
           totalCandidates++;
           
           // Validate: not empty, not purely numeric, not another UUID

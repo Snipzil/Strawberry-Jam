@@ -1,6 +1,5 @@
 {
   "productName": "strawberry-jam",
-  "electronVersion": "32.0.1",
   "directories": {
     "output": "build"
   },
@@ -74,6 +73,7 @@
     "!scripts/**/*",
     "!plugins/**/*",
     "!assets/client/**/*",
+    "!eslint.config.js",
     "!*.{eslintignore,eslintrc,gitignore,gitattributes,editorconfig}"
   ],
   "extraFiles": [

@@ -204,17 +204,12 @@ class MigrationService {
   async loadIgnoreList(stateModel) {
     try {
       const paths = getFilePaths(this.pluginStoragePath);
-      let loadedCount = 0;
-      let collectedCount = 0;
-      let addedFromAccounts = 0;
 
       // Load from processed_usernames.txt
       if (await this.fileService.fileExists(paths.processedUsernamesPath)) {
         const processedUsernames = await this.fileService.readLinesFromFile(paths.processedUsernamesPath);
         for (const username of processedUsernames) {
-          if (username && stateModel.addIgnoredUsername(username)) {
-            loadedCount++;
-          }
+          if (username) stateModel.addIgnoredUsername(username);
         }
       }
 
@@ -222,9 +217,7 @@ class MigrationService {
       if (await this.fileService.fileExists(paths.collectedUsernamesPath)) {
         const collectedUsernames = await this.fileService.readUsernamesFromLog(paths.collectedUsernamesPath);
         for (const username of collectedUsernames) {
-          if (username && stateModel.addIgnoredUsername(username)) {
-            collectedCount++;
-          }
+          if (username) stateModel.addIgnoredUsername(username);
         }
       }
 
@@ -232,13 +225,10 @@ class MigrationService {
       if (await this.fileService.fileExists(paths.potentialAccountsPath)) {
         const potentialAccounts = await this.fileService.readLinesFromFile(paths.potentialAccountsPath);
         for (const username of potentialAccounts) {
-          if (username && stateModel.addIgnoredUsername(username)) {
-            addedFromAccounts++;
-          }
+          if (username) stateModel.addIgnoredUsername(username);
         }
       }
 
-      const totalIgnored = loadedCount + collectedCount + addedFromAccounts;
       return true;
     } catch (error) {
       this.application.consoleMessage({

@@ -259,8 +259,8 @@ exports.render = function (app) {
 
   const parseGitHubUrl = (url) => {
     try {
-      const basicPattern = /^https?:\/\/(?:www\.)?github\.com\/([^\/]+)\/([^\/]+)\/?$/
-      const treePattern = /^https?:\/\/(?:www\.)?github\.com\/([^\/]+)\/([^\/]+)\/tree\/[^\/]+\/(.+)$/
+      const basicPattern = /^https?:\/\/(?:www\.)?github\.com\/([^/]+)\/([^/]+)\/?$/
+      const treePattern = /^https?:\/\/(?:www\.)?github\.com\/([^/]+)\/([^/]+)\/tree\/[^/]+\/(.+)$/
 
       let match = url.match(basicPattern)
       if (match && match.length === 3) {
@@ -288,7 +288,7 @@ exports.render = function (app) {
         directPlugin = true
       } else {
         pluginsApiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/contents/plugins`
-        let response = await fetch(pluginsApiUrl)
+        const response = await fetch(pluginsApiUrl)
         if (!response.ok && response.status === 404) {
           pluginsApiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/contents`
         }
@@ -561,7 +561,7 @@ exports.render = function (app) {
 
       $pluginsList.html('<div class="col-span-full flex justify-center items-center h-32"><i class="fas fa-circle-notch fa-spin text-gray-400 mr-2"></i><span class="text-gray-400 text-sm">Loading plugins...</span></div>')
 
-      let allPlugins = []
+      const allPlugins = []
       for (const repoInfo of GITHUB_API_URLS) {
         const response = await fetch(repoInfo.url)
         if (response.status === 403) {
@@ -657,7 +657,7 @@ exports.render = function (app) {
 
     const pluginPromises = plugins.map(async plugin => {
       const installed = await isPluginInstalled(plugin.name)
-      let metadata = { name: plugin.name, description: `A plugin from ${plugin.repoOwner}/${plugin.repoName}`, author: plugin.repoOwner }
+      const metadata = { name: plugin.name, description: `A plugin from ${plugin.repoOwner}/${plugin.repoName}`, author: plugin.repoOwner }
 
       try {
         const metadataUrl = `https://api.github.com/repos/${plugin.repoOwner}/${plugin.repoName}/contents/${plugin.path}/plugin.json`
@@ -769,94 +769,6 @@ exports.render = function (app) {
     }
 
     await displayGitHubPlugins(allPlugins)
-  }
-
-  const fetchInstalledPlugins = async () => {
-    const $pluginsList = $modal.find('#installedPluginsList')
-    $pluginsList.html('<div class="col-span-full flex justify-center items-center h-32"><i class="fas fa-circle-notch fa-spin text-gray-400 mr-2"></i><span class="text-gray-400 text-sm">Loading installed plugins...</span></div>')
-
-    try {
-      const userPluginsPath = await getUserPluginsPath()
-      const bundledPluginsPath = LOCAL_PLUGINS_DIR
-      const allPlugins = new Map()
-
-      if (fs.existsSync(userPluginsPath)) {
-        fs.readdirSync(userPluginsPath, { withFileTypes: true })
-          .filter(dirent => dirent.isDirectory())
-          .forEach(dirent => allPlugins.set(dirent.name, { path: userPluginsPath, isBundled: false }))
-      }
-
-      if (fs.existsSync(bundledPluginsPath)) {
-        fs.readdirSync(bundledPluginsPath, { withFileTypes: true })
-          .filter(dirent => dirent.isDirectory())
-          .forEach(dirent => {
-            if (!allPlugins.has(dirent.name)) allPlugins.set(dirent.name, { path: bundledPluginsPath, isBundled: true })
-          })
-      }
-
-      if (allPlugins.size === 0) {
-        $pluginsList.html('<div class="col-span-full text-center text-gray-400 py-8"><p class="text-sm">No plugins installed.</p><p class="text-xs mt-1 text-gray-500">Go to the Store or GitHub tab to install plugins.</p></div>')
-        return
-      }
-
-      $pluginsList.empty()
-
-      for (const [pluginName, pluginInfo] of allPlugins) {
-        const pluginsDir = pluginInfo.path
-        const isBundled = pluginInfo.isBundled
-
-        let metadata = { name: pluginName, description: 'A plugin for Strawberry Jam', author: 'Unknown', version: '', tags: [] }
-
-        const pluginJsonPath = path.join(pluginsDir, pluginName, 'plugin.json')
-        if (fs.existsSync(pluginJsonPath)) {
-          try {
-            const parsedMetadata = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8'))
-            if (parsedMetadata.name) metadata.name = parsedMetadata.name
-            if (parsedMetadata.description) metadata.description = parsedMetadata.description
-            if (parsedMetadata.author) metadata.author = parsedMetadata.author
-            if (parsedMetadata.version) metadata.version = parsedMetadata.version
-            if (parsedMetadata.tags) metadata.tags = parsedMetadata.tags
-            if (parsedMetadata.category) metadata.category = parsedMetadata.category
-          } catch (_) {}
-        }
-
-        const pluginFiles = fs.readdirSync(path.join(pluginsDir, pluginName))
-        let source = 'unknown'
-        if (pluginFiles.includes('.github-source')) source = 'github'
-        else if (pluginFiles.includes('.sj-source')) source = 'strawberry-jam'
-        else if (pluginFiles.includes('.jam-source')) source = 'original-jam'
-
-        const cardHtml = PluginCard.render({
-          metadata,
-          installed: true,
-          source,
-          plugin: { name: pluginName },
-          isBundled,
-          actions: {
-            openFolder: { dir: pluginName, path: pluginsDir }
-          }
-        })
-        $pluginsList.append(cardHtml)
-      }
-
-      $pluginsList.find('.open-plugin-folder-btn').on('click', function () {
-        const pluginDir = $(this).data('plugin-dir')
-        const pluginPath = $(this).data('plugin-path')
-        app.invoke('open-directory', path.join(pluginPath, pluginDir))
-      })
-
-      $pluginsList.find('.uninstall-plugin-btn').on('click', function () {
-        const pluginName = $(this).data('plugin-name')
-        if (confirm(`Are you sure you want to uninstall the "${pluginName}" plugin?`)) {
-          uninstallPlugin(pluginName)
-          setTimeout(() => fetchInstalledPlugins(), 500)
-        }
-      })
-
-      applyFilters()
-    } catch (error) {
-      $pluginsList.html(`<div class="col-span-full text-center text-error-red p-4"><i class="fas fa-exclamation-circle mr-2"></i>Error loading installed plugins: ${error.message}</div>`)
-    }
   }
 
   if (activeTab === 'store') fetchPlugins()

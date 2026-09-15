@@ -1,8 +1,7 @@
 const path = require('path')
 const fs = require('fs')
-const { rename, copyFile, rm, mkdir, cp } = fs.promises
+const { copyFile, rm, mkdir } = fs.promises
 const { existsSync } = fs
-const { spawn } = require('child_process')
 const { ipcRenderer } = require('electron')
 const CacheCleaner = require('../../../../utils/CacheCleaner')
 const PlatformPaths = require('../../../../PlatformPaths')

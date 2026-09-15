@@ -1,7 +1,6 @@
 const path = require('path')
 const fs = require('fs').promises
 const Ajv = new (require('ajv'))({ useDefaults: true })
-const { PluginTypes } = require('../../Constants')
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 
@@ -224,7 +223,7 @@ class PluginManager {
         }
       })
 
-      let loadedPluginConfigs = (await Promise.all(pluginPromises)).filter(r => r !== null)
+      const loadedPluginConfigs = (await Promise.all(pluginPromises)).filter(r => r !== null)
 
       loadedPluginConfigs.sort((a, b) => {
         const aType = a.configuration.type
@@ -456,7 +455,7 @@ class PluginManager {
 
     this._application.$pluginList.empty()
 
-    const clearedCount = await this._clearAllPluginCache()
+    await this._clearAllPluginCache()
 
     this.clearAllCallback()
     await this.load()

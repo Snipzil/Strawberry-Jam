@@ -112,7 +112,6 @@ function setupIpcHandlers(electronInstance) {
     const senderWindow = BrowserWindow.fromWebContents(event.sender);
     if (senderWindow && !senderWindow.isDestroyed()) {
       senderWindow.minimize();
-    } else {
     }
   });
 
@@ -129,8 +128,7 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.handle('set-setting', async (event, key, value) => {
-    const result = await settingsService.setSetting(key, value);
-    return result;
+    return await settingsService.setSetting(key, value);
   });
 
   // IPC handler for getting SWF files information
@@ -262,13 +260,9 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
-  ipcMain.handle('get-app-state', (async () => {
-      return electronInstance.getAppState();
-  }).bind(electronInstance));
+  ipcMain.handle('get-app-state', () => electronInstance.getAppState());
 
-  ipcMain.handle('set-app-state', (async (event, newState) => {
-      return electronInstance.setAppState(newState);
-  }).bind(electronInstance));
+  ipcMain.handle('set-app-state', (event, newState) => electronInstance.setAppState(newState));
 
   ipcMain.handle('dispatch-get-state', async (event, key) => {
     if (electronInstance._isQuitting) {
@@ -307,9 +301,6 @@ function setupIpcHandlers(electronInstance) {
       }
     });
   });
-
-  ipcMain.once('renderer-ready', (async () => {
-  }).bind(electronInstance));
 
   ipcMain.on('session-cleanup', () => {
     if (electronInstance._window && !electronInstance._window.isDestroyed()) {
@@ -462,7 +453,7 @@ function setupIpcHandlers(electronInstance) {
             resolvedHelperPath = testPath;
             break;
           } catch (err) {
-            continue;
+            // try the next candidate
           }
         }
 
@@ -679,22 +670,6 @@ function setupIpcHandlers(electronInstance) {
 
   ipcMain.handle('get-os-info', async () => {
     return systemInfoService.getOsInfo();
-  });
-
-  ipcMain.handle('get-server-port', async () => {
-    if (electronInstance && electronInstance.application && electronInstance.application.server) {
-      if (electronInstance.application.server.actualPort) {
-        return electronInstance.application.server.actualPort
-      }
-
-      for (let attempt = 0; attempt < 10; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, 500))
-        if (electronInstance.application.server.actualPort) {
-          return electronInstance.application.server.actualPort
-        }
-      }
-    }
-    return null
   });
 
   ipcMain.handle('get-api-port', async () => {
@@ -999,18 +974,12 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.on('winapp-generate-report', (event, reportData) => {
     if (reportData && reportData.logs) {
       logManager.addGameClientLogs(reportData.logs);
-    } else {
     }
   });
 
   ipcMain.handle('get-username-logger-counts', async (event) => {
     try {
-      const pluginWindowEntry = Array.from(electronInstance.pluginWindows.entries()).find(([name, win]) => name === 'Username Logger');
-      
-      if (!pluginWindowEntry) {
-        return null;
-      }
-      const pluginWindow = pluginWindowEntry[1];
+      const pluginWindow = electronInstance.pluginWindows.get('Username Logger');
 
       if (!pluginWindow || pluginWindow.isDestroyed() || !pluginWindow.webContents || pluginWindow.webContents.isDestroyed()) {
         return null;
@@ -1131,7 +1100,10 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
-  ipcMain.on('console-message', (event, { type, msg }) => {
+  // Plugin windows call jam.application.consoleMessage(type, msg); surface it in the main console.
+  ipcMain.on('console-message', (event, { type, msg } = {}) => {
+    if (msg === undefined) return;
+    electronInstance.messageWindow('message', { type: type || 'logger', message: String(msg) });
   });
 
   ipcMain.on('dispatch-get-state-sync', (event, key) => {

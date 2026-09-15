@@ -14,7 +14,7 @@ class AppInitializer {
       connectionStatusManager
     } = dependencies
 
-    let totalUptime = await this.ipcRenderer.invoke('get-total-uptime')
+    const totalUptime = await this.ipcRenderer.invoke('get-total-uptime')
     const sessionStartTime = new Date()
     sessionStartTimeRef.current = sessionStartTime
 
