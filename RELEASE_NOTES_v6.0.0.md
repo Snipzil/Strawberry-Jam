@@ -11,6 +11,7 @@ Download: `strawberry-jam-Setup-6.0.0.exe` from the Releases page.
 - **Plugins tab refresh.** New plugin cards with accent icons, type badges, and an open chevron; a toolbar with search (Ctrl+F, Esc to clear); a Recent row of your last five opened plugins; keyboard navigation with a visible focus ring.
 - **Header.** Segmented Network/Plugins tabs and a PLAY button that spins while patching and turns into a green RUNNING state while the game is open.
 - **2FA fix for UUID Spoofing.** The spoofed device ID is now persistent, so Animal Jam remembers the device and stops asking for a code on every login. A "New ID" button regenerates it on demand.
+- **High Performance Mode.** New launcher setting (on by default) that unlocks GPU rasterization and zero-copy compositing, ignores the GPU blocklist, disables background throttling of the game renderer, and raises the client's process priority so the game gets CPU and GPU time ahead of other apps. Independent of the in-game Performance Mode mod.
 - **In-game controls.** Settings, debug log, version, and a new "Open · F10" Mod Menu row stay visible and clickable over the game. The mod menu button is a glass pill that reveals its shortcut on hover.
 
 ## Fixes
