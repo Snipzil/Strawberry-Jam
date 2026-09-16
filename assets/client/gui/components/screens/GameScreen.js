@@ -286,6 +286,13 @@
         document.addEventListener('mod-menu-btn-changed', (e) => {
           this.modMenuBtn.style.display = e.detail.enabled ? 'flex' : 'none';
         });
+        document.addEventListener('open-mod-menu', () => {
+          if (this.webViewElem && this._webviewReady) {
+            this.webViewElem.focus();
+            this.webViewElem.sendInputEvent({ type: 'keyDown', keyCode: 'F10' });
+            this.webViewElem.sendInputEvent({ type: 'keyUp', keyCode: 'F10' });
+          }
+        });
       }
 
       this._webviewReady = false;

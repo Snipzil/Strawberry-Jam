@@ -516,7 +516,16 @@
             background-color: var(--theme-primary);
           }
 
+          .settings-item-ingame {
+            display: none;
+          }
+
+          :host(.in-game) .settings-item-ingame {
+            display: flex;
+          }
+
           #settings-panel.show {
+            min-height: min(470px, calc(100vh - 112px));
             max-height: min(600px, calc(100vh - 112px));
             opacity: 1;
             animation: slideUp 0.3s ease forwards;
@@ -906,6 +915,25 @@
             padding: 6px 8px;
           }
 
+          #uuid-regenerate-row {
+            display: none;
+            margin-top: -2px;
+          }
+
+          #uuid-spoofing-warning.show + #uuid-regenerate-row {
+            display: flex;
+          }
+
+          .settings-mono {
+            font-family: Consolas, 'Cascadia Code', monospace;
+            font-size: 10.5px;
+            color: var(--sj-text-muted);
+            letter-spacing: 0.02em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
           .shortcuts-note {
             font-size: 10px;
             padding: 8px 10px;
@@ -1213,7 +1241,7 @@
           </div>
         </div>
         <div id="glockoma-credit">
-          Made with 🤎 by <a href="https://github.com/glvckoma" target="_blank">glvckoma</a>
+          Updated with ❤ by <a href="https://github.com/glvckoma" target="_blank" title="Original by glvckoma">Snipz</a>
         </div>
 
         <div class="button-container-bottom-left">
@@ -1242,6 +1270,10 @@
           <div class="settings-tab-content active" id="tab-general">
             <div class="settings-subsection">
               <h5>Enhancements</h5>
+              <div class="settings-item settings-item-ingame" id="open-mod-menu-item">
+                <span>Mod Menu</span>
+                <button id="open-mod-menu-btn" class="settings-mini-btn" title="Open the in-game Mod Menu (F10)">Open · F10</button>
+              </div>
               <div class="settings-item">
                 <span>UUID Spoofing</span>
                 <label style="display: inline-flex; align-items: center; cursor: pointer; position: relative;">
@@ -1250,7 +1282,11 @@
                 </label>
               </div>
               <div id="uuid-spoofing-warning" class="hidden">
-                Will not work with accounts that have 2FA enabled.
+                Uses one fixed fake device ID, so 2FA only asks once per device. Generating a new ID makes 2FA ask again.
+              </div>
+              <div id="uuid-regenerate-row" class="settings-item">
+                <span class="settings-mono" id="uuid-current-id" title="Current spoofed device ID">ID: …</span>
+                <button id="uuid-regenerate-btn" class="settings-mini-btn" title="Generate a new random device ID">New ID</button>
               </div>
               <div class="settings-item">
                 <span>Background Processing</span>

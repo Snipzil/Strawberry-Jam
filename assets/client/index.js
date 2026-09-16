@@ -72,6 +72,7 @@ try {
 } catch (e) {}
 
 const STORE_KEY_UUID_SPOOFER = 'uuid_spoofer_enabled';
+const STORE_KEY_SPOOFED_DF = 'uuid_spoofer_df';
 const STORE_KEY_SAVED_ACCOUNTS = 'saved_accounts';
 
 const AUTO_UPDATE_STARTUP_DELAY_MS = 2000;
@@ -109,8 +110,10 @@ async function toggleUuidSpoofing(enable) {
     if (win) {
       if (enable) {
         const newUuid = uuidv4();
+        spoofedUuid = newUuid;
+        store.set(STORE_KEY_SPOOFED_DF, newUuid);
         log("info", `[UUID Spoofer] Generated random UUID: ${newUuid.substr(0, 8)}...`);
-        
+
         win.webContents.send('update-df', newUuid);
         
         return { success: true, uuid: newUuid };
@@ -572,12 +575,18 @@ const getSystemData = () => {
 const getDf = async () => {
   const uuidSpooferEnabled = store.get(STORE_KEY_UUID_SPOOFER, false);
   if (uuidSpooferEnabled) {
+    // Reuse one persistent spoofed ID so the game server keeps treating this as
+    // the same (remembered) device; a fresh ID would force 2FA on every login.
+    if (!spoofedUuid) {
+      spoofedUuid = store.get(STORE_KEY_SPOOFED_DF) || null;
+    }
     if (spoofedUuid) {
-      log("debug", `[DF] UUID spoofing enabled, using existing spoofed UUID: ${spoofedUuid.substr(0, 8)}...`);
+      log("debug", `[DF] UUID spoofing enabled, using persistent spoofed UUID: ${spoofedUuid.substr(0, 8)}...`);
       return spoofedUuid;
     }
     const newUuid = uuidv4();
-    spoofedUuid = newUuid; 
+    spoofedUuid = newUuid;
+    store.set(STORE_KEY_SPOOFED_DF, newUuid);
     log("debug", `[DF] UUID spoofing enabled, generated new spoofed UUID: ${newUuid.substr(0, 8)}...`);
     return newUuid;
   }
@@ -1094,12 +1103,24 @@ ipcMain.handle('get-df', async () => {
   }
 });
 
+ipcMain.handle("regenerate-df", async (event) => {
+  if (!store.get(STORE_KEY_UUID_SPOOFER, false)) {
+    return null;
+  }
+  const newUuid = uuidv4();
+  spoofedUuid = newUuid;
+  store.set(STORE_KEY_SPOOFED_DF, newUuid);
+  log("info", `[DF] User regenerated spoofed UUID: ${newUuid.substr(0, 8)}...`);
+  return newUuid;
+});
+
 ipcMain.handle("refresh-df", async (event) => {
   if (store.get(STORE_KEY_UUID_SPOOFER, false)) {
-    const newUuid = uuidv4();
-    spoofedUuid = newUuid;
-    log("debug", `[DF] Refreshed DF - generated new UUID: ${newUuid}`);
-    return newUuid;
+    // Return the persistent spoofed ID; it is only regenerated when spoofing is
+    // toggled off and on again, so 2FA "remember this device" keeps working.
+    const df = await getDf();
+    log("debug", `[DF] Refresh DF requested - reusing spoofed UUID: ${df ? df.substr(0, 8) : 'none'}...`);
+    return df;
   }
   return null;
 });

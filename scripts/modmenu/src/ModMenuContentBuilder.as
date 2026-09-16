@@ -20,9 +20,25 @@ package gui
 
       public static const COL_GAP:int = 12;
 
+      public static var hoverCallback:Function = null;
+
       public function ModMenuContentBuilder()
       {
          super();
+      }
+
+      private static function notifyHover(row:MovieClip, show:Boolean) : void
+      {
+         try
+         {
+            if(hoverCallback != null)
+            {
+               hoverCallback(row,show);
+            }
+         }
+         catch(e:Error)
+         {
+         }
       }
 
       private static function hasHotkey(hotkey:String) : Boolean
@@ -55,10 +71,12 @@ package gui
          var overHandler:Function = function(e:MouseEvent):void
          {
             ModMenuUIHelper.drawRowBackground(bg,ROW_W,ROW_BG_H,true);
+            notifyHover(row,true);
          };
          var outHandler:Function = function(e:MouseEvent):void
          {
             ModMenuUIHelper.drawRowBackground(bg,ROW_W,ROW_BG_H,false);
+            notifyHover(row,false);
          };
          bg.addEventListener("mouseOver",overHandler,false,0,false);
          bg.addEventListener("mouseOut",outHandler,false,0,false);
@@ -146,6 +164,8 @@ package gui
          row.addChild(labelTxt);
          descTxt = makeLabel(description,86,20,ROW_W - 86 - 8,10,false,ModMenuUIHelper.COLOR_TEXT_DIM,true);
          row.addChild(descTxt);
+         row["fullDesc"] = description;
+         row["descClipped"] = descTxt.numLines > 2;
          checkboxClickHandler = function(e:MouseEvent):void
          {
             var currentTime:int;
@@ -263,6 +283,8 @@ package gui
          row.addChild(labelTxt);
          descTxt = makeLabel(description,10,20,textW,10,false,ModMenuUIHelper.COLOR_TEXT_DIM,true);
          row.addChild(descTxt);
+         row["fullDesc"] = description;
+         row["descClipped"] = descTxt.numLines > 2;
          openBtn = ModMenuUIHelper.createButton("Open",5025616,72,22);
          openBtn.x = ROW_W - 8 - 72;
          openBtn.y = hasHotkey(hotkey) ? 4 : 12;

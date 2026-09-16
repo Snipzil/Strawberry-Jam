@@ -44,7 +44,7 @@ class GameLauncher {
     }
 
     this._isLaunching = true
-    $btn.classList.add('opacity-50', 'pointer-events-none')
+    $btn.classList.add('opacity-50', 'pointer-events-none', 'is-launching')
 
     const startMessageId = `start-aj-${Date.now()}`
     let launchSuccessful = false
@@ -79,7 +79,9 @@ class GameLauncher {
       }
 
       if ($btn) {
-        $btn.classList.remove('opacity-50', 'pointer-events-none')
+        $btn.classList.remove('opacity-50', 'pointer-events-none', 'is-launching')
+        $btn.classList.toggle('is-running', !!this.application._isGameRunning)
+        this._setPlayLabel(this.application._isGameRunning ? 'RUNNING' : 'PLAY')
 
         if (this.application._isGameRunning) {
           try {
@@ -101,7 +103,8 @@ class GameLauncher {
     this.application._isGameRunning = false
 
     if (this.application.$playGameBtn) {
-      this.application.$playGameBtn.classList.remove('opacity-100')
+      this.application.$playGameBtn.classList.remove('opacity-100', 'is-running', 'is-launching')
+      this._setPlayLabel('PLAY')
     }
 
     this.application.consoleMessage({
@@ -109,6 +112,11 @@ class GameLauncher {
       type: 'notify'
     })
   }
+  _setPlayLabel(text) {
+    const label = document.querySelector('#playGameBtn .play-btn-label')
+    if (label) label.textContent = text
+  }
+
   _showHeaderNotification(text, type = 'warning') {
     const el = document.getElementById('headerNotification')
     if (!el) return

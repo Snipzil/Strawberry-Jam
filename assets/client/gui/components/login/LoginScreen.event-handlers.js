@@ -184,6 +184,7 @@
                 return;
               }
               this.loginScreen.uuidSpoofingWarning.classList.add('show');
+              if (this._showCurrentDf) this._showCurrentDf();
             } catch (err) {
               this.loginScreen.uuidSpooferToggle.checked = false;
               return;
@@ -203,6 +204,50 @@
           } catch (err) {
             console.error('Failed to save background processing setting:', err);
           }
+        });
+      }
+
+      const uuidIdLabel = this.loginScreen.shadowRoot.getElementById('uuid-current-id');
+      const uuidRegenBtn = this.loginScreen.shadowRoot.getElementById('uuid-regenerate-btn');
+      const showCurrentDf = async () => {
+        if (!uuidIdLabel || !window.ipc) return;
+        try {
+          const df = await window.ipc.getDf();
+          uuidIdLabel.textContent = df ? `ID: ${String(df).slice(0, 8)}…` : 'ID: —';
+          uuidIdLabel.title = df ? `Current spoofed device ID: ${df}` : 'No device ID';
+        } catch (_) {
+          uuidIdLabel.textContent = 'ID: —';
+        }
+      };
+      this._showCurrentDf = showCurrentDf;
+      if (uuidRegenBtn) {
+        uuidRegenBtn.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          try {
+            const newDf = await window.ipc.invoke('regenerate-df');
+            if (newDf) {
+              globals.df = newDf;
+              await showCurrentDf();
+              uuidRegenBtn.textContent = 'Done';
+              setTimeout(() => { uuidRegenBtn.textContent = 'New ID'; }, 1200);
+            }
+          } catch (err) {
+            console.error('[UUID] Failed to regenerate spoofed ID:', err);
+          }
+        });
+      }
+      if (this.loginScreen.settingsBtn) {
+        this.loginScreen.settingsBtn.addEventListener('click', () => { showCurrentDf(); });
+      }
+
+      const openModMenuBtn = this.loginScreen.shadowRoot.getElementById('open-mod-menu-btn');
+      if (openModMenuBtn) {
+        openModMenuBtn.addEventListener('click', (event) => {
+          event.stopPropagation();
+          if (this.loginScreen.settingsPanel) {
+            this.loginScreen.settingsPanel.classList.remove('show');
+          }
+          document.dispatchEvent(new CustomEvent('open-mod-menu'));
         });
       }
 

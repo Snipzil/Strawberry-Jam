@@ -30,7 +30,7 @@
           class="play-btn flex items-center relative"
           style="white-space: nowrap; flex-shrink: 0;"
           title="Launch Game">
-          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polygon points="6 3 20 12 6 21 6 3"/></svg><span class="header-tab-label play-btn-label">PLAY</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polygon points="6 3 20 12 6 21 6 3"/></svg><span class="play-btn-dot"></span><span class="header-tab-label play-btn-label">PLAY</span>
         </button>
         <div class="header-tabs flex" style="flex-shrink: 1; min-width: 0;">
           <button id="packetLoggingTab"
@@ -95,6 +95,12 @@
           </button>
         </div>
         <div class="flex items-center gap-1">
+          <div class="plugins-search">
+            <i class="fas fa-search"></i>
+            <input id="pluginSearchInput" type="text" placeholder="Search plugins…" aria-label="Search plugins" spellcheck="false">
+            <button id="pluginSearchClear" class="plugins-search-clear hidden" title="Clear search" aria-label="Clear search"><i class="fas fa-times"></i></button>
+          </div>
+          <span class="plugins-toolbar-divider"></span>
           <div class="relative" id="pluginSettingsWrapper">
             <button id="pluginSettingsBtn" class="toolbar-btn toolbar-btn-icon" title="Plugin Settings" aria-label="Plugin Settings">
               <i class="fas fa-cog"></i>
@@ -132,8 +138,17 @@
         </div>
       </div>
       <div id="pluginsSectionContent" class="flex-1 overflow-y-auto overflow-x-hidden themed-scrollbar">
+        <div id="pluginRecentRow" class="plugin-recent-row hidden">
+          <span class="plugin-recent-label"><i class="fas fa-history"></i> Recent</span>
+          <div id="pluginRecentChips" class="plugin-recent-chips"></div>
+        </div>
         <ul id="pluginList" class="grid gap-2.5 plugin-grid" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
         </ul>
+        <div id="pluginSearchEmpty" class="hidden plugins-empty">
+          <div class="plugins-empty-icon"><i class="fas fa-search"></i></div>
+          <p class="plugins-empty-title">No plugins match</p>
+          <p class="plugins-empty-hint">Try a different search term.</p>
+        </div>
         <div id="emptyPluginMessage" class="hidden plugins-empty">
           <div class="plugins-empty-icon"><i class="fas fa-puzzle-piece"></i></div>
           <p class="plugins-empty-title">No plugins installed</p>
@@ -413,6 +428,159 @@
     }
     .play-btn-label {
       line-height: 1;
+    }
+    .play-btn .play-btn-dot {
+      display: none;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.9);
+      animation: playDotPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes playDotPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.55; transform: scale(0.8); }
+    }
+    .play-btn.is-running {
+      color: #34d399;
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%);
+      border-color: rgba(34, 197, 94, 0.45);
+    }
+    .play-btn.is-running svg {
+      display: none;
+    }
+    .play-btn.is-running .play-btn-dot {
+      display: inline-block;
+    }
+    .play-btn.is-launching svg {
+      animation: playSpin 0.9s linear infinite;
+      filter: none;
+    }
+    @keyframes playSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ---- Plugins tab: search + recent ---- */
+    .plugins-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 28px;
+      width: 200px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(156, 163, 175, 0.15);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, width 0.2s ease;
+    }
+    .plugins-search:focus-within {
+      border-color: var(--theme-primary, #e83d52);
+      box-shadow: 0 0 0 2px rgba(var(--theme-primary-rgb, 232, 61, 82), 0.15);
+      width: 240px;
+    }
+    .plugins-search > i.fa-search {
+      position: absolute;
+      left: 9px;
+      font-size: 11px;
+      color: var(--theme-primary, #e83d52);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .plugins-search input {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      background: transparent;
+      border: 0;
+      outline: 0;
+      padding: 0 26px 0 26px;
+      font-size: 11.5px;
+      color: #e5e7eb;
+    }
+    .plugins-search input::placeholder {
+      color: rgba(156, 163, 175, 0.5);
+    }
+    .plugins-search-clear {
+      position: absolute;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      font-size: 10px;
+      color: rgba(195, 195, 195, 0.7);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .plugins-search-clear:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .plugins-search-clear.hidden {
+      display: none !important;
+    }
+    .plugin-recent-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 2px 10px;
+      margin-bottom: 4px;
+      border-bottom: 1px dashed rgba(156, 163, 175, 0.15);
+    }
+    .plugin-recent-row.hidden {
+      display: none !important;
+    }
+    .plugin-recent-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6b7280;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .plugin-recent-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 0;
+    }
+    .plugin-recent-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 26px;
+      padding: 0 10px 0 8px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #e5e7eb;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(156, 163, 175, 0.15);
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+    .plugin-recent-chip svg {
+      width: 13px;
+      height: 13px;
+      color: #60a5fa;
+    }
+    .plugin-recent-chip:hover {
+      background: rgba(96, 165, 250, 0.14);
+      border-color: rgba(96, 165, 250, 0.4);
+    }
+    .plugin-recent-chip:active {
+      transform: scale(0.96);
+    }
+    .plugin-recent-chip:focus-visible {
+      outline: 2px solid var(--theme-primary, #e83d52);
+      outline-offset: 1px;
+    }
+    .plugins-empty#pluginSearchEmpty.hidden {
+      display: none;
     }
 
     /* ---- Header: segmented tabs ---- */
@@ -953,6 +1121,44 @@
         });
       }
 
+      var pluginSearchInput = document.getElementById("pluginSearchInput");
+      var pluginSearchClear = document.getElementById("pluginSearchClear");
+      if (pluginSearchInput) {
+        var applyPluginSearch = function () {
+          var q = pluginSearchInput.value || '';
+          if (pluginSearchClear) pluginSearchClear.classList.toggle('hidden', q.length === 0);
+          try {
+            var app = window.jam && window.jam.application;
+            if (app && app.pluginUIManager) app.pluginUIManager.setSearchQuery(q);
+          } catch (_) {}
+        };
+        pluginSearchInput.addEventListener("input", applyPluginSearch);
+        pluginSearchInput.addEventListener("keydown", function (e) {
+          if (e.key === 'Escape') {
+            pluginSearchInput.value = '';
+            applyPluginSearch();
+            pluginSearchInput.blur();
+          }
+        });
+        if (pluginSearchClear) {
+          pluginSearchClear.addEventListener("click", function () {
+            pluginSearchInput.value = '';
+            applyPluginSearch();
+            pluginSearchInput.focus();
+          });
+        }
+        document.addEventListener("keydown", function (e) {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+            var pluginsTab = document.getElementById('plugins');
+            if (pluginsTab && !pluginsTab.classList.contains('hidden')) {
+              e.preventDefault();
+              pluginSearchInput.focus();
+              pluginSearchInput.select();
+            }
+          }
+        });
+      }
+
       var showHiddenBtn = document.getElementById("showHiddenPluginsBtn");
       if (showHiddenBtn) {
         showHiddenBtn.addEventListener("click", function () {
@@ -1399,7 +1605,6 @@
         applySynchronizedElements(color);
         
         document.title = customName;
-        $('#playButtonText').text(customName);
         
         return true;
       };
@@ -1568,7 +1773,6 @@
           const displayName = fruitName.charAt(0).toUpperCase() + fruitName.slice(1) + ' Jam';
 
           document.title = displayName;
-          $('#playButtonText').text(displayName);
           
           if (theme && theme.primary) {
             // Update theme colors using our helper function

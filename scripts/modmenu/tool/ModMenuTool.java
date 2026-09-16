@@ -37,6 +37,22 @@ public class ModMenuTool {
         File f = p.export(idx, new File(dir, p.getClassPath().className + ".as"), ses, false);
         System.out.println("script=" + p.scriptIndex + " " + p.getClassPath() + " -> " + f);
       }
+    } else if (mode.equals("prune")) {
+      // prune <in.swf> <out.swf> <scriptIndex,scriptIndex,...>: delete stale duplicate packs
+      String outSwf = a[2];
+      Set<Integer> idx = new HashSet<>();
+      for (String s : a[3].split(",")) idx.add(Integer.parseInt(s.trim()));
+      int n = 0;
+      for (ScriptPack p : packs) {
+        if (idx.contains(p.scriptIndex)) {
+          System.out.println("deleting script=" + p.scriptIndex + " " + p.getClassPath());
+          p.delete(p.abc, true);
+          if (p.abc.parentTag != null) ((com.jpexs.decompiler.flash.tags.Tag) p.abc.parentTag).setModified(true);
+          n++;
+        }
+      }
+      try (FileOutputStream fos = new FileOutputStream(outSwf)) { swf.saveTo(fos); }
+      System.out.println("deleted " + n + " packs, saved " + outSwf);
     } else if (mode.equals("replace")) {
       String outSwf = a[2]; File srcDir = new File(a[3]);
       As3ScriptReplacerInterface r = As3ScriptReplacerFactory.createFFDec();

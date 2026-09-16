@@ -571,6 +571,21 @@ select.modal-input {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
+.plugin-grid-tile:focus {
+  outline: none;
+}
+
+.plugin-grid-tile:focus-visible {
+  outline: 2px solid var(--theme-primary, #e83d52);
+  outline-offset: 2px;
+  border-color: rgba(var(--tile-accent), 0.35);
+}
+
+.plugin-grid-tile:focus-visible .plugin-tile-open {
+  opacity: 1;
+  transform: translateX(0);
+}
+
 .plugin-tile-head {
   display: flex;
   align-items: center;

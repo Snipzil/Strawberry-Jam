@@ -19,27 +19,31 @@
             display: flex;
             flex-direction: column;
             width: 600px;
-            border-radius: 10px;
-            background-color: #F5F2E1;
-            border: 1px solid #BDAB84;
+            border-radius: 20px;
+            background-color: rgba(26, 26, 30, 0.97);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--theme-secondary, rgba(232, 61, 82, 0.3));
+            backdrop-filter: blur(14px);
+            overflow: hidden;
             font-family: CCDigitalDelivery, sans-serif;
-            color: #6E4B37;
-            font-size: 18px;
+            color: #ECECEE;
+            font-size: 16px;
             text-align: center;
           }
 
           #header-div {
             font-family: Tiki-Island, sans-serif;
-            font-size: 40px;
+            font-size: 30px;
             position: relative;
-            border-bottom: #E8E0C8 1px solid;
-            padding: 10px;
-            color: #7A4A12;
-            text-shadow: 1px 2px 0px rgba(2,2,2,0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px 10px 12px;
+            color: var(--theme-primary, #e83d52);
+            text-shadow: 1px 2px 0px rgba(0, 0, 0, 0.35);
+            letter-spacing: 0.5px;
           }
 
           #body-div {
-            border-bottom: #E8E0C8 2px solid;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -52,7 +56,14 @@
 
           #body-div ajd-text-input {
             width: 300px;
-            background-color: #FDFCF9;
+            --sj-input-bg: rgba(255, 255, 255, 0.06);
+            --sj-input-text: #F3F3F5;
+            --sj-input-placeholder: rgba(255, 255, 255, 0.38);
+            --sj-text-muted: #A6A6AE;
+            --ajd-input-radius: 14px;
+            background-color: rgba(255, 255, 255, 0.06);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
             margin-bottom: 8px;
           }
 
@@ -73,7 +84,7 @@
             height: 30px;
             border: none;
             background-color: transparent;
-            color: #7A4A12;
+            color: #B0B0B8;
             font-size: 24px;
             font-weight: bold;
             cursor: pointer;
@@ -85,11 +96,23 @@
           }
 
           #close-button:hover {
-            background-color: rgba(122, 74, 18, 0.1);
+            background-color: rgba(255, 255, 255, 0.08);
+            color: #FFFFFF;
           }
 
           #close-button:active {
-            background-color: rgba(122, 74, 18, 0.2);
+            background-color: rgba(255, 255, 255, 0.14);
+          }
+
+          ajd-bubble-button {
+            --ajd-bubble-button-background-color: var(--theme-button-bg, var(--theme-primary, #e83d52));
+            --ajd-bubble-button-border-color: var(--theme-button-border, rgba(0, 0, 0, 0.25));
+            --ajd-bubble-button-text-color: var(--theme-button-text, #FFFFFF);
+            font-size: 24px;
+          }
+          #body-text {
+            color: #C9C9D0;
+            line-height: 1.45;
           }
         </style>
 
@@ -133,6 +156,7 @@
     }
 
     connectedCallback() {
+      syncModalTheme(this);
       this.localize();
     }
 

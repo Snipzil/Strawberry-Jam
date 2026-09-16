@@ -5,7 +5,79 @@ class PluginUIManager {
     this.application = application
     this.$activeContextMenu = null
     this.$activeIconPicker = null
+    this._searchQuery = ''
     this._initGlobalContextMenuDismiss()
+  }
+
+  static RECENT_LIMIT = 5
+
+  setSearchQuery(query) {
+    this._searchQuery = String(query || '').trim().toLowerCase()
+    this.reorderPluginList()
+  }
+
+  _getRecent() {
+    try {
+      const settings = this.application.settings
+      if (settings && settings.get) {
+        const list = settings.get('plugins.recentlyUsed')
+        return Array.isArray(list) ? list : []
+      }
+    } catch (_) {}
+    return []
+  }
+
+  _recordRecent(pluginName) {
+    if (!pluginName) return
+    try {
+      const settings = this.application.settings
+      if (settings && settings.get && settings.update) {
+        const list = this._getRecent().filter(n => n !== pluginName)
+        list.unshift(pluginName)
+        settings.update('plugins.recentlyUsed', list.slice(0, PluginUIManager.RECENT_LIMIT))
+      }
+    } catch (_) {}
+    this.renderRecentRow()
+  }
+
+  _openPlugin(name) {
+    this._recordRecent(name)
+    const mode = this.application.settings.get('plugins.defaultDisplayMode', 'inline')
+    if (mode === 'inline' && this.application.inlinePluginManager) {
+      this.application.inlinePluginManager.open(name)
+    } else {
+      this.application.dispatch.open(name)
+    }
+  }
+
+  renderRecentRow() {
+    const $row = $('#pluginRecentRow')
+    const $chips = $('#pluginRecentChips')
+    if (!$row.length || !$chips.length || !this.application.$pluginList) return
+
+    const customIcons = this._getCustomIcons()
+    const recent = this._getRecent().filter(name => {
+      const $tile = this.application.$pluginList.find(`li[data-plugin-name="${name}"]`)
+      return $tile.length > 0 && $tile.data('plugin-type') === 'ui'
+    })
+
+    $chips.empty()
+    if (recent.length === 0 || this._searchQuery) {
+      $row.addClass('hidden')
+      return
+    }
+
+    recent.forEach(name => {
+      const $chip = $(`<button type="button" class="plugin-recent-chip" title="Open ${name}"></button>`)
+      $chip.append(createIconSvg(getIconForPlugin(name, 'ui', customIcons)))
+      $chip.append($('<span></span>').text(name))
+      $chip.on('click', (e) => {
+        e.stopPropagation()
+        this._openPlugin(name)
+      })
+      $chips.append($chip)
+    })
+    $row.removeClass('hidden')
   }
 
   _initGlobalContextMenuDismiss() {
@@ -64,7 +136,7 @@ class PluginUIManager {
 
     const $plugin = $(`
       <li class="plugin-grid-tile group relative ${isUI ? 'cursor-pointer' : ''}"
-          data-plugin-name="${name}" data-plugin-type="${type}" title="${description || name}" ${hidden ? 'style="display:none"' : ''}>
+          data-plugin-name="${name}" data-plugin-type="${type}" data-plugin-search="${`${name} ${author} ${descText}`.toLowerCase().replace(/"/g, '')}" title="${description || name}" ${isUI ? 'tabindex="0" role="button"' : ''} ${hidden ? 'style="display:none"' : ''}>
         <div class="plugin-tile-head">
           <div class="plugin-icon-container">
             ${iconSvg}
@@ -86,12 +158,13 @@ class PluginUIManager {
     if (isUI) {
       $plugin.on('click', (e) => {
         if (!$(e.target).closest('.plugin-context-menu').length) {
-          const mode = this.application.settings.get('plugins.defaultDisplayMode', 'inline')
-          if (mode === 'inline' && this.application.inlinePluginManager) {
-            this.application.inlinePluginManager.open(name)
-          } else {
-            this.application.dispatch.open(name)
-          }
+          this._openPlugin(name)
+        }
+      })
+      $plugin.on('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          this._openPlugin(name)
         }
       })
     }
@@ -122,6 +195,7 @@ class PluginUIManager {
         label: 'Open Inline',
         icon: 'fa-columns',
         action: () => {
+          this._recordRecent(pluginName)
           if (this.application.inlinePluginManager) {
             this.application.inlinePluginManager.open(pluginName)
           } else {
@@ -132,7 +206,10 @@ class PluginUIManager {
       menuItems.push({
         label: 'Open in New Window',
         icon: 'fa-external-link-alt',
-        action: () => this.application.dispatch.open(pluginName)
+        action: () => {
+          this._recordRecent(pluginName)
+          this.application.dispatch.open(pluginName)
+        }
       })
     }
 
@@ -421,8 +498,15 @@ class PluginUIManager {
 
   updateEmptyPluginMessage() {
     const $emptyPluginMessage = $('#emptyPluginMessage')
+    const $searchEmpty = $('#pluginSearchEmpty')
+    const visiblePlugins = this.application.$pluginList.children('li:visible').length
+    if (this._searchQuery) {
+      $emptyPluginMessage.addClass('hidden')
+      $searchEmpty.toggleClass('hidden', visiblePlugins > 0)
+      return
+    }
+    $searchEmpty.addClass('hidden')
     if ($emptyPluginMessage.length > 0) {
-      const visiblePlugins = this.application.$pluginList.children('li:visible').length
       $emptyPluginMessage.toggleClass('hidden', visiblePlugins > 0)
     }
   }
@@ -472,10 +556,13 @@ class PluginUIManager {
       return nameA.localeCompare(nameB)
     })
 
+    const query = this._searchQuery
     sorted.forEach(el => {
       const name = $(el).data('plugin-name')
       const type = $(el).data('plugin-type')
-      const shouldHide = hiddenPlugins.includes(name) || (hideGamePlugins && type === 'game')
+      const searchText = String($(el).attr('data-plugin-search') || String(name).toLowerCase())
+      const matchesSearch = !query || searchText.indexOf(query) !== -1
+      const shouldHide = hiddenPlugins.includes(name) || (hideGamePlugins && type === 'game') || !matchesSearch
       if (shouldHide) {
         $(el).hide()
       } else {
@@ -485,6 +572,7 @@ class PluginUIManager {
     })
 
     this.updateEmptyPluginMessage()
+    this.renderRecentRow()
   }
 
   _getHideGamePlugins() {

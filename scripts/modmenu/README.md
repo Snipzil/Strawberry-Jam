@@ -25,5 +25,13 @@ java -Xmx1600m SwfCompress new-raw.swf ..\..\..\assets\flash\ajclient.swf
 `ModMenuTool dump <swf> <outdir>` exports every ModMenu pack (one folder per
 script index) for inspection.
 
+`ModMenuTool prune` exists but does not work: FFDec's script delete flag is not
+honoured on save, so the stale duplicate packs (scripts 1039, 1048, 1056)
+remain. The player uses the first definition (437 / 1046 / 81); `replace`
+overwrites every copy, so the duplicates never carry old code.
+
+UI preferences (search text, "Enabled only", last tab) persist in the Flash
+SharedObject `sjModMenuUi`.
+
 Rollback: `assets/flash/options/v5.2.0.swf` is the previous client with the old
 menu; copy it over `assets/flash/ajclient.swf`.

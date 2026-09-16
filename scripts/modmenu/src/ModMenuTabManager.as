@@ -90,6 +90,14 @@ package gui
          return tabContainer;
       }
 
+      public function setTabLabel(tabName:String, label:String) : void
+      {
+         if(_tabButtons && _tabButtons[tabName])
+         {
+            ModMenuUIHelper.setTabButtonLabel(_tabButtons[tabName],label);
+         }
+      }
+
       public function getHeaderWidth() : int
       {
          return ModMenuUIHelper.TAB_W * 3 + TAB_GAP * 2;

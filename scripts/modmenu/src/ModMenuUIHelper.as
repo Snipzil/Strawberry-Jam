@@ -320,7 +320,7 @@ package gui
          btnTxt.text = label;
          btnTxt.textColor = COLOR_TEXT;
          var btnFormat:TextFormat = new TextFormat();
-         btnFormat.size = 13;
+         btnFormat.size = 12;
          btnFormat.bold = true;
          btnFormat.align = "center";
          btnTxt.setTextFormat(btnFormat);
@@ -366,6 +366,134 @@ package gui
          {
             lf.textColor = isActive ? COLOR_TEXT : COLOR_TEXT_DIM;
          }
+      }
+
+      public static function setTabButtonLabel(tabBtn:MovieClip, label:String) : void
+      {
+         var lf:TextField;
+         var fmt:TextFormat;
+         if(tabBtn == null)
+         {
+            return;
+         }
+         try
+         {
+            lf = tabBtn["labelField"] as TextField;
+            if(lf)
+            {
+               lf.text = label;
+               fmt = new TextFormat();
+               fmt.size = 12;
+               fmt.bold = true;
+               fmt.align = "center";
+               lf.setTextFormat(fmt);
+               lf.textColor = tabBtn["isActive"] ? COLOR_TEXT : COLOR_TEXT_DIM;
+            }
+         }
+         catch(e:Error)
+         {
+         }
+      }
+
+      public static function createToggleChip(label:String, width:int, on:Boolean) : MovieClip
+      {
+         var chip:MovieClip = new MovieClip();
+         var txt:TextField = new TextField();
+         var fmt:TextFormat = new TextFormat();
+         txt.text = label;
+         fmt.size = 11;
+         fmt.bold = true;
+         fmt.align = "center";
+         txt.setTextFormat(fmt);
+         txt.x = 0;
+         txt.y = 7;
+         txt.width = width;
+         txt.height = 18;
+         txt.selectable = false;
+         txt.mouseEnabled = false;
+         chip.addChild(txt);
+         chip["labelField"] = txt;
+         chip["chipWidth"] = width;
+         setToggleChipState(chip,on);
+         chip.buttonMode = true;
+         chip.mouseEnabled = true;
+         chip.mouseChildren = false;
+         chip.tabEnabled = false;
+         return chip;
+      }
+
+      public static function setToggleChipState(chip:MovieClip, on:Boolean) : void
+      {
+         var w:int;
+         var lf:TextField;
+         if(chip == null)
+         {
+            return;
+         }
+         w = int(chip["chipWidth"]);
+         chip["isOn"] = on;
+         chip.graphics.clear();
+         if(on)
+         {
+            chip.graphics.beginFill(COLOR_ACCENT,0.22);
+            chip.graphics.drawRoundRect(0,0,w,30,CORNER_RADIUS_SM,CORNER_RADIUS_SM);
+            chip.graphics.endFill();
+            chip.graphics.lineStyle(1,COLOR_ACCENT,0.9);
+            chip.graphics.drawRoundRect(0,0,w,30,CORNER_RADIUS_SM,CORNER_RADIUS_SM);
+            chip.graphics.lineStyle(0,0,0);
+            chip.graphics.beginFill(COLOR_ACCENT,1);
+            chip.graphics.drawCircle(12,15,3.5);
+            chip.graphics.endFill();
+         }
+         else
+         {
+            chip.graphics.beginFill(1979428,1);
+            chip.graphics.drawRoundRect(0,0,w,30,CORNER_RADIUS_SM,CORNER_RADIUS_SM);
+            chip.graphics.endFill();
+            chip.graphics.lineStyle(1,COLOR_TEXT,0.12);
+            chip.graphics.drawRoundRect(0,0,w,30,CORNER_RADIUS_SM,CORNER_RADIUS_SM);
+            chip.graphics.lineStyle(1,COLOR_TEXT_DIM,0.8);
+            chip.graphics.drawCircle(12,15,3.5);
+         }
+         lf = chip["labelField"] as TextField;
+         if(lf)
+         {
+            lf.textColor = on ? COLOR_TEXT : COLOR_TEXT_DIM;
+         }
+      }
+
+      public static function createTooltip(text:String, width:int) : MovieClip
+      {
+         var tip:MovieClip = new MovieClip();
+         var txt:TextField = new TextField();
+         var fmt:TextFormat = new TextFormat();
+         var h:int;
+         fmt.size = 11;
+         txt.defaultTextFormat = fmt;
+         txt.wordWrap = true;
+         txt.multiline = true;
+         txt.width = width - 20;
+         txt.text = text;
+         txt.textColor = COLOR_TEXT;
+         txt.selectable = false;
+         txt.mouseEnabled = false;
+         txt.x = 10;
+         txt.y = 7;
+         txt.height = txt.textHeight + 6;
+         h = int(txt.height) + 14;
+         tip.graphics.beginFill(0,0.35);
+         tip.graphics.drawRoundRect(-3,-2,width + 6,h + 8,10,10);
+         tip.graphics.endFill();
+         tip.graphics.beginFill(2039583,0.98);
+         tip.graphics.drawRoundRect(0,0,width,h,8,8);
+         tip.graphics.endFill();
+         tip.graphics.lineStyle(1,COLOR_ACCENT_BLUE,0.7);
+         tip.graphics.drawRoundRect(0,0,width,h,8,8);
+         tip.addChild(txt);
+         tip.mouseEnabled = false;
+         tip.mouseChildren = false;
+         tip["tipHeight"] = h;
+         return tip;
       }
 
       public static function updateTabButtonState(tabBtn:MovieClip, isActive:Boolean) : void

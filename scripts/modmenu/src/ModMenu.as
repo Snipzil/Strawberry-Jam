@@ -7,6 +7,8 @@ package gui
    import flash.events.KeyboardEvent;
    import flash.events.MouseEvent;
    import flash.external.ExternalInterface;
+   import flash.geom.Point;
+   import flash.net.SharedObject;
    import flash.text.TextField;
    import flash.text.TextFormat;
 
@@ -30,6 +32,10 @@ package gui
       private static var _sessionScrollPositions:Object = {};
 
       private static var _sessionQuery:String = "";
+
+      private static var _sessionEnabledOnly:Boolean = false;
+
+      private static var _prefsLoaded:Boolean = false;
 
       private var _modMenuPopup:MovieClip;
 
@@ -63,6 +69,14 @@ package gui
 
       private var _emptyLabels:Object;
 
+      private var _enabledChip:MovieClip;
+
+      private var _tooltip:MovieClip;
+
+      private var _tabTotals:Object;
+
+      private var _tabVisible:Object;
+
       private var _itemHeight:int = 50;
 
       private var _startY:int = -180;
@@ -87,6 +101,9 @@ package gui
          _checkboxStates = {};
          _iconRows = {};
          _emptyLabels = {};
+         _tabTotals = {};
+         _tabVisible = {};
+         loadUiPrefs();
          DarkenManager.showLoadingSpiral(true);
          createModMenuInterface();
       }
@@ -95,7 +112,57 @@ package gui
       {
          _sessionLastTab = "mods";
          _sessionScrollPositions = {};
-         _sessionQuery = "";
+      }
+
+      private static function loadUiPrefs() : void
+      {
+         var so:SharedObject;
+         if(_prefsLoaded)
+         {
+            return;
+         }
+         _prefsLoaded = true;
+         try
+         {
+            so = SharedObject.getLocal("sjModMenuUi");
+            if(so && so.data)
+            {
+               if(so.data.hasOwnProperty("query"))
+               {
+                  _sessionQuery = String(so.data["query"] || "");
+               }
+               if(so.data.hasOwnProperty("enabledOnly"))
+               {
+                  _sessionEnabledOnly = Boolean(so.data["enabledOnly"]);
+               }
+               if(so.data.hasOwnProperty("lastTab"))
+               {
+                  _sessionLastTab = String(so.data["lastTab"] || "mods");
+               }
+            }
+         }
+         catch(e:Error)
+         {
+         }
+      }
+
+      private static function saveUiPrefs() : void
+      {
+         var so:SharedObject;
+         try
+         {
+            so = SharedObject.getLocal("sjModMenuUi");
+            if(so)
+            {
+               so.data["query"] = _sessionQuery;
+               so.data["enabledOnly"] = _sessionEnabledOnly;
+               so.data["lastTab"] = _sessionLastTab;
+               so.flush();
+            }
+         }
+         catch(e:Error)
+         {
+         }
       }
 
       private function getToggleCheckboxCallback() : Function
@@ -198,7 +265,11 @@ package gui
          tabHeader.x = -394;
          tabHeader.y = -226;
          _modMenuPopup.addChild(tabHeader);
-         _searchBox = ModMenuUIHelper.createSearchField(PANEL_W / 2 - 14 - (tabHeader.x + _tabManager.getHeaderWidth() + 12),30);
+         _enabledChip = ModMenuUIHelper.createToggleChip("Enabled only",104,_sessionEnabledOnly);
+         _enabledChip.x = PANEL_W / 2 - 14 - 104;
+         _enabledChip.y = -226;
+         _modMenuPopup.addChild(_enabledChip);
+         _searchBox = ModMenuUIHelper.createSearchField(_enabledChip.x - 8 - (tabHeader.x + _tabManager.getHeaderWidth() + 12),30);
          _searchBox.x = tabHeader.x + _tabManager.getHeaderWidth() + 12;
          _searchBox.y = -226;
          _modMenuPopup.addChild(_searchBox);
@@ -256,6 +327,8 @@ package gui
          hintTxt.selectable = false;
          hintTxt.mouseEnabled = false;
          _modMenuPopup.addChild(hintTxt);
+         gui.ModMenuContentBuilder.hoverCallback = onRowHover;
+         updateTabLabels();
          _modMenuPopup.x = 450;
          _modMenuPopup.y = 275;
          GuiManager.guiLayer.addChild(_modMenuPopup);
@@ -531,6 +604,7 @@ package gui
          var isVisible:Boolean;
          var sections:Array = [];
          var emptyLabel:TextField;
+         var total:int = 0;
          var colStep:int = gui.ModMenuContentBuilder.ROW_W + gui.ModMenuContentBuilder.COL_GAP;
          if(!container || !scroller)
          {
@@ -545,6 +619,20 @@ package gui
                row = MovieClip(child);
                matchText = String(row["matchText"]);
                isVisible = query == "" || matchText.indexOf(query) != -1;
+               if(!row["isSection"])
+               {
+                  total++;
+               }
+               if(isVisible && _sessionEnabledOnly && row.checkbox && !row["isSection"])
+               {
+                  try
+                  {
+                     isVisible = gui.ModMenuFeatures.getFeatureState(String(row["featureKey"]));
+                  }
+                  catch(stateErr:Error)
+                  {
+                  }
+               }
                row.visible = isVisible;
                if(isVisible)
                {
@@ -579,7 +667,87 @@ package gui
          {
             emptyLabel.visible = visibleIndex == 0 && sections.length == 0;
          }
+         _tabTotals[tabName] = total;
+         _tabVisible[tabName] = visibleIndex;
          scroller.setMaxScrollForHeight(yPos + 12);
+      }
+
+      private function updateTabLabels() : void
+      {
+         var names:Array = ["mods","enhancements","popups"];
+         var titles:Array = ["Mods","Enhancements","Popups"];
+         var i:int = 0;
+         var filtered:Boolean = getQuery() != "" || _sessionEnabledOnly;
+         var total:int;
+         var shown:int;
+         var label:String;
+         if(!_tabManager)
+         {
+            return;
+         }
+         while(i < names.length)
+         {
+            total = int(_tabTotals[names[i]]);
+            shown = int(_tabVisible[names[i]]);
+            if(filtered && (names[i] != "popups" || getQuery() != ""))
+            {
+               label = titles[i] + "  " + shown + "/" + total;
+            }
+            else
+            {
+               label = titles[i] + "  " + total;
+            }
+            _tabManager.setTabLabel(names[i],label);
+            i++;
+         }
+      }
+
+      private function onEnabledChipDown(e:MouseEvent) : void
+      {
+         e.stopPropagation();
+         _sessionEnabledOnly = !_sessionEnabledOnly;
+         ModMenuUIHelper.setToggleChipState(_enabledChip,_sessionEnabledOnly);
+         saveUiPrefs();
+         applyFilterToAll();
+      }
+
+      private function hideTooltip() : void
+      {
+         if(_tooltip && _tooltip.parent)
+         {
+            _tooltip.parent.removeChild(_tooltip);
+         }
+         _tooltip = null;
+      }
+
+      private function onRowHover(row:MovieClip, show:Boolean) : void
+      {
+         var globalPt:Point;
+         var localPt:Point;
+         var tipH:int;
+         hideTooltip();
+         if(!show || !row || !_modMenuPopup || !row["descClipped"] || !row.parent)
+         {
+            return;
+         }
+         try
+         {
+            _tooltip = ModMenuUIHelper.createTooltip(String(row["fullDesc"]),gui.ModMenuContentBuilder.ROW_W - 20);
+            globalPt = row.parent.localToGlobal(new Point(row.x,row.y));
+            localPt = _modMenuPopup.globalToLocal(globalPt);
+            tipH = int(_tooltip["tipHeight"]);
+            _tooltip.x = localPt.x + 10;
+            _tooltip.y = localPt.y + gui.ModMenuContentBuilder.ROW_BG_H + 4;
+            if(_tooltip.y + tipH > _startY + _maskHeight)
+            {
+               _tooltip.y = localPt.y - tipH - 4;
+            }
+            _modMenuPopup.addChild(_tooltip);
+         }
+         catch(e:Error)
+         {
+            _tooltip = null;
+         }
       }
 
       private function getQuery() : String
@@ -619,6 +787,8 @@ package gui
             _activeScroller.setScrollY(0);
             _activeScroller.updateScrollButtons();
          }
+         hideTooltip();
+         updateTabLabels();
          refreshMouseEnabled();
       }
 
@@ -627,6 +797,7 @@ package gui
          try
          {
             _sessionQuery = _searchInput ? _searchInput.text : "";
+            saveUiPrefs();
             updatePlaceholder();
             applyFilterToAll();
          }
@@ -672,6 +843,8 @@ package gui
             _activeScroller = _popupsScroller;
          }
          _sessionLastTab = newTab;
+         saveUiPrefs();
+         hideTooltip();
          if(_activeScroller)
          {
             var savedScroll:int = getSavedScrollPosition(newTab);
@@ -737,6 +910,14 @@ package gui
          if(key == "denLoginEnabled" && _denUsernameInput)
          {
             _denUsernameInput.alpha = newState ? 1 : 0.5;
+         }
+         if(_sessionEnabledOnly && key != "denLoginEnabled")
+         {
+            layoutContainer(_modsContainer,_modsScroller,"mods");
+            layoutContainer(_enhancementsContainer,_enhancementsScroller,"enhancements");
+            hideTooltip();
+            updateTabLabels();
+            refreshMouseEnabled();
          }
       }
 
@@ -901,6 +1082,10 @@ package gui
          {
             _searchBox.addEventListener("mouseDown",onSearchBoxDown,false,0,false);
          }
+         if(_enabledChip)
+         {
+            _enabledChip.addEventListener("mouseDown",onEnabledChipDown,false,0,false);
+         }
          gMainFrame.stage.addEventListener("keyDown",onKeyDown,false,0,false);
       }
 
@@ -943,6 +1128,15 @@ package gui
          {
             _searchBox.removeEventListener("mouseDown",onSearchBoxDown);
          }
+         if(_enabledChip)
+         {
+            _enabledChip.removeEventListener("mouseDown",onEnabledChipDown);
+         }
+         if(gui.ModMenuContentBuilder.hoverCallback == onRowHover)
+         {
+            gui.ModMenuContentBuilder.hoverCallback = null;
+         }
+         hideTooltip();
          if(gMainFrame && gMainFrame.stage)
          {
             gMainFrame.stage.removeEventListener("keyDown",onKeyDown);
@@ -1333,6 +1527,10 @@ package gui
          _searchInput = null;
          _searchPlaceholder = null;
          _emptyLabels = null;
+         _enabledChip = null;
+         _tooltip = null;
+         _tabTotals = null;
+         _tabVisible = null;
          _modsScroller = null;
          _enhancementsScroller = null;
          _popupsScroller = null;

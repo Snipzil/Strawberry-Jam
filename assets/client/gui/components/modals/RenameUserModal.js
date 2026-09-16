@@ -32,27 +32,31 @@
             display: flex;
             flex-direction: column;
             width: 600px;
-            border-radius: 10px;
-            background-color: #F5F2E1;
-            border: 1px solid #BDAB84;
+            border-radius: 20px;
+            background-color: rgba(26, 26, 30, 0.97);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--theme-secondary, rgba(232, 61, 82, 0.3));
+            backdrop-filter: blur(14px);
+            overflow: hidden;
             font-family: CCDigitalDelivery, sans-serif;
-            color: #6E4B37;
-            font-size: 18px;
+            color: #ECECEE;
+            font-size: 16px;
             text-align: center;
           }
 
           #header-div {
             font-family: Tiki-Island, sans-serif;
-            font-size: 40px;
+            font-size: 30px;
             position: relative;
-            border-bottom: #E8E0C8 1px solid;
-            padding: 10px;
-            color: #7A4A12;
-            text-shadow: 1px 2px 0px rgba(2,2,2,0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px 10px 12px;
+            color: var(--theme-primary, #e83d52);
+            text-shadow: 1px 2px 0px rgba(0, 0, 0, 0.35);
+            letter-spacing: 0.5px;
           }
 
           #body-div {
-            border-bottom: #E8E0C8 2px solid;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             padding: 20px;
             position: relative;
             display: flex;
@@ -102,15 +106,26 @@
           #username-input {
             width: 550px;
               margin-top: 24px;
-              background-color: #FDFCF9;
+              --sj-input-bg: rgba(255, 255, 255, 0.06);
+            --sj-input-text: #F3F3F5;
+            --sj-input-placeholder: rgba(255, 255, 255, 0.38);
+            --sj-text-muted: #A6A6AE;
+            --ajd-input-radius: 14px;
+            background-color: rgba(255, 255, 255, 0.06);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
           }
 
           #username-input.valid {
-            background-color: #e4ffd8;
+            --sj-input-bg: rgba(46, 204, 113, 0.16);
+            background-color: rgba(46, 204, 113, 0.16);
+            border-color: rgba(46, 204, 113, 0.5);
           }
 
           #username-input.invalid {
-            background-color: #FFF7B8;
+            --sj-input-bg: rgba(255, 190, 0, 0.14);
+            background-color: rgba(255, 190, 0, 0.14);
+            border-color: rgba(255, 190, 0, 0.5);
           }
 
           #close-button {
@@ -118,6 +133,17 @@
             z-index: 1;
             right: 20px;
             top: 20px;
+          }
+
+          ajd-bubble-button {
+            --ajd-bubble-button-background-color: var(--theme-button-bg, var(--theme-primary, #e83d52));
+            --ajd-bubble-button-border-color: var(--theme-button-border, rgba(0, 0, 0, 0.25));
+            --ajd-bubble-button-text-color: var(--theme-button-text, #FFFFFF);
+            font-size: 24px;
+          }
+          #body-text {
+            color: #C9C9D0;
+            line-height: 1.45;
           }
         </style>
 
@@ -280,6 +306,10 @@
       else {
         this.submitButtonElem.disabled = true;
       }
+    }
+
+    connectedCallback() {
+      syncModalTheme(this);
     }
   });
 })();
