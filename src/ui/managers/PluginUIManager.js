@@ -51,32 +51,35 @@ class PluginUIManager {
 
     const isUI = type === 'ui'
     const typeBadge = isUI
-      ? '<span class="px-1.5 py-0.5 text-xs rounded bg-blue-500/20 text-blue-400 font-medium">UI</span>'
-      : '<span class="px-1.5 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400 font-medium">Game</span>'
+      ? '<span class="plugin-type-badge">UI</span>'
+      : '<span class="plugin-type-badge">Game</span>'
 
     const statusColor = isUI ? 'bg-red-500' : 'bg-yellow-500'
-    const borderAccent = isUI ? 'border-l-blue-500/40' : 'border-l-yellow-500/40'
 
     const hidden = this._getHiddenPlugins().includes(name)
     const descText = description || 'No description available'
+    const openHint = isUI
+      ? '<span class="plugin-tile-open" aria-hidden="true"><i class="fas fa-chevron-right"></i></span>'
+      : ''
 
     const $plugin = $(`
-      <li class="plugin-grid-tile flex flex-col text-sidebar-text hover:bg-tertiary-bg rounded-lg group relative p-3 border-l-2 ${borderAccent} ${isUI ? 'cursor-pointer' : ''}"
+      <li class="plugin-grid-tile group relative ${isUI ? 'cursor-pointer' : ''}"
           data-plugin-name="${name}" data-plugin-type="${type}" title="${description || name}" ${hidden ? 'style="display:none"' : ''}>
-        <div class="flex items-center gap-2.5 mb-2">
-          <div class="plugin-icon-container relative flex items-center justify-center rounded-lg bg-tertiary-bg/50 group-hover:bg-tertiary-bg transition-colors flex-shrink-0" style="width:36px;height:36px;">
+        <div class="plugin-tile-head">
+          <div class="plugin-icon-container">
             ${iconSvg}
             <span class="plugin-status-indicator ${statusColor}"></span>
           </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-semibold truncate">${name}</span>
+          <div class="plugin-tile-meta">
+            <div class="plugin-tile-title-row">
+              <span class="plugin-tile-name">${name}</span>
               ${typeBadge}
             </div>
-            <span class="text-xs text-gray-500">${author}${version ? ' \u00b7 v' + version : ''}</span>
+            <span class="plugin-tile-sub">${author}${version ? ' \u00b7 v' + version : ''}</span>
           </div>
+          ${openHint}
         </div>
-        <p class="text-xs text-gray-400 leading-relaxed" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${descText}</p>
+        <p class="plugin-tile-desc">${descText}</p>
       </li>
     `)
 

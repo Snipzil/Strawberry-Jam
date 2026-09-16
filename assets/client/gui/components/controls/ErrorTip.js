@@ -19,29 +19,24 @@
           }
 
           #text {
-            padding: 12px;
-            font-family: CCDigitalDelivery;
-            font-size: 13px;
+            padding: 10px 14px;
+            font-family: CCDigitalDelivery, 'Segoe UI', sans-serif;
+            font-size: 12.5px;
             color: #FFFFFF;
-            background-color: #333333;
+            background-color: #2a2a2f;
             border: var(--theme-primary, #FF4A26) 1px solid;
-            border-radius: 20px;
-            letter-spacing: .7px;
+            border-radius: 12px;
+            letter-spacing: .4px;
             text-align: center;
             line-height: 17px;
-            text-shadow: 1px 1px 0px rgba(2, 2, 2, 0.25);
-            box-shadow: 0px 2px 1px rgba(2, 2, 2, 0.3);
+            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), 0 0 0 3px var(--theme-shadow, rgba(252, 93, 93, 0.1));
           }
 
           #tip {
-            /*position: absolute;*/
-            border-top: 10px solid transparent;
-            border-bottom: 10px solid transparent;
-            border-left: 14px solid #333333;
-            /*margin-top: auto;
-            margin-bottom: auto;*/
-            /*margin-left: 190px;*/
-            /*display: none;*/
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-left: 12px solid #2a2a2f;
           }
         </style>
         <div id="text"></div>

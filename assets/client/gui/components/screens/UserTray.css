@@ -3,10 +3,10 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  font-family: Arial, sans-serif;
+  font-family: 'CCDigitalDelivery', 'Segoe UI', Arial, sans-serif;
   position: fixed;
-  bottom: 4px;
-  right: 4px;
+  bottom: 6px;
+  right: 6px;
   z-index: 10000;
   /* Prevent cursor interference with game area */
   pointer-events: none;
@@ -16,6 +16,7 @@
   --theme-hover-border: rgba(232, 61, 82, 0.5);
   --theme-shadow: rgba(252, 93, 93, 0.1);
   --theme-box-background: rgba(255, 245, 230, 0.95);
+  --theme-settings-hover: rgba(232, 61, 82, 0.05);
 }
 
 .hidden {
@@ -26,13 +27,14 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  background-color: var(--theme-box-background);
-  border: 2px solid var(--theme-primary);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px var(--theme-shadow);
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: rgba(18, 18, 20, 0.88);
+  border: 1px solid var(--theme-secondary);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  transition: border-color 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
   overflow: hidden;
-  opacity: 0.8;
+  opacity: 0.85;
+  backdrop-filter: blur(10px);
   /* Re-enable pointer events for the container itself */
   pointer-events: auto;
 }
@@ -40,31 +42,32 @@
 #tray-container:hover {
   opacity: 1;
   border-color: var(--theme-hover-border);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 3px var(--theme-shadow);
 }
 
 #arrow-container {
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background-color 0.3s ease;
-  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  border-radius: 10px;
+  margin: 2px;
   /* Ensure pointer events are enabled for interactive element */
   pointer-events: auto;
-  /* Strict containment to prevent hover area extension */
   box-sizing: border-box;
   overflow: hidden;
 }
 
 #arrow-container:hover {
-  background-color: var(--theme-settings-hover);
+  background-color: rgba(255, 255, 255, 0.07);
 }
 
 #arrow-container:active {
-  background-color: rgba(232, 61, 82, 0.2);
+  background-color: rgba(255, 255, 255, 0.12);
 }
 
 #arrow-icon-svg {
@@ -72,69 +75,86 @@
   height: 16px;
   stroke: var(--theme-primary);
   stroke-width: 2.5;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 #tray-content {
   display: flex;
   flex-direction: column;
   padding: 0;
-  color: #6E4B37;
+  color: #e6e6ea;
   max-width: 0;
   opacity: 0;
-  transition: max-width 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
-              opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.35s ease,
+              padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   white-space: nowrap;
 }
 
 #tray-content.expanded {
-  max-width: 140px;
+  max-width: 150px;
   opacity: 1;
-  padding: 0 12px 0 8px;
+  padding: 0 8px 0 4px;
 }
 
 #tray-content button {
-  display: flex; 
+  display: flex;
   align-items: center;
   width: 100%;
-  margin: 4px 0;
-  padding: 8px 12px;
+  margin: 3px 0;
+  padding: 7px 12px;
   cursor: pointer;
-  background-color: var(--theme-primary);
-  color: white;
-  border: none;
-  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #e6e6ea;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
   font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.02em;
   text-align: left;
-  transition: background-color 0.3s ease;
-  min-width: 116px;
-  font-family: CCDigitalDelivery, Arial, sans-serif;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  min-width: 118px;
+  font-family: 'CCDigitalDelivery', 'Segoe UI', Arial, sans-serif;
   /* Ensure pointer events are enabled for buttons */
   pointer-events: auto;
-  /* Strict containment to prevent hover area extension */
   box-sizing: border-box;
   overflow: hidden;
 }
 
 #tray-content button:first-child {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 #tray-content button:last-child {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 #tray-content button:hover {
-  background-color: var(--theme-hover-border);
+  background-color: var(--theme-primary);
+  border-color: var(--theme-primary);
+  color: #ffffff;
+}
+
+#tray-content button:active {
+  transform: scale(0.97);
 }
 
 #tray-content button svg {
   margin-right: 8px;
   width: 14px;
   height: 14px;
-  stroke: white; 
-  stroke-width: 2;
+  stroke: var(--theme-primary);
+  stroke-width: 2.25;
   flex-shrink: 0;
+  transition: stroke 0.2s ease;
+}
+
+#tray-content button:hover svg {
+  stroke: #ffffff;
+}
+
+#logout-button:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
 }

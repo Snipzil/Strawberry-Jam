@@ -971,6 +971,7 @@
           }
           loginScreen.loginBlocked = false;
           gameScreen.classList.add("show");
+          loginScreen.classList.add("in-game");
           setTimeout(() => {
             document.getElementById("login-screen").localize();
           }, 1000);
@@ -980,6 +981,7 @@
         });
         gameScreen.addEventListener("switchToLogin", event => {
           gameScreen.classList.remove("show");
+          loginScreen.classList.remove("in-game");
         });
         gameScreen.addEventListener("accountCreated", event => {
           loginScreen.username = event.detail.username;

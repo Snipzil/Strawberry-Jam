@@ -21,50 +21,53 @@
 <body class="bg-primary-bg text-sidebar-text h-screen flex font-sans">
   <div id="mainContent" class="flex-1 flex flex-col bg-primary-bg overflow-hidden">
 
-    <header id="header" class="flex items-center justify-center bg-secondary-bg border-b border-sidebar-border shadow" style="min-height: 0; gap: 0; padding: 8px 12px;">
-      <div style="flex: 1 1 0; min-width: 0; display: flex; justify-content: flex-end; align-items: center; -webkit-app-region: no-drag;">
-        <div id="headerNotification" style="display: none; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; margin-right: 8px; white-space: nowrap; animation: fadeInLeft 0.2s ease-out forwards; cursor: default;"></div>
+    <header id="header" class="flex items-center justify-center bg-secondary-bg border-b border-sidebar-border" style="min-height: 0; gap: 0; padding: 8px 12px;">
+      <div class="header-side" style="flex: 1 1 0; min-width: 0; display: flex; justify-content: flex-end; align-items: center; -webkit-app-region: no-drag;">
+        <div id="headerNotification" style="display: none; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 500; margin-right: 10px; white-space: nowrap; animation: fadeInLeft 0.2s ease-out forwards; cursor: default;"></div>
       </div>
-      <div class="flex rounded-lg overflow-hidden" style="border: 1px solid rgba(156,163,175,0.15); -webkit-app-region: no-drag; flex-shrink: 1; min-width: 0;">
-          <button id="playGameBtn"
-            class="text-sidebar-text py-1.5 px-3 text-xs font-medium transition-all relative hover:text-white flex items-center"
-            style="white-space: nowrap; flex-shrink: 0;"
-            title="Launch Game">
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polygon points="6 3 20 12 6 21 6 3"/></svg><span class="header-tab-label" style="margin-left: 6px;">PLAY</span>
-          </button>
+      <div class="header-center" style="display: flex; align-items: center; gap: 8px; -webkit-app-region: no-drag; flex-shrink: 1; min-width: 0;">
+        <button id="playGameBtn"
+          class="play-btn flex items-center relative"
+          style="white-space: nowrap; flex-shrink: 0;"
+          title="Launch Game">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polygon points="6 3 20 12 6 21 6 3"/></svg><span class="header-tab-label play-btn-label">PLAY</span>
+        </button>
+        <div class="header-tabs flex" style="flex-shrink: 1; min-width: 0;">
           <button id="packetLoggingTab"
-            class="tab-button active text-sidebar-text py-1.5 px-3 text-xs font-medium transition-all relative flex items-center"
+            class="tab-button active relative flex items-center"
             data-tab="packet-logging"
-            style="border-left: 1px solid rgba(156,163,175,0.15); white-space: nowrap; flex-shrink: 0;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span class="header-tab-label" style="margin-left: 6px;">Network</span>
-            <span class="active-indicator absolute bottom-0 left-0 right-0 h-0.5 transition-transform duration-300 ease-out" style="transform: scaleX(0);"></span>
+            style="white-space: nowrap; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span class="header-tab-label">Network</span>
+            <span class="active-indicator absolute transition-transform duration-300 ease-out" style="transform: scaleX(0);"></span>
           </button>
           <button id="pluginsTab"
-            class="tab-button text-sidebar-text py-1.5 px-3 text-xs font-medium transition-all relative flex items-center"
+            class="tab-button relative flex items-center"
             data-tab="plugins"
-            style="border-left: 1px solid rgba(156,163,175,0.15); white-space: nowrap; flex-shrink: 0;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-2 .9-2 2v3.8h1.5c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5H2V19c0 1.1.9 2 2 2h3.8v-1.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5V21H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg><span class="header-tab-label" style="margin-left: 6px;">Plugins</span>
-            <span class="active-indicator absolute bottom-0 left-0 right-0 h-0.5 transition-transform duration-300 ease-out" style="transform: scaleX(0);"></span>
+            style="white-space: nowrap; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-2 .9-2 2v3.8h1.5c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5H2V19c0 1.1.9 2 2 2h3.8v-1.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5V21H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg><span class="header-tab-label">Plugins</span>
+            <span class="active-indicator absolute transition-transform duration-300 ease-out" style="transform: scaleX(0);"></span>
           </button>
         </div>
+      </div>
 
-      <div style="flex: 1 1 0; min-width: 0; display: flex; justify-content: flex-end;">
-      <div class="flex items-center flex-shrink-0" style="-webkit-app-region: no-drag; gap: 2px;">
-        <button id="settingsHeaderBtn" class="p-2 rounded hover:bg-tertiary-bg transition-colors text-sidebar-text focus:outline-none" data-tooltip="Settings">
+      <div class="header-side" style="flex: 1 1 0; min-width: 0; display: flex; justify-content: flex-end;">
+      <div class="window-controls flex items-center flex-shrink-0" style="-webkit-app-region: no-drag; gap: 2px;">
+        <button id="settingsHeaderBtn" class="window-control-btn focus:outline-none" data-tooltip="Settings">
           <i class="fas fa-cog"></i>
         </button>
+        <span class="window-controls-divider"></span>
         <button id="minimizeButton"
-          class="p-2 rounded hover:bg-tertiary-bg hover:text-white transition-colors text-sidebar-text focus:outline-none"
+          class="window-control-btn focus:outline-none"
           data-tooltip="Minimize">
           <i class="fas fa-minus"></i>
         </button>
         <button id="fullscreenButton"
-          class="p-2 rounded hover:bg-tertiary-bg hover:text-white transition-colors text-sidebar-text focus:outline-none"
+          class="window-control-btn focus:outline-none"
           data-tooltip="Toggle Fullscreen">
           <i class="fa-regular fa-window-maximize"></i>
         </button>
         <button id="mainCloseButton"
-          class="p-2 rounded hover:bg-error-red hover:text-white transition-colors text-sidebar-text focus:outline-none"
+          class="window-control-btn window-control-close focus:outline-none"
           data-tooltip="Close">
           <i class="fas fa-times"></i>
         </button>
@@ -73,31 +76,35 @@
     </header>
 
     <div id="plugins" class="tab-content flex-1 p-4 overflow-hidden flex flex-col hidden" style="min-height: 0;">
-      <div class="flex items-center justify-between mb-1 px-3 py-1">
-        <div class="flex items-center space-x-1">
-          <button id="pluginSortBtn" class="text-sidebar-text hover:text-highlight-yellow px-2 py-1 rounded transition-all text-xs font-medium flex items-center" title="Sort: By Type" aria-label="Sort Plugins">
-            <i class="fas fa-sort-amount-down text-xs mr-1.5"></i>
+      <div class="flex items-center justify-between plugins-toolbar">
+        <div class="flex items-center gap-1 min-w-0">
+          <span class="plugins-toolbar-title">
+            <i class="fas fa-puzzle-piece"></i>
+            <span>Plugins</span>
+          </span>
+          <span class="plugins-toolbar-divider"></span>
+          <button id="pluginSortBtn" class="toolbar-btn" title="Sort: By Type" aria-label="Sort Plugins">
+            <i class="fas fa-sort-amount-down"></i>
             <span id="pluginSortLabel">By Type</span>
           </button>
-          <div style="width: 1px; height: 16px; background: rgba(156,163,175,0.2);"></div>
-          <button id="showHiddenPluginsBtn" class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all hidden" title="Show Hidden Plugins" aria-label="Show Hidden Plugins">
-            <i class="fas fa-eye-slash text-sm"></i>
+          <button id="showHiddenPluginsBtn" class="toolbar-btn toolbar-btn-icon hidden" title="Show Hidden Plugins" aria-label="Show Hidden Plugins">
+            <i class="fas fa-eye-slash"></i>
           </button>
-          <button id="hideGamePluginsToggle" class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all" title="Toggle Game Plugins" aria-label="Toggle Game Plugins">
-            <i class="fas fa-gamepad text-sm"></i>
+          <button id="hideGamePluginsToggle" class="toolbar-btn toolbar-btn-icon" title="Toggle Game Plugins" aria-label="Toggle Game Plugins">
+            <i class="fas fa-gamepad"></i>
           </button>
         </div>
-        <div class="flex items-center space-x-1">
+        <div class="flex items-center gap-1">
           <div class="relative" id="pluginSettingsWrapper">
-            <button id="pluginSettingsBtn" class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all" title="Plugin Settings" aria-label="Plugin Settings">
-              <i class="fas fa-cog text-sm"></i>
+            <button id="pluginSettingsBtn" class="toolbar-btn toolbar-btn-icon" title="Plugin Settings" aria-label="Plugin Settings">
+              <i class="fas fa-cog"></i>
             </button>
-            <div id="pluginSettingsPopover" class="absolute right-0 bg-secondary-bg rounded-lg shadow-lg p-4" style="top: 100%; min-width: 260px; z-index: 50; display: none; border: 1px solid rgba(255,255,255,0.15);">
+            <div id="pluginSettingsPopover" class="absolute right-0 bg-secondary-bg rounded-xl shadow-lg p-4" style="top: calc(100% + 6px); min-width: 264px; z-index: 50; display: none; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 12px 32px rgba(0,0,0,0.45);">
               <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Plugin Settings</div>
               <div>
                 <label class="block mb-1.5 text-xs font-medium text-text-primary">Refresh Behavior</label>
                 <span class="block mb-2 text-xs text-gray-500">When refreshing plugins with open windows:</span>
-                <select id="pluginRefreshBehaviorPopover" class="bg-tertiary-bg text-text-primary focus:outline-none rounded px-3 py-1.5 w-full text-sm" style="color-scheme: dark;">
+                <select id="pluginRefreshBehaviorPopover" class="text-text-primary focus:outline-none rounded-lg px-3 py-1.5 w-full text-sm" style="color-scheme: dark; background: rgba(255,255,255,0.06); border: 1px solid rgba(156,163,175,0.15);">
                   <option value="ask">Ask before closing</option>
                   <option value="alwaysClose">Always close automatically</option>
                 </select>
@@ -105,44 +112,45 @@
               <div class="mt-3">
                 <label class="block mb-1.5 text-xs font-medium text-text-primary">Default Open Mode</label>
                 <span class="block mb-2 text-xs text-gray-500">How UI plugins open when clicked:</span>
-                <select id="pluginDefaultDisplayMode" class="bg-tertiary-bg text-text-primary focus:outline-none rounded px-3 py-1.5 w-full text-sm" style="color-scheme: dark;">
+                <select id="pluginDefaultDisplayMode" class="text-text-primary focus:outline-none rounded-lg px-3 py-1.5 w-full text-sm" style="color-scheme: dark; background: rgba(255,255,255,0.06); border: 1px solid rgba(156,163,175,0.15);">
                   <option value="inline">Embedded (in-app)</option>
                   <option value="window">Separate Window</option>
                 </select>
               </div>
             </div>
           </div>
-          <div style="width: 1px; height: 16px; background: rgba(156,163,175,0.2);"></div>
-          <button id="openPluginHubLink" class="text-sidebar-text hover:text-highlight-green p-1.5 rounded transition-all" title="Plugin Store" aria-label="Plugin Store">
-            <i class="fas fa-store text-sm"></i>
+          <span class="plugins-toolbar-divider"></span>
+          <button id="openPluginHubLink" class="toolbar-btn toolbar-btn-icon toolbar-btn-store" title="Plugin Store" aria-label="Plugin Store">
+            <i class="fas fa-store"></i>
           </button>
-          <button id="openUserPluginsDirBtn" class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all" title="Open Plugins Folder" aria-label="Open Plugins Folder">
-            <i class="fas fa-folder-open text-sm"></i>
+          <button id="openUserPluginsDirBtn" class="toolbar-btn toolbar-btn-icon" title="Open Plugins Folder" aria-label="Open Plugins Folder">
+            <i class="fas fa-folder-open"></i>
           </button>
-          <button id="refreshPluginsSection" class="text-sidebar-text hover:text-blue-400 p-1.5 rounded transition-all" title="Refresh Plugins" aria-label="Refresh Plugins">
-            <i class="fas fa-sync-alt text-sm"></i>
+          <button id="refreshPluginsSection" class="toolbar-btn toolbar-btn-icon toolbar-btn-refresh" title="Refresh Plugins" aria-label="Refresh Plugins">
+            <i class="fas fa-sync-alt"></i>
           </button>
         </div>
       </div>
       <div id="pluginsSectionContent" class="flex-1 overflow-y-auto overflow-x-hidden themed-scrollbar">
-        <ul id="pluginList" class="grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+        <ul id="pluginList" class="grid gap-2.5 plugin-grid" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
         </ul>
-        <div id="emptyPluginMessage" class="hidden text-center py-8 text-gray-400">
-          <i class="fas fa-puzzle-piece mb-2 text-2xl" style="opacity: 0.5;"></i>
-          <p class="text-sm">No plugins installed</p>
+        <div id="emptyPluginMessage" class="hidden plugins-empty">
+          <div class="plugins-empty-icon"><i class="fas fa-puzzle-piece"></i></div>
+          <p class="plugins-empty-title">No plugins installed</p>
+          <p class="plugins-empty-hint">Grab some from the Plugin Store or drop them into your plugins folder.</p>
         </div>
       </div>
       <div id="inlinePluginContainer" class="hidden flex-1 flex flex-col overflow-hidden">
-        <div id="inlinePluginHeader" class="flex items-center px-3 py-2 bg-secondary-bg border-b border-sidebar-border">
-          <button id="inlinePluginBackBtn" class="p-1.5 rounded hover:bg-tertiary-bg transition-colors text-sidebar-text" title="Back to plugins">
-            <i class="fas fa-arrow-left text-sm"></i>
+        <div id="inlinePluginHeader" class="flex items-center inline-plugin-header">
+          <button id="inlinePluginBackBtn" class="toolbar-btn toolbar-btn-icon" title="Back to plugins">
+            <i class="fas fa-arrow-left"></i>
           </button>
-          <span id="inlinePluginName" class="ml-2 text-sm font-semibold text-text-primary truncate flex-1"></span>
-          <button id="inlinePluginPopoutBtn" class="p-1.5 rounded hover:bg-tertiary-bg transition-colors text-sidebar-text" title="Open in new window">
-            <i class="fas fa-external-link-alt text-sm"></i>
+          <span id="inlinePluginName" class="inline-plugin-name truncate flex-1"></span>
+          <button id="inlinePluginPopoutBtn" class="toolbar-btn toolbar-btn-icon" title="Open in new window">
+            <i class="fas fa-external-link-alt"></i>
           </button>
         </div>
-        <iframe id="inlinePluginFrame" class="flex-1 border-0" style="width:100%; background: #1e1f2e;"></iframe>
+        <iframe id="inlinePluginFrame" class="flex-1 border-0 inline-plugin-frame" style="width:100%; background: #1e1f2e;"></iframe>
       </div>
     </div>
 
@@ -360,16 +368,268 @@
       height: 8px;
       background: var(--sidebar-hover) !important;
     }
-    #plugins > div:first-child button:hover,
-    #plugins > div:first-child .relative:hover > button {
-      background-color: rgba(255, 255, 255, 0.08);
-    }
     #packet-logging > div:first-child button:hover,
     #packet-logging > div:first-child .relative:hover > button {
       background-color: rgba(255, 255, 255, 0.08);
     }
-    #inlinePluginHeader button:hover {
+
+    /* ---- Header: PLAY button ("jam" launcher button) ---- */
+    .play-btn {
+      gap: 7px;
+      padding: 6px 14px 6px 12px;
+      border-radius: 9px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--theme-primary, #e83d52);
+      background: linear-gradient(180deg, rgba(var(--theme-primary-rgb, 232, 61, 82), 0.2) 0%, rgba(var(--theme-primary-rgb, 232, 61, 82), 0.1) 100%);
+      border: 1px solid rgba(var(--theme-primary-rgb, 232, 61, 82), 0.4);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+    }
+    .play-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(60% 120% at 50% 0%, rgba(255, 255, 255, 0.12), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+    .play-btn:hover {
+      background: linear-gradient(180deg, rgba(var(--theme-primary-rgb, 232, 61, 82), 0.32) 0%, rgba(var(--theme-primary-rgb, 232, 61, 82), 0.18) 100%);
+      border-color: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.7);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 3px rgba(var(--theme-primary-rgb, 232, 61, 82), 0.12), 0 4px 16px rgba(var(--theme-primary-rgb, 232, 61, 82), 0.28);
+    }
+    .play-btn:hover::before {
+      opacity: 1;
+    }
+    .play-btn:active {
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+    }
+    .play-btn svg {
+      filter: drop-shadow(0 0 4px rgba(var(--theme-primary-rgb, 232, 61, 82), 0.6));
+    }
+    .play-btn-label {
+      line-height: 1;
+    }
+
+    /* ---- Header: segmented tabs ---- */
+    .header-tabs {
+      padding: 3px;
+      gap: 2px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(156, 163, 175, 0.12);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+    .tab-button {
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(195, 195, 195, 0.75);
+      overflow: hidden;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .tab-button svg {
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+    .tab-button.active svg,
+    .tab-button:hover svg {
+      opacity: 1;
+    }
+    .tab-button .active-indicator {
+      bottom: 0;
+      left: 10px;
+      right: 10px;
+      height: 2px;
+      border-radius: 2px 2px 0 0;
+    }
+
+    /* ---- Header: window controls ---- */
+    .window-control-btn {
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      color: rgba(195, 195, 195, 0.7);
+      font-size: 12px;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .window-control-btn:hover {
       background-color: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+    .window-control-btn.window-control-close:hover {
+      background-color: var(--error-red, #FF4D4F);
+      color: #ffffff;
+    }
+    .window-controls-divider {
+      width: 1px;
+      height: 14px;
+      margin: 0 4px;
+      background: rgba(156, 163, 175, 0.18);
+    }
+    #settingsHeaderBtn i {
+      transition: transform 0.4s ease;
+    }
+    #settingsHeaderBtn:hover i {
+      transform: rotate(60deg);
+    }
+
+    /* ---- Plugins tab: toolbar ---- */
+    .plugins-toolbar {
+      margin-bottom: 10px;
+      padding: 6px 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(156, 163, 175, 0.1);
+      gap: 8px;
+    }
+    .plugins-toolbar-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 6px 0 4px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #e5e7eb;
+      white-space: nowrap;
+    }
+    .plugins-toolbar-title i {
+      color: var(--theme-primary, #e83d52);
+      font-size: 12px;
+    }
+    .plugins-toolbar-divider {
+      display: inline-block;
+      width: 1px;
+      height: 16px;
+      margin: 0 4px;
+      background: rgba(156, 163, 175, 0.18);
+      flex-shrink: 0;
+    }
+    .toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 7px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: rgba(195, 195, 195, 0.8);
+      border: 1px solid transparent;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+      white-space: nowrap;
+    }
+    .toolbar-btn.hidden {
+      display: none !important;
+    }
+    .toolbar-btn i {
+      font-size: 12px;
+    }
+    .toolbar-btn-icon {
+      width: 28px;
+      padding: 0;
+      justify-content: center;
+    }
+    .toolbar-btn:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+    .toolbar-btn:active {
+      transform: scale(0.94);
+    }
+    .toolbar-btn-store:hover {
+      color: #34d399;
+      background-color: rgba(52, 211, 153, 0.12);
+    }
+    .toolbar-btn-refresh:hover {
+      color: #60a5fa;
+      background-color: rgba(96, 165, 250, 0.12);
+    }
+    #pluginSettingsWrapper .toolbar-btn:hover i {
+      transform: rotate(60deg);
+    }
+    #pluginSettingsWrapper .toolbar-btn i {
+      transition: transform 0.4s ease;
+    }
+
+    /* ---- Plugins tab: empty state ---- */
+    .plugins-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 48px 16px;
+      color: #9ca3af;
+    }
+    .plugins-empty.hidden {
+      display: none;
+    }
+    .plugins-empty-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--theme-primary, #e83d52);
+      background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.1);
+      border: 1px dashed rgba(var(--theme-primary-rgb, 232, 61, 82), 0.35);
+      margin-bottom: 14px;
+    }
+    .plugins-empty-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e5e7eb;
+      margin-bottom: 4px;
+    }
+    .plugins-empty-hint {
+      font-size: 12px;
+      color: #6b7280;
+      max-width: 320px;
+    }
+
+    /* ---- Plugins tab: inline (embedded) plugin header ---- */
+    .inline-plugin-header {
+      gap: 6px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(156, 163, 175, 0.1);
+    }
+    .inline-plugin-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e5e7eb;
+      padding-left: 2px;
+    }
+    .inline-plugin-name::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .inline-plugin-frame {
+      border-radius: 12px;
+      border: 1px solid rgba(156, 163, 175, 0.1) !important;
     }
     #clearPacketLogButton:hover {
       color: #e83d52 !important;
@@ -399,14 +659,16 @@
     }
     
     .tab-button.active {
-      background-color: rgba(156, 163, 175, 0.12) !important;
+      background-color: rgba(255, 255, 255, 0.09) !important;
       color: white !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.25);
     }
     .tab-button:not(.active) {
       background-color: transparent !important;
     }
     .tab-button:not(.active):hover {
-      background-color: rgba(156, 163, 175, 0.06) !important;
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      color: #e5e7eb;
     }
 
     #filterAllButton.active,
@@ -610,12 +872,11 @@
     }
 
     #refreshPluginsSection:hover {
-      transform: scale(1.1);
-      color: #3b82f6 !important;
+      color: #60a5fa !important;
     }
 
     #refreshPluginsSection:active {
-      transform: scale(0.95);
+      transform: scale(0.94);
     }
 
     #refreshPluginsSection:disabled {

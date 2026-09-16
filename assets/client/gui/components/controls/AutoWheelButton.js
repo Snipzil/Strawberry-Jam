@@ -28,7 +28,7 @@
           }
 
           :host(.dark-mode) .auto-wheel-container {
-            background-color: rgba(45, 45, 45, 0.95);
+            background-color: rgba(26, 26, 30, 0.96);
           }
 
           .auto-wheel-container:hover {

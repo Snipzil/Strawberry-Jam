@@ -153,31 +153,84 @@
 
       #mod-menu-btn {
         position: absolute;
-        bottom: 10px;
-        left: 10px;
-        width: 32px;
-        height: 32px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 8px;
-        background-color: rgba(18, 18, 18, 0.85);
-        backdrop-filter: blur(6px);
+        bottom: 12px;
+        left: 12px;
+        height: 34px;
+        min-width: 34px;
+        max-width: 34px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        background-color: rgba(18, 18, 20, 0.88);
+        backdrop-filter: blur(10px);
+        color: #b8b8c0;
         cursor: pointer;
-        opacity: 0.7;
-        transition: all 0.2s ease;
+        opacity: 0.85;
+        transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         display: none;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
+        gap: 8px;
         z-index: 100;
-        padding: 0;
+        padding: 0 8px;
+        overflow: hidden;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+        font-family: 'CCDigitalDelivery', 'Segoe UI', sans-serif;
+        font-size: 11.5px;
+        font-weight: bold;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        box-sizing: border-box;
+      }
+      #mod-menu-btn::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--theme-primary, #e83d52);
+        opacity: 0.85;
+        border-radius: 10px 0 0 10px;
       }
       #mod-menu-btn:hover {
         opacity: 1;
+        max-width: 160px;
+        color: #ffffff;
         border-color: var(--theme-primary, #e83d52);
-        transform: scale(1.05);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(232, 61, 82, 0.18);
+      }
+      #mod-menu-btn:active {
+        transform: scale(0.96);
       }
       #mod-menu-btn svg {
         display: block;
-        color: #888;
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        color: var(--theme-primary, #e83d52);
+        margin-left: 1px;
+      }
+      #mod-menu-btn .mod-menu-btn-label {
+        opacity: 0;
+        transform: translateX(-4px);
+        transition: opacity 0.2s ease 0.05s, transform 0.25s ease;
+        padding-right: 4px;
+      }
+      #mod-menu-btn:hover .mod-menu-btn-label {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      #mod-menu-btn .mod-menu-btn-key {
+        font-size: 9.5px;
+        font-weight: bold;
+        padding: 2px 5px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #9c9ca6;
+        letter-spacing: 0.04em;
+        margin-left: 2px;
       }
 
       webview {
@@ -213,7 +266,7 @@
       <div id="border-right-container"></div>
       <div id="flash-game-container">
         <webview id="flash-game-webview" plugins preload="gamePreload.js" webpreferences="contextIsolation=false" style="height: 100%; width: 100%;"></webview>
-        <button id="mod-menu-btn" title="Toggle Mod Menu (F10)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+        <button id="mod-menu-btn" title="Toggle Mod Menu (F10)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg><span class="mod-menu-btn-label">Mod Menu <span class="mod-menu-btn-key">F10</span></span></button>
       </div>
     </div>
       `;

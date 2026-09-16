@@ -17,19 +17,29 @@
           :host {
             user-select: none;
             display: flex;
-            color: #6E4B37;
-            font-family: CCDigitalDelivery;
+            align-items: center;
+            color: var(--sj-text, #6E4B37);
+            font-family: CCDigitalDelivery, 'Segoe UI', sans-serif;
             font-size: 18px;
             letter-spacing: .4px;
+            cursor: pointer;
             /* each box is 22 pixels tall, 25 pixels wide */
             --checkbox-width: 22.72px;
           }
 
           #cb {
             width: var(--checkbox-width);
+            height: 22px;
+            flex-shrink: 0;
             background: url(images/core/core_form_checkbox_sprite.svg);
             background-repeat: no-repeat;
             background-size: cover;
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s ease;
+          }
+
+          :host(:hover) #cb {
+            transform: scale(1.06);
+            filter: brightness(1.05);
           }
 
           #cb:hover {

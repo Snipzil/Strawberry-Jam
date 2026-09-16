@@ -497,51 +497,206 @@ select.modal-input {
   filter: brightness(1.15);
 }
 
+/* ------------------------------------------------------------------
+   Plugin tiles (Plugins tab / mod UI)
+   Hooks used by JS: li.plugin-grid-tile, [data-plugin-name],
+   [data-plugin-type], .plugin-icon-container, .plugin-status-indicator
+   (bg-red-500 / bg-yellow-500 / bg-green-500 toggled at runtime).
+   ------------------------------------------------------------------ */
 .plugin-grid-tile {
+  --tile-accent: 96, 165, 250;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-height: 0;
   min-width: 0;
+  padding: 12px 12px 12px 14px;
+  border-radius: 14px;
   overflow: hidden;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  color: var(--sidebar-text, #C3C3C3);
   border: 1px solid rgba(156, 163, 175, 0.1);
-  background: rgba(255, 255, 255, 0.02);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.015) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.plugin-grid-tile[data-plugin-type="game"] {
+  --tile-accent: 250, 204, 21;
+}
+
+.plugin-grid-tile::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: rgba(var(--tile-accent), 0.55);
+  transition: background 0.18s ease, top 0.18s ease, bottom 0.18s ease;
+}
+
+.plugin-grid-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(420px circle at 0% 0%, rgba(var(--tile-accent), 0.12), transparent 55%);
+  transition: opacity 0.2s ease;
 }
 
 .plugin-grid-tile:hover {
-  border-color: rgba(156, 163, 175, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(var(--tile-accent), 0.35);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.025) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+}
+
+.plugin-grid-tile:hover::before {
+  background: rgba(var(--tile-accent), 0.95);
+  top: 6px;
+  bottom: 6px;
+}
+
+.plugin-grid-tile:hover::after {
+  opacity: 1;
 }
 
 .plugin-grid-tile:active {
-  background: rgba(255, 255, 255, 0.01);
+  transform: translateY(0) scale(0.995);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.plugin-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .plugin-grid-tile .plugin-icon-container {
   position: relative;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  color: rgb(var(--tile-accent));
+  background: rgba(var(--tile-accent), 0.12);
+  border: 1px solid rgba(var(--tile-accent), 0.18);
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.plugin-grid-tile:hover .plugin-icon-container {
+  background: rgba(var(--tile-accent), 0.18);
+  border-color: rgba(var(--tile-accent), 0.35);
+}
+
+.plugin-grid-tile .plugin-icon-container svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
 }
 
 .plugin-grid-tile .plugin-status-indicator {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  border: 1.5px solid var(--sidebar-bg, #1a1b26);
+  border: 2px solid var(--primary-bg, #121212);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
 }
 
-.plugin-grid-tile .plugin-icon-container svg {
+.plugin-grid-tile .plugin-status-indicator.bg-green-500 {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 8px rgba(34, 197, 94, 0.8);
+}
+
+.plugin-tile-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plugin-tile-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.plugin-tile-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ececf1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.plugin-tile-sub {
+  font-size: 11px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plugin-tile-open {
+  flex-shrink: 0;
   width: 22px;
   height: 22px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: rgba(195, 195, 195, 0.5);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.plugin-grid-tile:hover .plugin-tile-open {
+  opacity: 1;
+  transform: translateX(0);
+  color: #ffffff;
+  background: rgba(var(--tile-accent), 0.22);
+}
+
+.plugin-tile-desc {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #9ca3af;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
 }
 
 .plugin-type-badge {
-  font-size: 10px;
+  font-size: 9.5px;
   padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 600;
+  border-radius: 999px;
+  font-weight: 700;
   flex-shrink: 0;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 15px;
+  color: rgb(var(--tile-accent));
+  background: rgba(var(--tile-accent), 0.14);
+  border: 1px solid rgba(var(--tile-accent), 0.22);
 }
 
 li[data-plugin-type="ui"] .plugin-type-badge {
