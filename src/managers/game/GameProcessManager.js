@@ -100,6 +100,13 @@ class GameProcessManager {
 
       processManager.add(gameProcess);
 
+      try {
+        const os = require('os');
+        if (gameProcess.pid && process.platform === 'win32') {
+          os.setPriority(gameProcess.pid, os.constants.priority.PRIORITY_ABOVE_NORMAL);
+        }
+      } catch (_) {}
+
       if (!this.isGameTimeBeingTrackedRef.value) {
         this.gameStartTimeRef.value = Date.now();
         this.isGameTimeBeingTrackedRef.value = true;

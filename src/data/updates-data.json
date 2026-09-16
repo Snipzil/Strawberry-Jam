@@ -2041,6 +2041,12 @@
           "priority": "major"
         },
         {
+          "icon": "zap",
+          "title": "High Performance Mode",
+          "description": "New launcher setting that unlocks GPU rendering, disables background throttling, and raises the client process priority so the game runs smoother.",
+          "priority": "major"
+        },
+        {
           "icon": "gamepad-2",
           "title": "In-Game Utility Controls",
           "description": "Settings, debug log, version, and a new Open Mod Menu shortcut stay visible and clickable over the game.",

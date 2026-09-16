@@ -409,7 +409,7 @@ ipcMain.on("loaded", async (event, message) => {
   win.on("restore", () => {
     log("debug", "[Window] Window restored");
     if (win && win.webContents && !win.isDestroyed()) {
-      win.webContents.backgroundThrottling = true;
+      win.webContents.backgroundThrottling = !HIGH_PERFORMANCE;
     }
     if (webview && webview.send) {
       webview.send("screenChange", "restored");
@@ -1250,6 +1250,32 @@ ipcMain.on("translate", (event, message) => {
     });
   }
 });
+
+// High Performance mode: let Chromium use the GPU freely, stop background
+// throttling of the game renderer, and raise the process priority class so the
+// renderer/GPU children (which inherit it) get scheduled ahead of other apps.
+const HIGH_PERFORMANCE = store.get("highPerformance", true) !== false;
+if (HIGH_PERFORMANCE) {
+  app.commandLine.appendSwitch("ignore-gpu-blocklist");
+  app.commandLine.appendSwitch("enable-gpu-rasterization");
+  app.commandLine.appendSwitch("enable-zero-copy");
+  app.commandLine.appendSwitch("enable-accelerated-2d-canvas");
+  app.commandLine.appendSwitch("disable-renderer-backgrounding");
+  app.commandLine.appendSwitch("disable-background-timer-throttling");
+  app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
+  app.commandLine.appendSwitch("disable-features", "CalculateNativeWinOcclusion");
+  try {
+    os.setPriority(process.pid, os.constants.priority.PRIORITY_HIGH);
+    log("info", "[Performance] High performance mode: GPU switches enabled, process priority raised");
+  } catch (err) {
+    log("warn", `[Performance] Could not raise process priority: ${err.message}`);
+  }
+  app.on("web-contents-created", (event, contents) => {
+    try {
+      contents.backgroundThrottling = false;
+    } catch (_) {}
+  });
+}
 
 app.commandLine.appendSwitch("ppapi-flash-path", path.join(__dirname, `${config.pluginPath}${config.pluginName}`));
 

@@ -30,6 +30,18 @@
         .catch(err => {
         });
 
+      window.ipc.invoke('get-setting', 'highPerformance')
+        .then(highPerformance => {
+          if (this.loginScreen.highPerformanceToggle) {
+            this.loginScreen.highPerformanceToggle.checked = highPerformance !== false;
+          }
+        })
+        .catch(() => {
+          if (this.loginScreen.highPerformanceToggle) {
+            this.loginScreen.highPerformanceToggle.checked = true;
+          }
+        });
+
       window.ipc.invoke('get-setting', 'backgroundProcessing')
         .then(backgroundProcessing => {
           if (this.loginScreen.backgroundProcessingToggle) {

@@ -197,6 +197,16 @@
         });
       }
 
+      if (this.loginScreen.highPerformanceToggle) {
+        this.loginScreen.highPerformanceToggle.addEventListener('change', async () => {
+          try {
+            await window.ipc.invoke('set-setting', 'highPerformance', this.loginScreen.highPerformanceToggle.checked);
+          } catch (err) {
+            console.error('Failed to save high performance setting:', err);
+          }
+        });
+      }
+
       if (this.loginScreen.backgroundProcessingToggle) {
         this.loginScreen.backgroundProcessingToggle.addEventListener('change', async () => {
           try {
