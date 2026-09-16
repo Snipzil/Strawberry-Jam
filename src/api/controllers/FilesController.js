@@ -92,7 +92,7 @@ class FilesController {
       await fsPromises.mkdir(this.optionsDir, { recursive: true })
 
       const activeSwfPath = path.join(this.flashDir, 'ajclient.swf')
-      const prodSwfPath = path.join(this.optionsDir, 'v5.2.0.swf')
+      const prodSwfPath = path.join(this.optionsDir, 'v6.0.0.swf')
 
       const [activeExists, prodExists] = await Promise.all([
         fsPromises.access(activeSwfPath).then(() => true).catch(() => false),
@@ -204,12 +204,12 @@ class FilesController {
       try {
         entries = await fsPromises.readdir(this.optionsDir, { withFileTypes: true })
       } catch (e) {
-        return ['v5.2.0.swf']
+        return ['v6.0.0.swf']
       }
       const files = entries
         .filter(entry => !entry.isDirectory() && entry.name.endsWith('.swf'))
         .map(entry => entry.name)
-      const order = ['v5.2.0.swf', 'v4.2.3.swf', 'non-purple-private-chat.swf', 'unmodded-ajclient.swf']
+      const order = ['v6.0.0.swf', 'v5.2.0.swf', 'v4.2.3.swf', 'non-purple-private-chat.swf', 'unmodded-ajclient.swf']
       return [...new Set(files)].sort((a, b) => {
         const ai = order.indexOf(a)
         const bi = order.indexOf(b)
@@ -220,14 +220,15 @@ class FilesController {
       })
     } catch (error) {
       console.error('Error scanning for SWF files:', error)
-      return ['v5.2.0.swf']
+      return ['v6.0.0.swf']
     }
   }
 
   async getSwfFileInfo () {
     const files = await this.getAvailableSwfFiles()
     const displayNames = {
-      'v5.2.0.swf': 'v5.2.0 (latest)',
+      'v6.0.0.swf': 'v6.0.0 (latest)',
+      'v5.2.0.swf': 'v5.2.0 (previous)',
       'v4.2.3.swf': 'v4.2.3 (older)',
       'non-purple-private-chat.swf': 'Non-Colored Private Chat (outdated)',
       'unmodded-ajclient.swf': 'Unmodded (latest)'

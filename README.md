@@ -19,7 +19,7 @@ Strawberry Jam is a fork of the original [Jam](https://github.com/Sxip/jam) proj
 ## 🚀 Quick Start
 
 ###  Windows
-1.  Download `Strawberry-Jam-Setup.exe` from our [latest release](https://github.com/glvckoma/strawberry-jam/releases/latest)
+1.  Download `Strawberry-Jam-Setup.exe` from our [latest release](https://github.com/Snipzil/Strawberry-Jam/releases/latest)
 2.  Run the installer
 3.  Launch Strawberry Jam from your Start menu
 
@@ -42,7 +42,7 @@ Want to run Strawberry Jam from its source code, make your own changes, or creat
     *   Open your terminal or command prompt.
     *   Use git to clone the repository (download the code):
         ```bash
-        git clone https://github.com/glvckoma/strawberry-jam.git
+        git clone https://github.com/Snipzil/Strawberry-Jam.git
         ```
     *   Navigate into the project directory:
         ```bash

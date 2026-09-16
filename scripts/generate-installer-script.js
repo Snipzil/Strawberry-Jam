@@ -20,7 +20,7 @@ RequestExecutionLevel user
 !macroend
 
 !macro customInit
-  MessageBox MB_ICONINFORMATION|MB_OK "This project is free on https://github.com/glvckoma$\\nIf you paid for this you were scammed."
+  MessageBox MB_ICONINFORMATION|MB_OK "This project is free on https://github.com/Snipzil/Strawberry-Jam$\\nIf you paid for this you were scammed."
 
   ExecWait 'taskkill /F /IM strawberry-jam.exe'
   ExecWait 'taskkill /F /IM "AJ Classic.exe"'

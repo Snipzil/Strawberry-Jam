@@ -93,7 +93,11 @@
           "icon": "⌨️",
           "title": "Ctrl + Shift + U",
           "description": "Toggles private chat On/Off. Purple border around chat box indicates when enabled.",
-          "keys": ["Ctrl", "Shift", "U"]
+          "keys": [
+            "Ctrl",
+            "Shift",
+            "U"
+          ]
         }
       ],
       "commands": [],
@@ -321,13 +325,21 @@
           "icon": "⌨️",
           "title": "Ctrl + Shift + W",
           "description": "Toggles on/off WASD mode in-game.",
-          "keys": ["Ctrl", "Shift", "W"]
+          "keys": [
+            "Ctrl",
+            "Shift",
+            "W"
+          ]
         },
         {
           "icon": "⌨️",
           "title": "Ctrl + Shift + D",
           "description": "Toggles on/off Den on Login.",
-          "keys": ["Ctrl", "Shift", "D"]
+          "keys": [
+            "Ctrl",
+            "Shift",
+            "D"
+          ]
         }
       ],
       "commands": [],
@@ -536,19 +548,29 @@
           "icon": "⌨️",
           "title": "Ctrl + X",
           "description": "Headless mode - Assists with performance when automating TFD. Requires extensive testing for optimal results.",
-          "keys": ["Ctrl", "X"]
+          "keys": [
+            "Ctrl",
+            "X"
+          ]
         },
         {
           "icon": "⌨️",
           "title": "Ctrl + Shift + M",
           "description": "Manual cache cleanup functionality for improved performance and troubleshooting. Currently in testing phase.",
-          "keys": ["Ctrl", "Shift", "M"]
+          "keys": [
+            "Ctrl",
+            "Shift",
+            "M"
+          ]
         },
         {
           "icon": "⌨️",
           "title": "Ctrl + M",
           "description": "Quick access to Trade Marketplace through enhanced shortcuts section for faster navigation.",
-          "keys": ["Ctrl", "M"]
+          "keys": [
+            "Ctrl",
+            "M"
+          ]
         }
       ],
       "commands": [
@@ -693,13 +715,21 @@
           "icon": "⌨️",
           "title": "Ctrl + Shift + N",
           "description": "Toggles on/off No Clip (sorta buggy, use to go somewhere then disable).",
-          "keys": ["Ctrl", "Shift", "N"]
+          "keys": [
+            "Ctrl",
+            "Shift",
+            "N"
+          ]
         },
         {
           "icon": "⌨️",
           "title": "Ctrl + Shift + H",
           "description": "Hide Settings/Bug/User Tray UI elements.",
-          "keys": ["Ctrl", "Shift", "H"]
+          "keys": [
+            "Ctrl",
+            "Shift",
+            "H"
+          ]
         }
       ],
       "commands": [],
@@ -986,13 +1016,19 @@
           "icon": "⌨️",
           "title": "F10",
           "description": "Opens centralized mod menu containing all popups and mods easily toggleable.",
-          "keys": ["F10"]
+          "keys": [
+            "F10"
+          ]
         },
         {
           "icon": "⌨️",
           "title": "Ctrl + Shift + E",
           "description": "Opens Shop Explorer popup that scrapes all player shops in the current den.",
-          "keys": ["Ctrl", "Shift", "E"]
+          "keys": [
+            "Ctrl",
+            "Shift",
+            "E"
+          ]
         }
       ],
       "commands": [],
@@ -1907,7 +1943,7 @@
   "5.1.1": {
     "version": "5.1.1",
     "releaseDate": "2026-03-27",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -1966,6 +2002,91 @@
       "shortcuts": [],
       "commands": [],
       "messages": []
+    }
+  },
+  "6.0.0": {
+    "version": "6.0.0",
+    "releaseDate": "2026-09-15",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "sliders-horizontal",
+          "title": "Mod Menu Overhaul",
+          "description": "F10 Mod Menu rebuilt: wider two-column layout, whole-row toggles, switch controls, hotkey chips, live search, Enabled-only filter, tab counts, hover tooltips, draggable scrollbar, and remembered search/tab.",
+          "priority": "major"
+        },
+        {
+          "icon": "layout-dashboard",
+          "title": "Launcher Redesign",
+          "description": "New login card, inputs, buttons, account rail, settings panel with segmented tabs, and dark/light token system. Verification and password modals match the new look.",
+          "priority": "major"
+        },
+        {
+          "icon": "puzzle",
+          "title": "Plugins Tab Refresh",
+          "description": "New plugin cards with accent icons and type badges, toolbar with search (Ctrl+F), Recent row of last-opened plugins, and keyboard navigation.",
+          "priority": "major"
+        },
+        {
+          "icon": "play",
+          "title": "Header and PLAY Button",
+          "description": "Segmented Network/Plugins tabs and a PLAY button that spins while patching and shows a green RUNNING state while the game is open.",
+          "priority": "minor"
+        },
+        {
+          "icon": "fingerprint",
+          "title": "Stable Spoofed Device ID",
+          "description": "UUID Spoofing now keeps one persistent fake device ID so 2FA only asks once, with a New ID button to regenerate on demand.",
+          "priority": "major"
+        },
+        {
+          "icon": "gamepad-2",
+          "title": "In-Game Utility Controls",
+          "description": "Settings, debug log, version, and a new Open Mod Menu shortcut stay visible and clickable over the game.",
+          "priority": "minor"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "wrench",
+          "title": "Mod Menu Sources in Repo",
+          "description": "ActionScript sources and a rebuild tool for the Mod Menu live under scripts/modmenu so it can be updated without decompiling.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "gamepad-2",
+          "title": "Mod Menu Button",
+          "description": "In-game mod menu button is now a glass pill that expands to show its F10 shortcut.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "archive",
+          "title": "Previous Client Kept",
+          "description": "v5.2.0 client remains selectable in Settings as a fallback next to the new v6.0.0 client.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "layers",
+          "title": "Modal Layering",
+          "description": "Login form no longer renders over the 2-step verification and other modals.",
+          "priority": "major"
+        },
+        {
+          "icon": "eye",
+          "title": "Hidden Utility Buttons",
+          "description": "Settings and debug buttons were nearly invisible over the game; they are now lifted above the game screen.",
+          "priority": "minor"
+        },
+        {
+          "icon": "broom",
+          "title": "Dead Code",
+          "description": "Removed stale play-button text references.",
+          "priority": "minor"
+        }
+      ]
     }
   }
 }
