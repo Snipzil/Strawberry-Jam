@@ -157,5 +157,25 @@ package gui
       {
          return _tabButtons[tabName];
       }
+
+      public function destroy() : void
+      {
+         var tabName:String;
+         var btn:MovieClip;
+         if(_tabButtons)
+         {
+            for(tabName in _tabButtons)
+            {
+               btn = _tabButtons[tabName];
+               if(btn && btn["_tabHandler"])
+               {
+                  btn.removeEventListener("mouseDown",btn["_tabHandler"]);
+               }
+            }
+         }
+         _tabButtons = null;
+         _containers = null;
+         _onTabChangeCallback = null;
+      }
    }
 }

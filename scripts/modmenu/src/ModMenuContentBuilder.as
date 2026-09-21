@@ -409,7 +409,7 @@ package gui
          container.addChild(denUsernameInput);
          denLoginCheckbox["isToggling"] = false;
          denLoginCheckbox["lastToggleTime"] = 0;
-         denLoginCheckbox.addEventListener("mouseDown",function(e:MouseEvent):void
+         var denCheckboxHandler:Function = function(e:MouseEvent):void
          {
             var clickedCheckbox:MovieClip;
             var currentTime:int;
@@ -441,7 +441,9 @@ package gui
             {
                clickedCheckbox["isToggling"] = false;
             }
-         },false,0,false);
+         };
+         denLoginCheckbox.addEventListener("mouseDown",denCheckboxHandler,false,0,false);
+         denLoginCheckbox["_checkboxHandler"] = denCheckboxHandler;
          return {
             "checkbox":denLoginCheckbox,
             "usernameInput":denUsernameInput,

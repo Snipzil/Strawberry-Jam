@@ -1508,8 +1508,40 @@ package gui
                      {
                         cleanupRow.openBtn.removeEventListener("mouseDown",cleanupRow["_buttonHandler"]);
                      }
+                     if(cleanupRow.hitBg && cleanupRow["_hoverOver"])
+                     {
+                        cleanupRow.hitBg.removeEventListener("mouseOver",cleanupRow["_hoverOver"]);
+                     }
+                     if(cleanupRow.hitBg && cleanupRow["_hoverOut"])
+                     {
+                        cleanupRow.hitBg.removeEventListener("mouseOut",cleanupRow["_hoverOut"]);
+                     }
                   }
                }
+            }
+         }
+         catch(e:Error)
+         {
+         }
+         try
+         {
+            if(_denLoginCheckbox && _denLoginCheckbox["_checkboxHandler"])
+            {
+               _denLoginCheckbox.removeEventListener("mouseDown",_denLoginCheckbox["_checkboxHandler"]);
+            }
+            if(_denUsernameInput)
+            {
+               _denUsernameInput.removeEventListener(Event.CHANGE,onDenUsernameChanged);
+            }
+         }
+         catch(e:Error)
+         {
+         }
+         try
+         {
+            if(_tabManager)
+            {
+               _tabManager.destroy();
             }
          }
          catch(e:Error)
