@@ -468,5 +468,7 @@ class PluginManager {
   }
 }
 
+PluginManager.ConfigurationSchema = ConfigurationSchema
+
 module.exports = PluginManager
 

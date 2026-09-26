@@ -71,6 +71,7 @@
     "!dev/**/*",
     "!build/**/*",
     "!scripts/**/*",
+    "!test/**/*",
     "!plugins/**/*",
     "!assets/client/**/*",
     "!eslint.config.js",

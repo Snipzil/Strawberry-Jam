@@ -18,6 +18,7 @@
     "dev": "npm run prepare:app && cross-env NODE_ENV=development electron .",
     "test": "npm run prepare:app && cross-env NODE_ENV=production electron .",
     "lint": "eslint .",
+    "test:offline": "node --require ./test/helpers/no-network.js --test \"test/**/*.test.js\"",
     "build": "npm run prepare:app && node scripts/generate-installer-script.js && electron-builder build -w",
     "publish": "npm run prepare:app && node scripts/generate-installer-script.js && electron-builder build -w -p always",
     "postinstall": "electron-builder install-app-deps",
