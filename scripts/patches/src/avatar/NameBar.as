@@ -445,7 +445,7 @@ package avatar
                clearCustomColorTransform();
                return;
             }
-            paletteIndex = int(avatar.CustomNametagColors.getColor(_avatarUserName,_perUserAvId));
+            paletteIndex = int(CustomNametagColors.getColor(_avatarUserName,_perUserAvId));
             if(paletteIndex < 0)
             {
                clearCustomColorTransform();
