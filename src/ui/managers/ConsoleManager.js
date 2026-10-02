@@ -34,6 +34,11 @@ class ConsoleManager {
 
     if (isPacket && typeof window !== 'undefined' && window._networkLogPaused) return
 
+    if (isPacket) {
+      this._appendPacket(message, isIncoming, _packetHidden)
+      return
+    }
+
     const logCategory = this._getLogCategory(message)
     if (logCategory) {
       this._removePreviousLogByCategory(logCategory)
@@ -52,39 +57,8 @@ class ConsoleManager {
       action: 'bg-teal-500/10 border-l-4 border-teal-500 text-teal-400'
     }
 
-    const packetTypeClasses = {
-      incoming: 'bg-tertiary-bg/20 border-l-4 text-text-primary',
-      outgoing: 'bg-tertiary-bg/10 border-l-4 text-text-primary'
-    }
-
-    const packetBorderColors = {
-      incoming: 'var(--packet-incoming-color, #10b981)',
-      outgoing: 'var(--packet-outgoing-color, #eab308)'
-    }
-
     const createElement = (tag, classes = '', content = '') => {
       return $('<' + tag + '>').addClass(classes + ' message-animate-in').html(content)
-    }
-
-    const getTime = () => {
-      const now = new Date()
-      let useMilitary = false
-      try {
-        useMilitary = this.application && this.application.settings
-          ? this.application.settings.get('ui.militaryTime', false)
-          : false
-      } catch (e) {
-      }
-      const minute = String(now.getMinutes()).padStart(2, '0')
-      const second = String(now.getSeconds()).padStart(2, '0')
-      if (useMilitary) {
-        const hour = String(now.getHours()).padStart(2, '0')
-        return `${hour}:${minute}:${second}`
-      }
-      let hour = now.getHours()
-      const period = hour >= 12 ? 'PM' : 'AM'
-      hour = hour % 12 || 12
-      return `${hour}:${minute}:${second} ${period}`
     }
 
     const status = (type, message) => {
@@ -105,41 +79,22 @@ class ConsoleManager {
       'flex items-start p-3 rounded-md mb-2 shadow-sm max-w-full w-full'
     )
 
-    if (isPacket) {
-      const packetDir = isIncoming ? 'incoming' : 'outgoing'
-      $container.addClass(packetTypeClasses[packetDir])
-      $container.css('border-left-color', packetBorderColors[packetDir])
-    } else {
-      $container.addClass(baseTypeClasses[type] || 'bg-tertiary-bg/10 border-l-4 border-tertiary-bg text-text-primary')
-    }
+    $container.addClass(baseTypeClasses[type] || 'bg-tertiary-bg/10 border-l-4 border-tertiary-bg text-text-primary')
 
-    if (isPacket) {
-      $container.attr('data-packet', 'true').attr('data-message', message)
-      const iconClass = isIncoming ? 'fa-arrow-down' : 'fa-arrow-up'
-      const iconColor = isIncoming
-        ? 'var(--packet-incoming-color, #10b981)'
-        : 'var(--packet-outgoing-color, #eab308)'
-      const $iconContainer = createElement('div', 'flex items-center mr-3 text-base', `<i class="fas ${iconClass}" style="color: ${iconColor};"></i>`)
-      $container.append($iconContainer)
-    } else if (time) {
-      const $timeContainer = createElement('div', 'text-xs text-gray-500 mr-3 whitespace-nowrap font-mono', getTime())
+    if (time) {
+      const $timeContainer = createElement('div', 'text-xs text-gray-500 mr-3 whitespace-nowrap font-mono', this._getTime())
       $container.append($timeContainer)
     }
 
     const $messageContainer = createElement(
       'div',
-      isPacket
-        ? 'flex-1 break-all leading-relaxed'
-        : 'flex-1 text-xs flex items-center space-x-2 leading-relaxed'
+      'flex-1 text-xs flex items-center space-x-2 leading-relaxed'
     )
 
-    if (withStatus && !isPacket) {
+    if (withStatus) {
       $messageContainer.html(status(type, message))
     } else {
       $messageContainer.text(message)
-      if (isPacket) {
-        $messageContainer.addClass('font-mono')
-      }
     }
 
     if (style) {
@@ -162,111 +117,149 @@ class ConsoleManager {
       $container.attr(this._deduplicationCategories[logCategory], 'true')
     }
 
-    if (isPacket && details) {
-      const $actionsContainer = createElement('div', 'flex ml-2 items-center')
+    const $targetContainer = $('#messages')
 
-      const $detailsButton = createElement(
-        'button',
-        'text-xs text-gray-400 hover:text-text-primary transition-colors px-2 py-1 rounded hover:bg-tertiary-bg/20',
-        '<i class="fas fa-code mr-1"></i> Details'
-      )
-
-      const $copyButton = createElement(
-        'button',
-        'text-xs text-gray-400 hover:text-text-primary transition-colors ml-1 px-2 py-1 rounded hover:bg-tertiary-bg/20',
-        '<i class="fas fa-copy mr-1"></i> Copy'
-      )
-
-      $copyButton.on('click', (e) => {
-        e.stopPropagation()
-        navigator.clipboard.writeText(message)
-
-        const originalHtml = $copyButton.html()
-        $copyButton.html('<i class="fas fa-check mr-1"></i> Copied!')
-        $copyButton.addClass('text-highlight-green')
-
-        setTimeout(() => {
-          $copyButton.html(originalHtml)
-          $copyButton.removeClass('text-highlight-green')
-        }, 1500)
-      })
-
-      $actionsContainer.append($detailsButton, $copyButton)
-      $container.append($actionsContainer)
-
-      const $detailsContainer = createElement(
-        'div',
-        'bg-tertiary-bg/50 rounded-md p-3 mt-2 hidden w-full',
-        `<pre class="text-xs text-text-primary overflow-auto max-h-[300px] font-mono">${JSON.stringify(details, null, 2)}</pre>`
-      )
-
-      $detailsButton.on('click', (e) => {
-        e.stopPropagation()
-        $detailsContainer.toggleClass('hidden')
-        const isHidden = $detailsContainer.hasClass('hidden')
-
-        if (isHidden) {
-          $detailsButton.html('<i class="fas fa-chevron-down mr-1 smooth-chevron"></i> Details')
-          $detailsButton.find('i').css('transform', 'rotate(0deg)')
-        } else {
-          $detailsButton.html('<i class="fas fa-chevron-down mr-1 smooth-chevron"></i> Hide')
-          $detailsButton.find('i').css('transform', 'rotate(180deg)')
-        }
-      })
-
-      $container.after($detailsContainer)
-
-      $container.css('cursor', 'pointer')
-      $container.on('click', function (e) {
-        if (!$(e.target).closest('button').length) {
-          $detailsButton.click()
-        }
-      })
+    this._appMessageCount++
+    if (this._appMessageCount > this._consoleLogLimit) {
+      this.cleanOldLogs($targetContainer, false)
     }
 
-    const $targetContainer = isPacket ? $('#message-log') : $('#messages')
-
-    if (isPacket) {
-      const $totalCount = $('#totalCount')
-      const $incomingCount = $('#incomingCount')
-      const $outgoingCount = $('#outgoingCount')
-
-      const totalCount = parseInt($totalCount.text() || '0', 10) + 1
-      $totalCount.text(totalCount)
-
-      if (isIncoming) {
-        const incomingCount = parseInt($incomingCount.text() || '0', 10) + 1
-        $incomingCount.text(incomingCount)
-      } else {
-        const outgoingCount = parseInt($outgoingCount.text() || '0', 10) + 1
-        $outgoingCount.text(outgoingCount)
-      }
-
-      this._packetLogCount++
-      if (this._packetLogCount > this._networkLogLimit) {
-        this.cleanOldLogs($targetContainer, true)
-      }
-    } else {
-      this._appMessageCount++
-      if (this._appMessageCount > this._consoleLogLimit) {
-        this.cleanOldLogs($targetContainer, false)
-      }
-    }
-
-    if (_packetHidden) {
-      $container.hide()
-    }
+    const el = $targetContainer[0]
+    const wasAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40
 
     $targetContainer.append($container)
 
-    const isAtBottom = $targetContainer.scrollTop() + $targetContainer.innerHeight() >= $targetContainer[0].scrollHeight - 30
-    if (isAtBottom) {
-      $targetContainer.scrollTop($targetContainer[0].scrollHeight)
+    if (wasAtBottom) {
+      el.scrollTop = el.scrollHeight
     }
 
-    if (!isPacket && this.application.consoleDrawerManager && !this.application.consoleDrawerManager.isOpen) {
+    if (this.application.consoleDrawerManager && !this.application.consoleDrawerManager.isOpen) {
       this.application.consoleDrawerManager.incrementUnread()
     }
+  }
+
+  _getTime(withMs = false) {
+    const now = new Date()
+    let useMilitary = false
+    try {
+      useMilitary = this.application && this.application.settings
+        ? this.application.settings.get('ui.militaryTime', false)
+        : false
+    } catch (e) {
+    }
+    const minute = String(now.getMinutes()).padStart(2, '0')
+    const second = String(now.getSeconds()).padStart(2, '0')
+    const ms = withMs ? '.' + String(now.getMilliseconds()).padStart(3, '0') : ''
+    if (useMilitary) {
+      const hour = String(now.getHours()).padStart(2, '0')
+      return `${hour}:${minute}:${second}${ms}`
+    }
+    let hour = now.getHours()
+    const period = hour >= 12 ? 'PM' : 'AM'
+    hour = hour % 12 || 12
+    if (withMs) hour = String(hour).padStart(2, '0')
+    return `${hour}:${minute}:${second}${ms} ${period}`
+  }
+
+  _getPacketCommand(message) {
+    if (!message) return ''
+    if (message.startsWith('%xt%')) {
+      const parts = message.split('%')
+      return (parts[2] === 'o' ? parts[3] : parts[2]) || 'xt'
+    }
+    if (message[0] === '<') {
+      const action = message.match(/action=['"]([^'"]+)['"]/)
+      return action ? action[1] : 'xml'
+    }
+    if (message[0] === '{') return 'json'
+    return ''
+  }
+
+  _formatPacketHtml(message) {
+    const escaped = String(message)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+    return escaped.replace(/%/g, '<span class="pkt-sep">%</span>')
+  }
+
+  _initPacketScroll(log) {
+    if (this._packetScrollInit) return
+    this._packetScrollInit = true
+    this._packetStick = true
+
+    const jump = document.createElement('button')
+    jump.id = 'packetJumpLatest'
+    jump.className = 'pkt-jump'
+    jump.innerHTML = '<i class="fas fa-arrow-down"></i> Jump to latest'
+    jump.addEventListener('click', () => {
+      this._packetStick = true
+      log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' })
+      jump.classList.remove('visible')
+    })
+    if (log.parentElement) log.parentElement.appendChild(jump)
+
+    log.addEventListener('scroll', () => {
+      const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40
+      if (atBottom !== this._packetStick) {
+        this._packetStick = atBottom
+        jump.classList.toggle('visible', !atBottom)
+      }
+    }, { passive: true })
+  }
+
+  _schedulePacketScroll(log) {
+    if (this._packetScrollQueued) return
+    this._packetScrollQueued = true
+    requestAnimationFrame(() => {
+      this._packetScrollQueued = false
+      if (this._packetStick) log.scrollTop = log.scrollHeight
+    })
+  }
+
+  _appendPacket(message, isIncoming, hidden) {
+    const log = document.getElementById('message-log')
+    if (!log) return
+    this._initPacketScroll(log)
+
+    const dir = isIncoming ? 'in' : 'out'
+    const cmd = this._getPacketCommand(message)
+
+    const row = document.createElement('div')
+    row.className = 'pkt-row pkt-' + dir
+    row.setAttribute('data-packet', 'true')
+    row.setAttribute('data-dir', dir)
+    row.setAttribute('data-message', message)
+
+    const meta = document.createElement('div')
+    meta.className = 'pkt-meta'
+    meta.innerHTML =
+      `<span class="pkt-time">${this._getTime(true)}</span>` +
+      `<i class="fas ${isIncoming ? 'fa-arrow-down' : 'fa-arrow-up'} pkt-dir"></i>` +
+      `<span class="pkt-cmd"></span>`
+    meta.lastChild.textContent = cmd
+    if (!cmd) meta.lastChild.classList.add('empty')
+
+    const body = document.createElement('div')
+    body.className = 'pkt-msg'
+    body.innerHTML = this._formatPacketHtml(message)
+
+    row.appendChild(meta)
+    row.appendChild(body)
+    if (hidden) row.style.display = 'none'
+
+    const $totalCount = $('#totalCount')
+    const $countEl = isIncoming ? $('#incomingCount') : $('#outgoingCount')
+    $totalCount.text(parseInt($totalCount.text() || '0', 10) + 1)
+    $countEl.text(parseInt($countEl.text() || '0', 10) + 1)
+
+    this._packetLogCount++
+    if (this._packetLogCount > this._networkLogLimit) {
+      this.cleanOldLogs($(log), true)
+    }
+
+    log.appendChild(row)
+    this._schedulePacketScroll(log)
   }
 
   updateMessage(messageId, { message, type = 'success' } = {}) {
@@ -313,9 +306,10 @@ class ConsoleManager {
 
     if (isPacketLog) {
       logsToRemove.each(function() {
-        if ($(this).hasClass('bg-tertiary-bg/20')) {
+        const dir = this.getAttribute('data-dir')
+        if (dir === 'in') {
           removedIncoming++
-        } else if ($(this).hasClass('bg-highlight-green/5')) {
+        } else if (dir === 'out') {
           removedOutgoing++
         }
       })
