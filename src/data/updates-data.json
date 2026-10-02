@@ -2098,7 +2098,7 @@
   "6.0.1": {
     "version": "6.0.1",
     "releaseDate": "2026-10-01",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -2152,6 +2152,23 @@
           "title": "Outgoing Count After Trimming",
           "description": "The out counter now goes down correctly when old packets are trimmed at the log limit.",
           "priority": "minor"
+        }
+      ]
+    }
+  },
+  "6.0.2": {
+    "version": "6.0.2",
+    "releaseDate": "2026-10-01",
+    "isLatest": true,
+    "categories": {
+      "features": [],
+      "improvements": [],
+      "fixes": [
+        {
+          "icon": "layers",
+          "title": "6.0.1 Client Now Loads",
+          "description": "Updating from 6.0.0 kept the old game client selected, so it replaced the new one on launch and the 6.0.1 fixes never showed up, including Retry Follow Buddy, nametag buddy cards and the marketplace fix. Your selection now moves to the v6.0.1 client automatically. You can still pick an older client in Settings.",
+          "priority": "major"
         }
       ]
     }
