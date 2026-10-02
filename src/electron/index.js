@@ -760,7 +760,19 @@ class Electron {
   }
 
   async _autoReapplySwfIfNeeded () {
-    const selectedFile = this._store.get('game.selectedSwfFile')
+    const { LATEST_SWF_FILE, PREVIOUS_LATEST_SWF_FILES } = require('../api/controllers/FilesController')
+    let selectedFile = this._store.get('game.selectedSwfFile')
+    // After an update an older "latest" client is still selected, and the reapply
+    // below would copy it over the newly shipped ajclient.swf. Move it once per
+    // release so picking an older client in Settings afterwards still sticks.
+    if (this._store.get('game.swfMigratedTo') !== LATEST_SWF_FILE) {
+      if (PREVIOUS_LATEST_SWF_FILES.includes(selectedFile)) {
+        logManager.log(`[Auto Reapply] Moving client selection from ${selectedFile} to ${LATEST_SWF_FILE}`, 'main', logManager.logLevels.INFO)
+        selectedFile = LATEST_SWF_FILE
+        this._store.set('game.selectedSwfFile', selectedFile)
+      }
+      this._store.set('game.swfMigratedTo', LATEST_SWF_FILE)
+    }
     if (!selectedFile) return
     await this._reapplySwfIfModified(selectedFile, { logPrefix: '[Auto Reapply]' })
   }

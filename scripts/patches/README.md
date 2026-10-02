@@ -72,6 +72,14 @@ cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```
 
+The app copies the client selected in Settings (`assets/flash/options/<file>`)
+over `ajclient.swf` on launch, so a rebuilt client also has to go into
+`options/`. For a release, copy it to `options/vX.Y.Z.swf`, set
+`LATEST_SWF_FILE` in `src/api/controllers/FilesController.js` to that file,
+and add the old latest to `PREVIOUS_LATEST_SWF_FILES` so existing installs
+switch to the new client. Otherwise the selected old client overwrites the
+rebuilt one.
+
 `PatchTool` takes a comma-separated list of source directories and a
 comma-separated list of fully-qualified class names, so more patched classes
 can be added later without a new tool.

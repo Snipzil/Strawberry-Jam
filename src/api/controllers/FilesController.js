@@ -3,6 +3,13 @@ const path = require('path')
 const fs = require('fs')
 const fsPromises = fs.promises
 
+// The client shipped with this release. Bump it (and add the file to
+// assets/flash/options) whenever a new ajclient.swf is released.
+const LATEST_SWF_FILE = 'v6.0.1.swf'
+// Earlier "latest" clients. Anyone still on one of these is moved to
+// LATEST_SWF_FILE on startup, since it was the default rather than a choice.
+const PREVIOUS_LATEST_SWF_FILES = ['v6.0.0.swf']
+
 class FilesController {
   constructor(app = null) {
     this._app = app;
@@ -92,7 +99,7 @@ class FilesController {
       await fsPromises.mkdir(this.optionsDir, { recursive: true })
 
       const activeSwfPath = path.join(this.flashDir, 'ajclient.swf')
-      const prodSwfPath = path.join(this.optionsDir, 'v6.0.0.swf')
+      const prodSwfPath = path.join(this.optionsDir, LATEST_SWF_FILE)
 
       const [activeExists, prodExists] = await Promise.all([
         fsPromises.access(activeSwfPath).then(() => true).catch(() => false),
@@ -204,12 +211,12 @@ class FilesController {
       try {
         entries = await fsPromises.readdir(this.optionsDir, { withFileTypes: true })
       } catch (e) {
-        return ['v6.0.0.swf']
+        return [LATEST_SWF_FILE]
       }
       const files = entries
         .filter(entry => !entry.isDirectory() && entry.name.endsWith('.swf'))
         .map(entry => entry.name)
-      const order = ['v6.0.0.swf', 'v5.2.0.swf', 'v4.2.3.swf', 'non-purple-private-chat.swf', 'unmodded-ajclient.swf']
+      const order = [LATEST_SWF_FILE, 'v6.0.0.swf', 'v5.2.0.swf', 'v4.2.3.swf', 'non-purple-private-chat.swf', 'unmodded-ajclient.swf']
       return [...new Set(files)].sort((a, b) => {
         const ai = order.indexOf(a)
         const bi = order.indexOf(b)
@@ -220,15 +227,16 @@ class FilesController {
       })
     } catch (error) {
       console.error('Error scanning for SWF files:', error)
-      return ['v6.0.0.swf']
+      return [LATEST_SWF_FILE]
     }
   }
 
   async getSwfFileInfo () {
     const files = await this.getAvailableSwfFiles()
     const displayNames = {
-      'v6.0.0.swf': 'v6.0.0 (latest)',
-      'v5.2.0.swf': 'v5.2.0 (previous)',
+      'v6.0.1.swf': 'v6.0.1 (latest)',
+      'v6.0.0.swf': 'v6.0.0 (previous)',
+      'v5.2.0.swf': 'v5.2.0 (older)',
       'v4.2.3.swf': 'v4.2.3 (older)',
       'non-purple-private-chat.swf': 'Non-Colored Private Chat (outdated)',
       'unmodded-ajclient.swf': 'Unmodded (latest)'
@@ -362,3 +370,5 @@ class FilesController {
 }
 
 module.exports = new FilesController();
+module.exports.LATEST_SWF_FILE = LATEST_SWF_FILE
+module.exports.PREVIOUS_LATEST_SWF_FILES = PREVIOUS_LATEST_SWF_FILES
