@@ -17,6 +17,7 @@ const PluginUIManager = require('../../../ui/managers/PluginUIManager')
 const IPCManager = require('../../../managers/ipc/IPCManager')
 const AutoCompleteManager = require('../../../ui/managers/AutoCompleteManager')
 const VersionChecker = require('../../../services/update/VersionChecker')
+const AppUpdateManager = require('../../../ui/managers/AppUpdateManager')
 const WindowActionManager = require('../../../managers/window/WindowActionManager')
 const ModalActionManager = require('../../../ui/managers/ModalActionManager')
 const ServerHostChecker = require('../../../services/network/ServerHostChecker')
@@ -299,51 +300,6 @@ module.exports = class Application extends EventEmitter {
     }
   }
 
-  // /**
-  //  * Sets up IPC listeners for application update status. (REMOVED - Global toasts for updates are disabled)
-  //  * @private
-  //  */
-  // _setupAppUpdateIPC() {
-  //   if (typeof require === "function") {
-  //     try {
-  //       const { ipcRenderer } = require('electron');
-  //       ipcRenderer.on('app-update-status', (event, { status, message, version }) => {
-  //         devLog(`[Renderer IPC] Received app-update-status: ${status}, Message: ${message}, Version: ${version}`);
-  //         let toastType = 'notify';
-  //         let toastMessage = message;
-  //         let duration = 7000; // Default duration from previous adjustment
-  //
-  //         switch (status) {
-  //           case 'checking':
-  //             toastType = 'checking'; // Use a specific type for styling if needed, or 'notify'
-  //             break;
-  //           case 'no-update':
-  //             toastType = 'success';
-  //             break;
-  //           case 'available':
-  //             toastType = 'available';
-  //             toastMessage = version ? `${message} (v${version})` : message;
-  //             duration = 5000; // Keep available message longer (reverted from 7000 for this specific case if desired)
-  //             break;
-  //           case 'downloaded':
-  //             toastType = 'downloaded'; // Or 'celebrate' from settings.js
-  //             duration = 7000; // Keep downloaded message longer
-  //             break;
-  //           case 'error':
-  //             toastType = 'error';
-  //             duration = 5000; // Reverted from 7000 for this specific case if desired
-  //             break;
-  //           default:
-  //             toastType = 'notify';
-  //         }
-  //         showGlobalToast(toastMessage, toastType, duration);
-  //       });
-  //     } catch (e) {
-  //       devError("[Renderer IPC] Error setting up app update status listeners:", e);
-  //     }
-  //   }
-  // }
-
   /**
    * Updates the status indicator for a specific plugin.
    * @param {string} pluginName - The name of the plugin.
@@ -589,6 +545,8 @@ module.exports = class Application extends EventEmitter {
     
     this.tooltipManager = new TooltipManager(this)
     this.tooltipManager.initialize()
+    this.appUpdateManager = new AppUpdateManager(this)
+    this.appUpdateManager.initialize()
     this.consoleDrawerManager.initialize()
     this.inlinePluginManager.initialize()
     this.networkEventHandler = new NetworkEventHandler(this, this.dispatch)

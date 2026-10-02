@@ -4,7 +4,6 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const crypto = require('crypto');
 const { spawn } = require('child_process');
-const { autoUpdater } = require('electron-updater');
 const processManager = require('../utils/ProcessManager');
 const logManager = require('../utils/LogManager');
 const PriceCheckerScraper = require('../services/PriceCheckerScraper');
@@ -251,13 +250,14 @@ function setupIpcHandlers(electronInstance) {
     return await fileIOHandler.saveTextFile(options);
   });
 
-  ipcMain.on('app-restart', () => {
-    try {
-      autoUpdater.quitAndInstall(false, true);
-    } catch (e) {
-      app.relaunch();
-      app.exit(0);
+  ipcMain.on('app-restart', async () => {
+    const service = electronInstance.autoUpdateService;
+    if (service && service.getState().status === 'downloaded') {
+      await installUpdateWithConfirm();
+      return;
     }
+    app.relaunch();
+    app.exit(0);
   });
 
   ipcMain.handle('get-app-state', () => electronInstance.getAppState());
@@ -1003,27 +1003,39 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
+  ipcMain.handle('get-update-status', () => {
+    return electronInstance.autoUpdateService ? electronInstance.autoUpdateService.getState() : null;
+  });
+
   ipcMain.on('check-for-updates', () => {
-    electronInstance.manualCheckInProgress = true;
-    autoUpdater.checkForUpdates().catch(err => {
-      const message = err && err.message ? err.message : String(err);
-      if (electronInstance.autoUpdateService) {
-        electronInstance.autoUpdateService.recordCheckStatus('error', { message, phase: 'manual' });
-      }
-      if (electronInstance._window && electronInstance._window.webContents && !electronInstance._window.isDestroyed()) {
-        electronInstance._window.webContents.send('manual-update-check-status', { status: 'error', message: `Manual update check failed: ${message}` });
-      }
-      electronInstance.manualCheckInProgress = false;
-    });
+    if (electronInstance.autoUpdateService) electronInstance.autoUpdateService.checkNow().catch(() => {});
   });
 
   ipcMain.on('download-update', () => {
-    autoUpdater.downloadUpdate().catch(err => {
-      if (electronInstance._window && electronInstance._window.webContents && !electronInstance._window.isDestroyed()) {
-        electronInstance._window.webContents.send('manual-update-check-status', { status: 'error', message: `Update download failed: ${err.message}` });
-      }
-    });
+    if (electronInstance.autoUpdateService) electronInstance.autoUpdateService.downloadNow().catch(() => {});
   });
+
+  // Installing closes the game, so ask first if it's open.
+  const installUpdateWithConfirm = async () => {
+    const service = electronInstance.autoUpdateService;
+    if (!service || service.getState().status !== 'downloaded') return false;
+    if (gameProcessManager.isGameRunning()) {
+      const { version } = service.getState();
+      const { response } = await dialog.showMessageBox(electronInstance._window, {
+        type: 'question',
+        buttons: ['Restart and update', 'Not now'],
+        defaultId: 0,
+        cancelId: 1,
+        title: 'Update Strawberry Jam',
+        message: `Restart to update to v${version}?`,
+        detail: 'Animal Jam is still open. Updating closes the game and Strawberry Jam, installs the update, then reopens Strawberry Jam.'
+      });
+      if (response !== 0) return false;
+    }
+    return service.installNow();
+  };
+
+  ipcMain.handle('install-update', () => installUpdateWithConfirm());
 
   ipcMain.on('launch-game-client', () => {
     gameProcessManager.launchGameClient();

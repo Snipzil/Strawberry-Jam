@@ -9,9 +9,7 @@ class SettingsEventHandler {
   }
 
   setupEventHandlers($modal, app, uiManager) {
-    if (typeof ipcRenderer !== 'undefined' && ipcRenderer) {
-      ipcRenderer.removeAllListeners('manual-update-check-status');
-    }
+    SettingsEventHandler.unsubscribeUpdateStatus();
 
     const self = this;
 
@@ -567,80 +565,103 @@ class SettingsEventHandler {
       }, 100);
     });
 
+    const BTN_CHECK = '<i class="fas fa-search mr-1.5"></i>Check for Updates';
+    const BTN_CHECKING = '<i class="fas fa-spinner fa-spin mr-1.5"></i>Checking...';
+    const BTN_DOWNLOADING = '<i class="fas fa-cloud-download-alt mr-1.5"></i>Downloading...';
+    const BTN_RESTART = '<i class="fas fa-power-off mr-1.5"></i>Restart to Update';
+    const BTN_RETRY = '<i class="fas fa-redo mr-1.5"></i>Retry Download';
+
+    const formatChecked = (iso) => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return ` Last checked ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`;
+    };
+
+    // What the main button does depends on the current state.
+    let primaryAction = 'check';
     $checkForUpdatesBtn.on('click', () => {
-      ipcRenderer.send('check-for-updates');
-      $manualUpdateStatusText.text('Checking for updates...').removeClass('text-green-400 text-red-400').addClass('text-yellow-400');
-      $checkForUpdatesBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Checking...').prop('disabled', true);
+      const updates = app.appUpdateManager;
+      if (!updates) return;
+      if (primaryAction === 'install') updates.installNow();
+      else if (primaryAction === 'retry') updates.downloadNow();
+      else updates.checkNow();
     });
 
     $downloadUpdateBtn.on('click', () => {
-      ipcRenderer.send('download-update');
-      $manualUpdateStatusText.text('Downloading update...').removeClass('text-yellow-400 text-red-400').addClass('text-blue-400');
-      $downloadUpdateBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Downloading...').prop('disabled', true);
-      $downloadProgressContainer.removeClass('hidden');
+      if (app.appUpdateManager) app.appUpdateManager.downloadNow();
     });
 
-    ipcRenderer.on('manual-update-check-status', async (event, { status, message, version }) => {
-      const autoUpdatesEnabled = await ipcRenderer.invoke('get-setting', 'updates.enableAutoUpdates');
+    const setStatus = (text, colorClass) => {
+      $manualUpdateStatusText.text(text)
+        .removeClass('text-gray-400 text-yellow-400 text-green-400 text-blue-400 text-purple-400 text-red-400')
+        .addClass(colorClass);
+    };
+
+    const render = (state) => {
+      const { status, version, percent, error, errorPhase, lastCheckedAt, currentVersion, releasesUrl } = state;
+      const v = version ? `v${version}` : '';
+      primaryAction = 'check';
+      $checkForUpdatesBtn.removeClass('hidden').prop('disabled', false).html(BTN_CHECK);
+      $downloadUpdateBtn.addClass('hidden').prop('disabled', false);
+      $downloadProgressContainer.addClass('hidden');
 
       switch (status) {
+        case 'disabled':
+          $checkForUpdatesBtn.prop('disabled', true);
+          setStatus('Updates are turned off in development builds.', 'text-gray-400');
+          break;
         case 'checking':
-          $manualUpdateStatusText.text(message || 'Checking for updates...').removeClass('text-yellow-400 text-red-400').addClass('text-green-400');
-          $checkForUpdatesBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Checking...').prop('disabled', true);
-          $downloadUpdateBtn.addClass('hidden');
+          $checkForUpdatesBtn.prop('disabled', true).html(BTN_CHECKING);
+          setStatus('Checking for updates...', 'text-yellow-400');
           break;
-        case 'no-update':
-          $manualUpdateStatusText.text(message || 'No new updates available.').removeClass('text-green-400 text-red-400').addClass('text-yellow-400');
-          $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false);
-          $downloadUpdateBtn.addClass('hidden');
+        case 'up-to-date':
+          setStatus(`You're on the latest version (v${currentVersion}).${formatChecked(lastCheckedAt)}`, 'text-green-400');
           break;
-        case 'available': {
-          const availableMessage = version ? `Update v${version} is available.` : message;
-          $manualUpdateStatusText.text(availableMessage).removeClass('text-yellow-400 text-red-400').addClass('text-blue-400');
-          
-          if (autoUpdatesEnabled) {
-            $checkForUpdatesBtn.html('<i class="fas fa-cloud-download-alt mr-2"></i>Downloading...').prop('disabled', true);
-            $downloadUpdateBtn.addClass('hidden');
-          } else {
-            $manualUpdateStatusText.text(`${availableMessage} Click "Download Now" to get it.`);
-            $checkForUpdatesBtn.addClass('hidden');
-            $downloadUpdateBtn.removeClass('hidden').prop('disabled', false);
-          }
+        case 'available':
+          $checkForUpdatesBtn.addClass('hidden');
+          $downloadUpdateBtn.removeClass('hidden');
+          setStatus(`${v} is available.`, 'text-blue-400');
           break;
-        }
-        case 'downloading': {
-          const progress = version;
-          $manualUpdateStatusText.text(`Downloading update... ${progress.toFixed(1)}%`).removeClass('text-yellow-400 text-red-400').addClass('text-blue-400');
-          $downloadProgressBar.css('width', `${progress}%`);
-          $downloadUpdateBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Downloading...').prop('disabled', true);
+        case 'downloading':
+          $checkForUpdatesBtn.prop('disabled', true).html(BTN_DOWNLOADING);
           $downloadProgressContainer.removeClass('hidden');
+          $downloadProgressBar.css('width', `${percent || 0}%`);
+          setStatus(`Downloading ${v}... ${(percent || 0).toFixed(0)}%`, 'text-blue-400');
           break;
-        }
         case 'downloaded':
-          $manualUpdateStatusText.text(message || 'Update downloaded. Restart to install.').removeClass('text-yellow-400 text-red-400').addClass('text-purple-400');
-          $downloadProgressContainer.addClass('hidden');
-          $downloadUpdateBtn.addClass('hidden');
-          $checkForUpdatesBtn.removeClass('hidden').html('<i class="fas fa-power-off mr-2"></i>Restart to Install')
-            .prop('disabled', false)
-            .off('click')
-            .on('click', () => {
-              ipcRenderer.send('app-restart');
-            });
+          primaryAction = 'install';
+          $checkForUpdatesBtn.html(BTN_RESTART);
+          setStatus(`${v} is ready. Restart now, or it installs the next time you close Strawberry Jam.`, 'text-purple-400');
+          break;
+        case 'installing':
+          $checkForUpdatesBtn.prop('disabled', true).html(BTN_RESTART);
+          setStatus('Installing the update...', 'text-purple-400');
           break;
         case 'error':
-          $manualUpdateStatusText.text(message || 'Error checking for updates.').removeClass('text-yellow-400 text-green-400').addClass('text-red-400');
-          $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false).removeClass('hidden');
-          $downloadUpdateBtn.addClass('hidden');
-          $downloadProgressContainer.addClass('hidden');
+          if (errorPhase === 'download') {
+            primaryAction = 'retry';
+            $checkForUpdatesBtn.html(BTN_RETRY);
+            setStatus(`Couldn't download ${v}: ${error}. It will retry automatically, or download it from ${releasesUrl}`, 'text-red-400');
+          } else {
+            setStatus(`Couldn't check for updates: ${error}. It will try again automatically.`, 'text-red-400');
+          }
           break;
         default:
-          $manualUpdateStatusText.text('').removeClass('text-yellow-400 text-green-400 text-red-400');
-          $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false).removeClass('hidden');
-          $downloadUpdateBtn.addClass('hidden');
-          $downloadProgressContainer.addClass('hidden');
+          setStatus(`Current version: v${currentVersion}.${formatChecked(lastCheckedAt)}`, 'text-gray-400');
       }
+    };
 
-    });
+    if (app.appUpdateManager) {
+      SettingsEventHandler._unsubscribeUpdateStatus = app.appUpdateManager.subscribe(render);
+    }
+  }
+
+  static unsubscribeUpdateStatus() {
+    if (SettingsEventHandler._unsubscribeUpdateStatus) {
+      SettingsEventHandler._unsubscribeUpdateStatus();
+      SettingsEventHandler._unsubscribeUpdateStatus = null;
+    }
   }
 }
 

@@ -20,7 +20,10 @@ RequestExecutionLevel user
 !macroend
 
 !macro customInit
-  MessageBox MB_ICONINFORMATION|MB_OK "This project is free on https://github.com/Snipzil/Strawberry-Jam$\\nIf you paid for this you were scammed."
+  ; Only on a manual install. App updates run silently (/S) and must not stop on a dialog.
+  IfSilent sj_skip_notice
+  MessageBox MB_ICONINFORMATION|MB_OK "This project is free on https://github.com/Snipzil/Strawberry-Jam$\\nIf you paid for this you were scammed." /SD IDOK
+  sj_skip_notice:
 
   ExecWait 'taskkill /F /IM strawberry-jam.exe'
   ExecWait 'taskkill /F /IM "AJ Classic.exe"'

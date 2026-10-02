@@ -47,9 +47,6 @@ exports.render = async function (app, data = {}) {
 }
 
 exports.close = function (app) {
-  if (typeof ipcRenderer !== 'undefined' && ipcRenderer) {
-    ipcRenderer.removeAllListeners('manual-update-check-status');
-  } else {
-    console.warn('[Settings Close] ipcRenderer not available for cleanup.');
-  }
+  const SettingsEventHandler = require('../../../../ui/managers/SettingsEventHandler');
+  SettingsEventHandler.unsubscribeUpdateStatus();
 }

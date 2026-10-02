@@ -24,6 +24,11 @@ class GameProcessManager {
     this.gameStartTimeRef = gameStartTimeRef;
     this.isGameTimeBeingTrackedRef = isGameTimeBeingTrackedRef;
     this.settingsService = settingsService;
+    this._runningGamePids = new Set();
+  }
+
+  isGameRunning() {
+    return this._runningGamePids.size > 0;
   }
 
   _getLinuxSettings() {
@@ -99,6 +104,7 @@ class GameProcessManager {
       });
 
       processManager.add(gameProcess);
+      if (gameProcess.pid) this._runningGamePids.add(gameProcess.pid);
 
       try {
         const os = require('os');
@@ -116,6 +122,7 @@ class GameProcessManager {
       }
 
       gameProcess.on('close', async (code) => {
+        this._runningGamePids.delete(gameProcess.pid);
         logManager.log(`[GameProcessManager] Game client process exited with code: ${code}`, 'main', logManager.logLevels.INFO);
 
         if (this.isGameTimeBeingTrackedRef.value && this.gameStartTimeRef.value) {

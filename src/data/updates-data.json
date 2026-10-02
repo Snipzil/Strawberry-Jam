@@ -2161,8 +2161,28 @@
     "releaseDate": "2026-10-01",
     "isLatest": true,
     "categories": {
-      "features": [],
-      "improvements": [],
+      "features": [
+        {
+          "icon": "download",
+          "title": "Update Button in the Header",
+          "description": "When an update is out, a button appears next to Settings. It shows download progress, then turns green: click Restart to update, or it installs the next time you close the app. You also get a console message at each step and a desktop notice if the window is in the background.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "refresh-cw",
+          "title": "More Reliable Updates",
+          "description": "Updates now install quietly and reopen the app, with no installer window. Failed downloads retry on their own, and the update button lets you retry right away. If the game is open, you are asked before it closes.",
+          "priority": "major"
+        },
+        {
+          "icon": "settings",
+          "title": "Update Notices With Auto-Updates Off",
+          "description": "Turning off Automatic Updates now only stops background downloads. You still see when an update is out and can download it with one click.",
+          "priority": "enhancement"
+        }
+      ],
       "fixes": [
         {
           "icon": "layers",

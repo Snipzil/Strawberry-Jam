@@ -232,7 +232,6 @@ class Electron {
     this.pluginWindows = new Map()
     this._backgroundPlugins = new Set()
     this._backgroundIntervals = new Map()
-    this.manualCheckInProgressRef = { value: false }
 
     try {
       this.keytar = require('keytar')
@@ -255,7 +254,7 @@ class Electron {
     this._setupFileOpeningIPC()
     this._setupCleanupHandlers()
 
-    this.autoUpdateService = new AutoUpdateService(app, this._store, this._window, this.manualCheckInProgressRef)
+    this.autoUpdateService = new AutoUpdateService(app, this._store, this._window)
     this.appStateService = new AppStateService(app, DEFAULT_APP_STATE)
     this.windowCreationService = new WindowCreationService(defaultWindowOptions)
     this.appNotificationService = new AppNotificationService(this._window, this.pluginWindows, this._backgroundPlugins)
