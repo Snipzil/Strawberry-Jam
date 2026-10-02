@@ -2100,16 +2100,47 @@
     "releaseDate": "2026-10-01",
     "isLatest": true,
     "categories": {
-      "features": [],
+      "features": [
+        {
+          "icon": "refresh-cw",
+          "title": "Retry Follow Buddy (Room Full)",
+          "description": "New Enhancements toggle in the Mod Menu. When a buddy is in a full room, Go to room keeps retrying every 2 seconds until you get in. A small banner shows while it tries, with a Stop button.",
+          "priority": "major"
+        }
+      ],
       "improvements": [
         {
           "icon": "list",
           "title": "Network Log Redesign",
           "description": "Packets now show as compact rows with a timestamp, direction arrow, command badge, and dimmed % separators, so about twice as many fit on screen.",
           "priority": "major"
+        },
+        {
+          "icon": "navigation",
+          "title": "Teleport Retries",
+          "description": "Teleporting to another room now keeps retrying until you arrive, instead of sending one request and closing the popup.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "sliders-horizontal",
+          "title": "Mod Menu Cleanup",
+          "description": "The Mod Menu now releases its event listeners and resources properly when it closes.",
+          "priority": "minor"
         }
       ],
       "fixes": [
+        {
+          "icon": "id-card",
+          "title": "Nametag Buddy Cards",
+          "description": "Clicking another player's nametag in a room now opens their buddy card, so you can get to their trade list from there.",
+          "priority": "major"
+        },
+        {
+          "icon": "store",
+          "title": "Marketplace Trade Rows",
+          "description": "The Trade For and View User buttons no longer throw an error, so marketplace listings show up again.",
+          "priority": "major"
+        },
         {
           "icon": "arrow-down",
           "title": "Network Log Auto-Scroll",
