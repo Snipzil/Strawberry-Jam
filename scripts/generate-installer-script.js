@@ -12,24 +12,45 @@ if (!fs.existsSync(buildDir)) {
   fs.mkdirSync(buildDir, { recursive: true });
 }
 
-const nshScriptContent = `
-RequestExecutionLevel user
+const APP_EXE = 'strawberry-jam.exe';
+const GAME_EXE = 'AJ Classic.exe';
 
-!macro customInstDir
-  StrCpy $INSTDIR "$LOCALAPPDATA\\Programs\\strawberry-jam"
-!macroend
+// Exit code 0 while the process is still running.
+const isRunning = (exe) =>
+  `nsExec::Exec \`"$SYSDIR\\cmd.exe" /C tasklist /NH /FI "IMAGENAME eq ${exe}" | "$SYSDIR\\find.exe" /I "${exe}"\``;
 
-!macro customInit
-  ; Only on a manual install. App updates run silently (/S) and must not stop on a dialog.
-  IfSilent sj_skip_notice
-  MessageBox MB_ICONINFORMATION|MB_OK "This project is free on https://github.com/Snipzil/Strawberry-Jam$\\nIf you paid for this you were scammed." /SD IDOK
-  sj_skip_notice:
+// Replaces electron-builder's running-app check. Its default matches every
+// process whose path starts with $INSTDIR, which also catches
+// strawberry-jam-classic\AJ Classic.exe, and then asks with "is running, click
+// OK" and "cannot be closed, retry" dialogs. Here both apps are closed without
+// asking (nsExec, so no console windows) and we wait up to ~10s for them to
+// exit so their files aren't in use. Also used by the uninstaller.
+const nshScriptContent = [
+  'RequestExecutionLevel user',
+  '',
+  '!macro customCheckAppRunning',
+  `  nsExec::Exec 'taskkill /F /T /IM "${APP_EXE}"'`,
+  '  Pop $0',
+  `  nsExec::Exec 'taskkill /F /T /IM "${GAME_EXE}"'`,
+  '  Pop $0',
+  '  StrCpy $R1 0',
+  '  sj_wait_for_exit:',
+  `    ${isRunning(APP_EXE)}`,
+  '    Pop $0',
+  '    StrCmp $0 0 sj_still_running',
+  `    ${isRunning(GAME_EXE)}`,
+  '    Pop $0',
+  '    StrCmp $0 0 sj_still_running sj_closed',
+  '  sj_still_running:',
+  '    IntOp $R1 $R1 + 1',
+  '    IntCmp $R1 40 sj_closed',
+  '    Sleep 250',
+  '    Goto sj_wait_for_exit',
+  '  sj_closed:',
+  '!macroend',
+  ''
+].join('\n');
 
-  ExecWait 'taskkill /F /IM strawberry-jam.exe'
-  ExecWait 'taskkill /F /IM "AJ Classic.exe"'
-!macroend
-`;
-
-fs.writeFileSync(nshScriptPath, nshScriptContent.trim());
+fs.writeFileSync(nshScriptPath, nshScriptContent);
 
 console.log(`Successfully generated ${nshScriptPath}`);

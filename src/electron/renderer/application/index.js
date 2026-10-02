@@ -609,6 +609,7 @@ module.exports = class Application extends EventEmitter {
     this._checkPortConflicts()
 
     await this._checkVersionAndShowUpdatesModal()
+    this._showFreeNoticeOnce()
 
     // Set up handlers for the minimize and close buttons
     const minimizeButton = document.getElementById('minimizeButton');
@@ -739,6 +740,23 @@ module.exports = class Application extends EventEmitter {
   async _checkVersionAndShowUpdatesModal() {
     if (this.versionChecker) {
       await this.versionChecker.checkAndShow()
+    }
+  }
+
+  /**
+   * Shows the "this project is free" notice once per install. It used to be a
+   * dialog in the installer.
+   * @private
+   */
+  async _showFreeNoticeOnce() {
+    try {
+      if (await ipcRenderer.invoke('get-setting', 'ui.freeNoticeShown')) return
+      this.consoleMessage({
+        type: 'notify',
+        message: 'Strawberry Jam is free at https://github.com/Snipzil/Strawberry-Jam. If you paid for it, you were scammed.'
+      })
+      await ipcRenderer.invoke('set-setting', 'ui.freeNoticeShown', true)
+    } catch (e) {
     }
   }
 

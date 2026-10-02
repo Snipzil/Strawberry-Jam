@@ -52,8 +52,8 @@
   },
   "nsis": {
     "artifactName": "${productName}-Setup-${version}.${ext}",
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true,
+    "oneClick": true,
+    "runAfterFinish": true,
     "perMachine": false,
     "allowElevation": false,
     "installerIcon": "./assets/images/icon.ico",

@@ -8,6 +8,11 @@ Download: `strawberry-jam-Setup-6.0.2.exe` from the Releases page, or let the ap
 
 - **6.0.1 client now loads.** Updating from 6.0.0 kept the old game client selected in Settings, so it replaced the new one every time the app started. The 6.0.1 fixes never showed up in game. Your selection now moves to the v6.0.1 client automatically on first launch. You can still pick an older client in Settings and it will stay picked.
 
+## Installer
+
+- **One-click install.** The installer is now a single progress window that opens Strawberry Jam when it finishes. It closes Strawberry Jam and the game on its own instead of asking, with no extra popups or console windows. It installs to the same place as before, so your settings carry over.
+- Windows may still show a "Windows protected your PC" warning on a fresh download because the installer isn't code-signed yet. Click **More info → Run anyway**. Updates through the app don't show it.
+
 ## Updates
 
 These take effect from the next update after this one.

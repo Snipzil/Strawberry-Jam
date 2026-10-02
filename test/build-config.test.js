@@ -62,8 +62,11 @@ describe('electron-builder.json', () => {
 
   test('nsis install dir matches the executable the installer kills', () => {
     const generator = fs.readFileSync(path.join(ROOT, 'scripts', 'generate-installer-script.js'), 'utf8')
-    assert.ok(generator.includes(`Programs\\\\${builder.productName}"`), 'customInstDir does not match productName')
-    assert.ok(generator.includes(`${builder.productName}.exe`), 'taskkill target does not match productName')
+    // A per-user one-click install goes to Programs\<package name>; keep that and
+    // the exe name the same so existing installs upgrade in place.
+    assert.equal(pkg.name, builder.productName, 'package name and productName differ, the install folder would change')
+    assert.ok(generator.includes(`'${builder.productName}.exe'`), 'taskkill target does not match productName')
+    assert.match(generator, /!macro customCheckAppRunning/, 'installer should replace the default running-app check')
   })
 
   test('extraResources sources exist', () => {

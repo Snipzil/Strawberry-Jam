@@ -2181,6 +2181,12 @@
           "title": "Update Notices With Auto-Updates Off",
           "description": "Turning off Automatic Updates now only stops background downloads. You still see when an update is out and can download it with one click.",
           "priority": "enhancement"
+        },
+        {
+          "icon": "package",
+          "title": "One-Click Installer",
+          "description": "The installer is now a single progress window that opens Strawberry Jam when it finishes. It closes Strawberry Jam and the game on its own instead of asking, with no extra popups or console windows.",
+          "priority": "enhancement"
         }
       ],
       "fixes": [
