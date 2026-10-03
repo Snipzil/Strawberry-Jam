@@ -2261,7 +2261,7 @@
   "6.0.4": {
     "version": "6.0.4",
     "releaseDate": "2026-10-03",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "fixes": [
         {
@@ -2275,6 +2275,27 @@
           "title": "WASD and the Chat Box",
           "description": "With WASD Movement on, the game no longer puts you back in the chat box by itself, so W/A/S/D move you instead of typing. Press Enter or click the chat box to type, and Enter to send. Afterwards you're back to moving. Enter on an empty chat box, Esc or clicking the room also gets you out.",
           "priority": "major"
+        }
+      ]
+    }
+  },
+  "6.0.5": {
+    "version": "6.0.5",
+    "releaseDate": "2026-10-03",
+    "isLatest": true,
+    "categories": {
+      "fixes": [
+        {
+          "icon": "shopping-cart",
+          "title": "Shop Explorer Bans",
+          "description": "Opening Shop Explorer could get your account banned, because it asked the server about shops that weren't in the den you were in, all at once. It now only works inside a den, only looks at that den's shops, and loads them one at a time a few seconds apart. Your own shops load without asking the server.",
+          "priority": "major"
+        },
+        {
+          "icon": "image",
+          "title": "Shop Explorer Item Pictures",
+          "description": "Item pictures in Shop Explorer now show on every row and line up with their item. Most of them used to be blank.",
+          "priority": "minor"
         }
       ]
     }
