@@ -54,6 +54,26 @@ the file as vanilla and untouched.
   full 20-item request. `TYPE_TRADE` now counts your own trade list (the list
   passed to `init`, or `userInfo.getMyTradeList()`), and both branches clamp
   to 0.
+- `src/MainFrame.as`, `src/room/RoomManagerWorld.as`,
+  `src/gamePlayFlow/GamePlay.as` — zoom hotkeys and WASD chat focus.
+  - Zoom: the Shift+Plus/Minus hotkeys stepped from
+    `MainFrame.electronManagedZoomLevel`, not from what was on screen. Rooms
+    clamp to a minimum "fill" zoom and window resizes apply an auto zoom, so
+    presses could jump, go the wrong way, or do nothing for several presses.
+    Joining a room also capped the scale to the room's own zoom, which threw
+    away your zoom in some rooms. Hotkeys now step from
+    `RoomManagerWorld.currentZoom` and record the result with
+    `MainFrame.setUserZoom()`, which sets an explicit `userZoomSet` flag
+    (exactly 100% used to count as "not set"). `onRoomLoaded` and
+    `handleResize` re-apply that zoom when the flag is set (except in
+    side-scroll quests). `updateRoomZoom` no longer throws before a room's
+    layers exist.
+  - WASD: with WASD movement on, the game puts focus back in the chat box
+    (for example after you send a message) and W/A/S/D then type there. A
+    capture-phase stage `mouseDown` in `MainFrame` now clears focus from the
+    text field whenever you click anything that isn't a text field, so
+    clicking the room to walk frees the keys. It only runs while WASD
+    movement is on, so vanilla chat focus is unchanged.
 - `src/gui/ModMenuFeatures.as` — registers the new `followBuddyRetryEnabled`
   enhancement toggle ("Retry Follow Buddy (Room Full)") so it shows up in the
   mod menu's Enhancements tab and persists like every other toggle.
@@ -77,7 +97,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src\avatar,..\src\gui,..\src\buddy avatar.NameBar,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow avatar.NameBar,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```
