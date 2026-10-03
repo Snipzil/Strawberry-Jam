@@ -81,6 +81,23 @@ the file as vanilla and untouched.
     text field whenever you click anything that isn't a text field, so
     clicking the room to walk frees the keys. It only runs while WASD
     movement is on, so vanilla chat focus is unchanged.
+- AJ deploy 1830 port: `src/avatar/AvatarManager.as`,
+  `src/avatar/AvatarViewExt_Splash.as`, `src/pet/PetBase.as`,
+  `src/pet/PetManager.as`, `src/den/DenXtCommManager.as`. AJ's client update
+  (deploy 1830, the Proto-Phantom candy adventure) added eight coloured
+  splash liquids (red, orange, yellow, green, cyan, blue, purple, pink) and
+  pets 120-123 (axolotl, countfabulous, countfabulousbat, tut). Our base
+  predates it, so in that adventure the splash view treated the colours as a
+  real splash volume and players couldn't move. `AvatarViewExt_Splash` is
+  AJ's 1830 file as-is (our mods don't touch it). The other four are our
+  modded versions plus only AJ's additions. AJ's `SmartFoxClient`/`SFClient`
+  changes were deliberately not ported, because they are connection plumbing
+  and renames, and our base forces the local proxy connection.
+  To check for future AJ updates: `GET https://www.animaljam.com/flashvars`
+  → `deploy_version`, download
+  `https://ajcontent.akamaized.net/<deploy_version>/ajclient.swf`, export both
+  it and `options/unmodded-ajclient.swf` with FFDec (one export at a time;
+  parallel exports came out truncated) and diff the scripts.
 - `src/gui/ModMenuFeatures.as` — registers the new `followBuddyRetryEnabled`
   enhancement toggle ("Retry Follow Buddy (Room Full)") so it shows up in the
   mod menu's Enhancements tab and persists like every other toggle.
@@ -104,7 +121,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow avatar.NameBar,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```
