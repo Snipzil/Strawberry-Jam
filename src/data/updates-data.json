@@ -2159,7 +2159,7 @@
   "6.0.2": {
     "version": "6.0.2",
     "releaseDate": "2026-10-01",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -2195,6 +2195,65 @@
           "title": "6.0.1 Client Now Loads",
           "description": "Updating from 6.0.0 kept the old game client selected, so it replaced the new one on launch and the 6.0.1 fixes never showed up, including Retry Follow Buddy, nametag buddy cards and the marketplace fix. Your selection now moves to the v6.0.1 client automatically. You can still pick an older client in Settings.",
           "priority": "major"
+        }
+      ]
+    }
+  },
+  "6.0.3": {
+    "version": "6.0.3",
+    "releaseDate": "2026-10-03",
+    "isLatest": true,
+    "categories": {
+      "improvements": [
+        {
+          "icon": "sparkles",
+          "title": "Animal Jam's Latest Update",
+          "description": "Adds the new coloured splash liquids (red, orange, yellow, green, cyan, blue, purple and pink) and the new pets (axolotl, Count Fabulous cat and bat, and Tut) from Animal Jam's latest game update.",
+          "priority": "major"
+        },
+        {
+          "icon": "palette",
+          "title": "Custom Theme on Game Buttons",
+          "description": "The Mod Menu button and the Fullscreen/Logout tray now use your theme colour, including custom themes, instead of staying red.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "repeat",
+          "title": "Trade Multi-Select",
+          "description": "Selecting several items for your trade list could stop working entirely after you'd sent someone a trade request. Searching or switching tabs could also add an item twice or ignore a click. Both are fixed.",
+          "priority": "major"
+        },
+        {
+          "icon": "zoom-in",
+          "title": "Zoom Hotkeys",
+          "description": "Shift+Plus/Minus now zoom from what's on screen, so presses no longer jump, go the wrong way or do nothing in some rooms. Your zoom also stays when you change rooms or resize the window.",
+          "priority": "major"
+        },
+        {
+          "icon": "keyboard",
+          "title": "WASD Stuck in Chat",
+          "description": "With WASD Movement on, clicking anywhere outside the chat box (like the room, to walk) now takes the keys back from chat.",
+          "priority": "major"
+        },
+        {
+          "icon": "maximize",
+          "title": "Fullscreen Version Tag",
+          "description": "The version tag no longer covers the Mod Menu button in fullscreen.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "list",
+          "title": "Readable Settings Dropdowns",
+          "description": "Dropdown options in the game window's settings were light text on white in dark mode. They are readable now.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "refresh-cw",
+          "title": "Game Reloads",
+          "description": "A failed game load could trigger several reloads at once after a few sessions. It now retries once.",
+          "priority": "enhancement"
         }
       ]
     }
