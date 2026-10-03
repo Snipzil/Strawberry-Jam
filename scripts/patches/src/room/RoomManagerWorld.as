@@ -1915,10 +1915,9 @@ package room
                   }
                }
             }
-            else
-            {
-               _loc5_ = heartbeat_movePlayer(param1,param2);
-            }
+            // vanilla moves the player every frame; an earlier recompile had put this in an
+            // `else`, so standing in any avatar volume (e.g. an adventure spawn) froze movement
+            _loc5_ = heartbeat_movePlayer(param1,param2);
          }
          if(_inPreviewMode)
          {
