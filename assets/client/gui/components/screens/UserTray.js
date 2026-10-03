@@ -160,15 +160,10 @@
       }
     }
 
-    updateTheme(theme) {
-      if (!theme) return;
-      this.style.setProperty('--theme-primary', theme.primary);
-      this.style.setProperty('--theme-secondary', theme.secondary);
-      this.style.setProperty('--theme-hover-border', theme.hoverBorder);
-      this.style.setProperty('--theme-shadow', theme.shadow);
-      this.style.setProperty('--theme-box-background', theme.boxBackground);
-      this.style.setProperty('--theme-settings-hover', theme.settingsHover);
-    }
+    // Theme vars are inherited from <html> (LoginScreen's theme manager shares them there),
+    // which also covers custom themes. Setting them inline here would pin the tray to
+    // whatever fruit theme was passed at login.
+    updateTheme() {}
   });
 
   window.UserTrayManager = {

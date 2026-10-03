@@ -23,7 +23,6 @@
         --sidebar-border: #16171f;
         --text-primary: #C3C3C3;
         --highlight-green: #38b000;
-        --theme-primary: #e83d52;
       }
       @media (min-aspect-ratio: 900 / 550) {
         :host {
