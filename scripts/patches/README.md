@@ -98,6 +98,21 @@ the file as vanilla and untouched.
   `https://ajcontent.akamaized.net/<deploy_version>/ajclient.swf`, export both
   it and `options/unmodded-ajclient.swf` with FFDec (one export at a time;
   parallel exports came out truncated) and diff the scripts.
+- `src/gui/ShopExplorerPopup.as` (mod-added popup, not vanilla) and
+  `src/den/DenXtCommManager.as` — Shop Explorer was getting accounts
+  banned. It sent a burst of `dsi` (den store info) requests no vanilla
+  client sends: every one of *your own* shop IDs (`ShopManager.myShopItems`)
+  paired with the current den owner's name, shop IDs left over from the
+  previous den, your own username when you weren't in a den at all, and a
+  fresh burst on every reopen (and on every den join while it was open).
+  Now it only runs inside a den; it asks only for shops placed in that den
+  (den-state IDs, which `DenXtCommManager` now tags with the room they came
+  from via `getLastDenStateRoomName()`, plus the room's own den items); your
+  own shops come from the local cache like the vanilla shop does; and
+  requests go out one at a time, 2.5s apart, paused while a shop is open,
+  stopped if you leave the den or a reply doesn't come back in 10s, with
+  results cached for 60s so reopening doesn't resend. `DenXtCommManager` no
+  longer calls into the popup on den state.
 - `src/room/RoomManagerWorld.as` heartbeat: an earlier decompile/recompile
   of this class moved `heartbeat_movePlayer` into an `else` after the
   avatar-volume test, so the player only moved while standing outside every
@@ -137,7 +152,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```

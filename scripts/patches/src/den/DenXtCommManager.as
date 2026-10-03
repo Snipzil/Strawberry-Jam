@@ -82,6 +82,8 @@ package den
       
       private static var _lastDenStateShopIds:Array = [];
       
+      private static var _lastDenStateRoomName:String = "";
+      
       public function DenXtCommManager()
       {
          super();
@@ -90,6 +92,11 @@ package den
       public static function getLastDenStateShopIds() : Array
       {
          return _lastDenStateShopIds;
+      }
+      
+      public static function getLastDenStateRoomName() : String
+      {
+         return _lastDenStateRoomName;
       }
       
       public static function init(param1:Function) : void
@@ -815,7 +822,6 @@ package den
       {
          var _loc18_:Array;
          var _loc40_:Array;
-         var ShopExplorerPopupClass:Class;
          var _loc38_:int = 0;
          var _loc27_:int = 0;
          var _loc12_:* = false;
@@ -926,21 +932,15 @@ package den
             }
             _loc21_++;
          }
-         if(_loc40_.length > 0)
-         {
-            try
-            {
-               ShopExplorerPopupClass = flash.utils.getDefinitionByName("gui.ShopExplorerPopup") as Class;
-               if(ShopExplorerPopupClass && ShopExplorerPopupClass.hasOwnProperty("onDenStateShopsDiscovered"))
-               {
-                  ShopExplorerPopupClass["onDenStateShopsDiscovered"](_loc40_);
-               }
-            }
-            catch(e:Error)
-            {
-            }
-         }
          _lastDenStateShopIds = _loc40_;
+         _lastDenStateRoomName = "";
+         try
+         {
+            _lastDenStateRoomName = gMainFrame.server.getCurrentRoomName();
+         }
+         catch(e:Error)
+         {
+         }
          _loc21_ = 0;
          while(_loc21_ < _loc14_)
          {
