@@ -2202,7 +2202,7 @@
   "6.0.3": {
     "version": "6.0.3",
     "releaseDate": "2026-10-03",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "improvements": [
         {
@@ -2254,6 +2254,27 @@
           "title": "Game Reloads",
           "description": "A failed game load could trigger several reloads at once after a few sessions. It now retries once.",
           "priority": "enhancement"
+        }
+      ]
+    }
+  },
+  "6.0.4": {
+    "version": "6.0.4",
+    "releaseDate": "2026-10-03",
+    "isLatest": true,
+    "categories": {
+      "fixes": [
+        {
+          "icon": "move",
+          "title": "Stuck in Some Adventures",
+          "description": "In some rooms, including the new Proto-Phantom candy adventure, you couldn't move at all with the arrow keys or by clicking if you started out standing in certain spots. You can move normally now.",
+          "priority": "major"
+        },
+        {
+          "icon": "keyboard",
+          "title": "WASD and the Chat Box",
+          "description": "With WASD Movement on, the game no longer puts you back in the chat box by itself, so W/A/S/D move you instead of typing. Press Enter or click the chat box to type, and Enter to send. Afterwards you're back to moving. Enter on an empty chat box, Esc or clicking the room also gets you out.",
+          "priority": "major"
         }
       ]
     }
