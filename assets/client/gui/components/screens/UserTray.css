@@ -10,13 +10,7 @@
   z-index: 10000;
   /* Prevent cursor interference with game area */
   pointer-events: none;
-  /* Theme variables matching LoginScreen */
-  --theme-primary: #e83d52;
-  --theme-secondary: rgba(232, 61, 82, 0.3);
-  --theme-hover-border: rgba(232, 61, 82, 0.5);
-  --theme-shadow: rgba(252, 93, 93, 0.1);
-  --theme-box-background: rgba(255, 245, 230, 0.95);
-  --theme-settings-hover: rgba(232, 61, 82, 0.05);
+  /* --theme-* vars are inherited from <html> (shared by LoginScreen's theme manager) */
 }
 
 .hidden {
@@ -28,7 +22,7 @@
   flex-direction: row;
   align-items: center;
   background-color: rgba(18, 18, 20, 0.88);
-  border: 1px solid var(--theme-secondary);
+  border: 1px solid var(--theme-secondary, rgba(232, 61, 82, 0.3));
   border-radius: 12px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   transition: border-color 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
@@ -41,8 +35,8 @@
 
 #tray-container:hover {
   opacity: 1;
-  border-color: var(--theme-hover-border);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 3px var(--theme-shadow);
+  border-color: var(--theme-hover-border, rgba(232, 61, 82, 0.5));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 3px var(--theme-shadow, rgba(252, 93, 93, 0.1));
 }
 
 #arrow-container {
@@ -73,7 +67,7 @@
 #arrow-icon-svg {
   width: 16px;
   height: 16px;
-  stroke: var(--theme-primary);
+  stroke: var(--theme-primary, #e83d52);
   stroke-width: 2.5;
   transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -131,9 +125,9 @@
 }
 
 #tray-content button:hover {
-  background-color: var(--theme-primary);
-  border-color: var(--theme-primary);
-  color: #ffffff;
+  background-color: var(--theme-primary, #e83d52);
+  border-color: var(--theme-primary, #e83d52);
+  color: var(--theme-button-text, #ffffff);
 }
 
 #tray-content button:active {
@@ -144,13 +138,19 @@
   margin-right: 8px;
   width: 14px;
   height: 14px;
-  stroke: var(--theme-primary);
+  stroke: var(--theme-primary, #e83d52);
   stroke-width: 2.25;
   flex-shrink: 0;
   transition: stroke 0.2s ease;
 }
 
 #tray-content button:hover svg {
+  stroke: var(--theme-button-text, #ffffff);
+}
+
+#logout-button:hover,
+#logout-button:hover svg {
+  color: #ffffff;
   stroke: #ffffff;
 }
 

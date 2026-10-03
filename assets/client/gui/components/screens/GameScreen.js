@@ -198,7 +198,7 @@
         max-width: 160px;
         color: #ffffff;
         border-color: var(--theme-primary, #e83d52);
-        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(232, 61, 82, 0.18);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5), 0 0 0 3px var(--theme-secondary, rgba(232, 61, 82, 0.18));
       }
       #mod-menu-btn:active {
         transform: scale(0.96);

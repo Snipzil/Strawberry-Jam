@@ -97,7 +97,20 @@
         createAccountBtn.style.setProperty('--ajd-bubble-button-background-color-active', buttonBg);
       }
       
+      this.shareThemeVars(root);
       return true;
+    }
+
+    // Theme vars live on the login screen host; copy them to <html> so siblings
+    // outside its shadow tree (game screen mod menu button, user tray) inherit them.
+    shareThemeVars(root) {
+      const docStyle = document.documentElement.style;
+      for (let i = 0; i < root.style.length; i++) {
+        const name = root.style[i];
+        if (name.startsWith('--theme-')) {
+          docStyle.setProperty(name, root.style.getPropertyValue(name));
+        }
+      }
     }
 
     setupFruitRotation() {
@@ -235,9 +248,7 @@
       if (this.loginScreen.accountPanelInstance && typeof this.loginScreen.accountPanelInstance.updateTheme === 'function') {
         this.loginScreen.accountPanelInstance.updateTheme(fruitKey);
       }
-      if (window.UserTrayManager && window.UserTrayManager.instance && typeof window.UserTrayManager.instance.updateTheme === 'function') {
-        window.UserTrayManager.instance.updateTheme(theme);
-      }
+      this.shareThemeVars(root);
       if (this.loginScreen.importButtonInstance && typeof this.loginScreen.importButtonInstance.updateTheme === 'function') {
         this.loginScreen.importButtonInstance.updateTheme(fruitKey);
       }
