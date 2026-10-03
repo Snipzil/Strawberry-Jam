@@ -295,6 +295,13 @@ package
       private static function keyDownListener(param1:KeyboardEvent) : void
       {
          var isTextFieldFocused:Boolean = _stage.focus is TextField;
+         // With WASD movement on, chat no longer grabs focus by itself, so Enter opens it for typing.
+         // Skip Enter that came from a text field (that one just sent a message).
+         if(GamePlay.wasdMovementEnabled && param1.keyCode == 13 && !isTextFieldFocused && !(param1.target is TextField) && !param1.ctrlKey && !param1.shiftKey && !param1.altKey && GuiManager.chatHist)
+         {
+            GuiManager.chatHist.focusMsgTextForTyping();
+            return;
+         }
          var isWASDKey:Boolean = param1.keyCode == 65 || param1.keyCode == 87 || param1.keyCode == 83 || param1.keyCode == 68;
          if(isTextFieldFocused && isWASDKey && GamePlay.wasdMovementEnabled)
          {
