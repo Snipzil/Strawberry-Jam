@@ -116,6 +116,11 @@
             pointer-events: auto;
           }
 
+          /* fullscreen game fills the window, so the version tag would sit on the mod menu button */
+          :host(.in-game.fullscreen-active) #version {
+            display: none;
+          }
+
           *, *::before, *::after {
             box-sizing: border-box;
           }
