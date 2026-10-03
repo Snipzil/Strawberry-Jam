@@ -828,6 +828,8 @@ package gui
                _currDownMC = _itemDenWindows.bg.getChildAt(_giftDownIdx) as ItemWindowOriginal;
             }
          }
+         // grid was rebuilt (search / tab switch): window indexes changed, so rebuild them from the selected items
+         _selectedItems = [];
          var i:int = 0;
          while(i < _currItemWindow.mediaWindows.length)
          {
@@ -841,6 +843,7 @@ package gui
                   if(selectedItem.invIdx == itemWindow.currItem.invIdx && selectedItem.itemType == itemWindow.currItem.itemType)
                   {
                      itemWindow.cir.gotoAndStop("green");
+                     _selectedItems.push(itemWindow.index);
                      break;
                   }
                   j++;
@@ -1158,8 +1161,19 @@ package gui
          {
             return;
          }
-         var existingIndex:int = int(_selectedItems.indexOf(itemWindow.index));
-         if(existingIndex != -1)
+         // decide by item identity, not window index (indexes go stale when the grid is rebuilt)
+         var selectedPos:int = -1;
+         var i:int = 0;
+         while(i < _selectedItemsCollection.length)
+         {
+            if(_selectedItemsCollection.getIitem(i).invIdx == item.invIdx && _selectedItemsCollection.getIitem(i).itemType == item.itemType)
+            {
+               selectedPos = i;
+               break;
+            }
+            i++;
+         }
+         if(selectedPos != -1)
          {
             if(itemWindow.isInUse)
             {
@@ -1169,16 +1183,11 @@ package gui
             {
                itemWindow.cir.gotoAndStop("up");
             }
-            _selectedItems.splice(existingIndex,1);
-            var i:int = 0;
-            while(i < _selectedItemsCollection.length)
+            _selectedItemsCollection.getCoreArray().splice(selectedPos,1);
+            var existingIndex:int = int(_selectedItems.indexOf(itemWindow.index));
+            if(existingIndex != -1)
             {
-               if(_selectedItemsCollection.getIitem(i).invIdx == item.invIdx && _selectedItemsCollection.getIitem(i).itemType == item.itemType)
-               {
-                  _selectedItemsCollection.getCoreArray().splice(i,1);
-                  break;
-               }
-               i++;
+               _selectedItems.splice(existingIndex,1);
             }
          }
          else

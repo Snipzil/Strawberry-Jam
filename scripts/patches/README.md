@@ -54,6 +54,13 @@ the file as vanilla and untouched.
   full 20-item request. `TYPE_TRADE` now counts your own trade list (the list
   passed to `init`, or `userInfo.getMyTradeList()`), and both branches clamp
   to 0.
+  Separately, selection was tracked by grid window index (`_selectedItems`),
+  which went stale whenever the grid was rebuilt (search, tab switch). The
+  rebuild re-marks selected items green by item identity, but toggling still
+  checked the stale index list, so clicking a green item could add it twice
+  and clicking an unselected item in a previously used slot did nothing.
+  `toggleItemSelection` now decides by item identity, and `onListLoaded`
+  rebuilds `_selectedItems` from the items it re-marks.
 - `src/MainFrame.as`, `src/room/RoomManagerWorld.as`,
   `src/gamePlayFlow/GamePlay.as` — zoom hotkeys and WASD chat focus.
   - Zoom: the Shift+Plus/Minus hotkeys stepped from

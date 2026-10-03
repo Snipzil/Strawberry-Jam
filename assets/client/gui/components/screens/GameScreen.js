@@ -496,9 +496,14 @@
       }
 
 
+      // drop listeners left over from an earlier load, otherwise a later failure
+      // fires every stale did-fail-load and schedules overlapping retries
+      if (this._loadDomReadyHandler) this.webViewElem.removeEventListener("dom-ready", this._loadDomReadyHandler);
+      if (this._loadFailHandler) this.webViewElem.removeEventListener("did-fail-load", this._loadFailHandler);
+
       this.webViewElem.classList.remove("hidden");
       this.webViewElem.src = globals.config.gameWebClient;
-      this.webViewElem.addEventListener("dom-ready", () => {
+      this._loadDomReadyHandler = () => {
         this._webviewReady = true;
         if (this._pendingDevToolsToggle) {
           this._pendingDevToolsToggle = false;
@@ -512,9 +517,10 @@
         console.log('[SWF] FlashVars ready, sending to webview');
         this.webViewElem.send("flashVarsReady", flashVars);
 
-      }, {once: true});
+      };
+      this.webViewElem.addEventListener("dom-ready", this._loadDomReadyHandler, {once: true});
 
-      this.webViewElem.addEventListener("did-fail-load", event => {
+      this._loadFailHandler = event => {
         if (!event.isMainFrame) return;
         if (event.errorCode === -3) return;
 
@@ -537,7 +543,8 @@
             this.loadGame(flashVars);
           }, 2000);
         }
-      }, {once: true});
+      };
+      this.webViewElem.addEventListener("did-fail-load", this._loadFailHandler, {once: true});
     }
 
     _initModMenuButton() {
