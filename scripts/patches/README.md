@@ -44,6 +44,16 @@ the file as vanilla and untouched.
     (`gotoDownHandler`) now uses the same retry helper when the new
     `followBuddyRetryEnabled` mod toggle is on; otherwise it keeps the
     original one-shot behavior.
+- `src/gui/DenAndClothesItemSelect.as` — the multi-select item picker
+  capped how many items you could select via `getSelectionLimit()`, which
+  for both your own trade list (`TYPE_TRADE`) and a trade request
+  (`TYPE_TRADE_INITIATION`) used `TradeManager.currentTradeListLength`, the
+  length of the *trade-request* list. That list is only cleared when the next
+  trade request opens, so after sending a request with N items you could
+  only select 20−N items for your own trade list, and none at all after a
+  full 20-item request. `TYPE_TRADE` now counts your own trade list (the list
+  passed to `init`, or `userInfo.getMyTradeList()`), and both branches clamp
+  to 0.
 - `src/gui/ModMenuFeatures.as` — registers the new `followBuddyRetryEnabled`
   enhancement toggle ("Retry Follow Buddy (Room Full)") so it shows up in the
   mod menu's Enhancements tab and persists like every other toggle.
@@ -67,7 +77,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src\avatar,..\src\gui,..\src\buddy avatar.NameBar,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src\avatar,..\src\gui,..\src\buddy avatar.NameBar,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```
