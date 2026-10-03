@@ -93,11 +93,11 @@ the file as vanilla and untouched.
   modded versions plus only AJ's additions. AJ's `SmartFoxClient`/`SFClient`
   changes were deliberately not ported, because they are connection plumbing
   and renames, and our base forces the local proxy connection.
-  To check for future AJ updates: `GET https://www.animaljam.com/flashvars`
-  → `deploy_version`, download
-  `https://ajcontent.akamaized.net/<deploy_version>/ajclient.swf`, export both
-  it and `options/unmodded-ajclient.swf` with FFDec (one export at a time;
-  parallel exports came out truncated) and diff the scripts.
+  Future AJ updates are ported by `npm run aj:update` (see
+  `scripts/aj-update/README.md`), which also writes the merged classes back
+  into this folder. Note `options/unmodded-ajclient.swf` is not pure vanilla:
+  its `SmartFoxClient` is hooked to the local proxy, so diff against AJ's own
+  SWF from `ajcontent.akamaized.net/<deploy>/ajclient.swf` instead.
 - `src/gui/ShopExplorerPopup.as` (mod-added popup, not vanilla) and
   `src/den/DenXtCommManager.as` — Shop Explorer was getting accounts
   banned. It sent a burst of `dsi` (den store info) requests no vanilla

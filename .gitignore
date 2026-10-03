@@ -22,3 +22,7 @@ plugin_packages/
 
 
 RELEASE_NOTES.md
+
+# AJ client updater downloads, exports and build output
+scripts/aj-update/work/
+scripts/aj-update/tool/*.class

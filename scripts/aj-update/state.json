@@ -1,0 +1,16 @@
+{
+  "vanilla": {
+    "1829": "a381eb63336426f9ddc0d03041a10581dad1bd39c68f106579da1a76c3ca0188",
+    "1830": "c6656448aa8e73b27b583831e2440965dfee98faab16151c76f5586004d76456"
+  },
+  "targets": {
+    "modded": {
+      "deploy": "1830",
+      "updatedAt": "2026-10-03T00:00:00.000Z"
+    },
+    "unmodded": {
+      "deploy": "1829",
+      "updatedAt": "2026-10-03T00:00:00.000Z"
+    }
+  }
+}

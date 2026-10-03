@@ -23,6 +23,8 @@
     "publish": "npm run prepare:app && node scripts/generate-installer-script.js && electron-builder build -w -p always",
     "postinstall": "electron-builder install-app-deps",
     "version:bump": "node scripts/version-bump.js",
+    "aj:check": "node scripts/aj-update/aj-update.js --check",
+    "aj:update": "node scripts/aj-update/aj-update.js",
     "prepare": "husky"
   },
   "repository": {
