@@ -789,6 +789,17 @@
             cursor: pointer;
           }
 
+          /* Electron 11 draws the native option popup on white regardless of color-scheme */
+          .settings-select option {
+            color: #4a3325;
+            background-color: #ffffff;
+          }
+
+          :host(.dark-mode) .settings-select option {
+            color: #F3F3F5;
+            background-color: #26262b;
+          }
+
           .settings-select:hover,
           .settings-input:hover {
             border-color: var(--theme-hover-border);
