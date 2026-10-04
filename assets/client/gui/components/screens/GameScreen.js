@@ -305,6 +305,10 @@
       };
       document.addEventListener("logout-requested", this._boundLogoutHandler);
 
+      // theme vars land on <html> (LoginScreen theme manager); forward changes to the mod menu
+      this._themeObserver = new MutationObserver(() => this._sendModMenuTheme());
+      this._themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
+
       this._boundDragoverHandler = (event) => {
         event.preventDefault();
         return false;
@@ -515,6 +519,8 @@
         }
         console.log('[SWF] FlashVars ready, sending to webview');
         this.webViewElem.send("flashVarsReady", flashVars);
+        this._sentModMenuTheme = null;
+        this._sendModMenuTheme();
 
       };
       this.webViewElem.addEventListener("dom-ready", this._loadDomReadyHandler, {once: true});
@@ -544,6 +550,16 @@
         }
       };
       this.webViewElem.addEventListener("did-fail-load", this._loadFailHandler, {once: true});
+    }
+
+    _sendModMenuTheme() {
+      if (!this._webviewReady || !this.webViewElem) return;
+      const primary = getComputedStyle(document.documentElement).getPropertyValue("--theme-primary");
+      const { normalizeHexColor } = window.LoginScreenUtilities || {};
+      const color = normalizeHexColor ? normalizeHexColor(primary) : null;
+      if (!color || color === this._sentModMenuTheme) return;
+      this._sentModMenuTheme = color;
+      this.webViewElem.send("modMenuTheme", color);
     }
 
     _initModMenuButton() {
@@ -587,6 +603,7 @@
 
     disconnectedCallback() {
       document.removeEventListener("logout-requested", this._boundLogoutHandler);
+      if (this._themeObserver) this._themeObserver.disconnect();
       if (this.webViewElem) {
         this.webViewElem.removeEventListener("dragover", this._boundDragoverHandler, false);
         this.webViewElem.removeEventListener("drop", this._boundDropHandler, false);

@@ -285,7 +285,7 @@ package gui
          row.addChild(descTxt);
          row["fullDesc"] = description;
          row["descClipped"] = descTxt.numLines > 2;
-         openBtn = ModMenuUIHelper.createButton("Open",5025616,72,22);
+         openBtn = ModMenuUIHelper.createButton("Open",ModMenuUIHelper.COLOR_BTN_PRIMARY,72,22);
          openBtn.x = ROW_W - 8 - 72;
          openBtn.y = hasHotkey(hotkey) ? 4 : 12;
          openBtn["popupAction"] = action;

@@ -104,6 +104,7 @@ package gui
          _tabTotals = {};
          _tabVisible = {};
          loadUiPrefs();
+         ModMenuUIHelper.loadTheme();
          DarkenManager.showLoadingSpiral(true);
          createModMenuInterface();
       }
@@ -221,7 +222,7 @@ package gui
          legendFmt.size = 10;
          blueCircle = new MovieClip();
          blueCircle.graphics.lineStyle(1,16777215,0.6);
-         blueCircle.graphics.beginFill(4896994);
+         blueCircle.graphics.beginFill(ModMenuUIHelper.COLOR_SCOPE_GLOBAL);
          blueCircle.graphics.drawCircle(5,5,5);
          blueCircle.graphics.endFill();
          blueCircle.x = -230;

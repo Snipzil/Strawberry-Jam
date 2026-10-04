@@ -3,6 +3,7 @@ package gui
    import flash.display.MovieClip;
    import flash.display.Shape;
    import flash.events.MouseEvent;
+   import flash.external.ExternalInterface;
    import flash.text.TextField;
    import flash.text.TextFormat;
 
@@ -11,19 +12,19 @@ package gui
 
       public static const COLOR_BG:uint = 1316120;
 
-      public static const COLOR_PANEL_BORDER:uint = 2765884;
+      public static var COLOR_PANEL_BORDER:uint = 2765884;
 
       public static const COLOR_BORDER:uint = 4549845;
 
-      public static const COLOR_ACCENT:uint = 3066993;
+      public static var COLOR_ACCENT:uint = 3066993;
 
-      public static const COLOR_ACCENT_BLUE:uint = 3899126;
+      public static var COLOR_ACCENT_BLUE:uint = 3899126;
 
       public static const COLOR_ROW_EVEN:uint = 2239032;
 
       public static const COLOR_ROW_ODD:uint = 1710618;
 
-      public static const COLOR_BTN_PRIMARY:uint = 3369812;
+      public static var COLOR_BTN_PRIMARY:uint = 3369812;
 
       public static const COLOR_BTN_DANGER:uint = 14369847;
 
@@ -35,13 +36,17 @@ package gui
 
       public static const COLOR_TEXT_FAINT:uint = 7042702;
 
-      public static const COLOR_ACTIVE_TAB:uint = 2771583;
+      public static var COLOR_ACTIVE_TAB:uint = 2771583;
 
       public static const COLOR_INACTIVE_TAB:uint = 2763306;
 
       public static const COLOR_SWITCH_OFF:uint = 3816524;
 
       public static const COLOR_CHIP_BG:uint = 2960707;
+
+      public static var COLOR_SCOPE_GLOBAL:uint = 4896994;
+
+      public static var COLOR_SCOPE_USER:uint = 4886574;
 
       public static const CORNER_RADIUS:int = 12;
 
@@ -58,6 +63,58 @@ package gui
       public function ModMenuUIHelper()
       {
          super();
+      }
+
+      // Recolors the accent palette from the launcher theme (--theme-primary, pushed
+      // into the game page by gamePreload.js). Keeps the defaults when unavailable.
+      public static function loadTheme() : void
+      {
+         var hex:String;
+         var p:Number;
+         var r:int;
+         var g:int;
+         var b:int;
+         var isLight:Boolean;
+         try
+         {
+            if(!ExternalInterface.available)
+            {
+               return;
+            }
+            hex = String(ExternalInterface.call("sjModMenuTheme.get") || "");
+         }
+         catch(e:Error)
+         {
+            return;
+         }
+         if(hex.length != 7 || hex.charAt(0) != "#")
+         {
+            return;
+         }
+         p = parseInt(hex.substr(1),16);
+         if(isNaN(p))
+         {
+            return;
+         }
+         r = int(p) >> 16 & 255;
+         g = int(p) >> 8 & 255;
+         b = int(p) & 255;
+         isLight = r * 0.299 + g * 0.587 + b * 0.114 > 160;
+         COLOR_ACCENT = uint(p);
+         COLOR_ACCENT_BLUE = uint(p);
+         COLOR_SCOPE_GLOBAL = uint(p);
+         COLOR_SCOPE_USER = uint(p);
+         COLOR_BTN_PRIMARY = isLight ? mixColor(uint(p),0,0.55) : uint(p);
+         COLOR_ACTIVE_TAB = mixColor(uint(p),COLOR_BG,0.32);
+         COLOR_PANEL_BORDER = mixColor(uint(p),COLOR_BG,0.45);
+      }
+
+      private static function mixColor(a:uint, b:uint, t:Number) : uint
+      {
+         var r:int = Math.round((a >> 16 & 255) * t + (b >> 16 & 255) * (1 - t));
+         var g:int = Math.round((a >> 8 & 255) * t + (b >> 8 & 255) * (1 - t));
+         var bl:int = Math.round((a & 255) * t + (b & 255) * (1 - t));
+         return uint(r << 16 | g << 8 | bl);
       }
 
       public static function createCheckbox() : MovieClip
@@ -589,7 +646,7 @@ package gui
             icon.graphics.endFill();
             if(isGlobe)
             {
-               blueColor = 4896994;
+               blueColor = COLOR_SCOPE_GLOBAL;
                grayColor = 6710886;
                color = isActive ? blueColor : grayColor;
                icon.graphics.lineStyle(1.5,16777215,isActive ? 0.9 : 0.5);
@@ -606,7 +663,7 @@ package gui
             }
             else
             {
-               activeColor = 4886574;
+               activeColor = COLOR_SCOPE_USER;
                inactiveColor = 6710886;
                userColor = isActive ? activeColor : inactiveColor;
                icon.graphics.lineStyle(2,userColor,1);
