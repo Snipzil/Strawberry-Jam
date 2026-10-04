@@ -927,7 +927,7 @@ ipcMain.handle('save-account', async (event, accountData) => {
     const accountMetadata = { username: accountData.username };
     const existingAccountIndex = savedAccountsMetadata.findIndex(acc => acc.username.toLowerCase() === accountData.username.toLowerCase());
     if (existingAccountIndex !== -1) {
-      savedAccountsMetadata[existingAccountIndex] = accountMetadata;
+      savedAccountsMetadata[existingAccountIndex] = { ...savedAccountsMetadata[existingAccountIndex], ...accountMetadata };
       log('info', `[AccMan] Updated existing account metadata: ${accountData.username}`);
     } else {
       savedAccountsMetadata.push(accountMetadata);
@@ -1065,7 +1065,7 @@ ipcMain.handle('import-accounts', async (event, accounts) => {
       );
 
       if (existingAccountIndex !== -1) {
-        savedAccountsMetadata[existingAccountIndex] = accountMetadata;
+        savedAccountsMetadata[existingAccountIndex] = { ...savedAccountsMetadata[existingAccountIndex], ...accountMetadata };
         log('info', `[AccMan] Updated existing account: ${account.username}`);
       } else {
         savedAccountsMetadata.push(accountMetadata);

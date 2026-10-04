@@ -46,7 +46,7 @@ class AccountManager {
       );
 
       if (existingAccountIndex !== -1) {
-        savedAccountsMetadata[existingAccountIndex] = accountMetadata;
+        savedAccountsMetadata[existingAccountIndex] = { ...savedAccountsMetadata[existingAccountIndex], ...accountMetadata };
       } else {
         savedAccountsMetadata.push(accountMetadata);
       }
@@ -165,7 +165,7 @@ class AccountManager {
         );
 
         if (existingAccountIndex !== -1) {
-          savedAccountsMetadata[existingAccountIndex] = accountMetadata;
+          savedAccountsMetadata[existingAccountIndex] = { ...savedAccountsMetadata[existingAccountIndex], ...accountMetadata };
         } else {
           savedAccountsMetadata.push(accountMetadata);
         }

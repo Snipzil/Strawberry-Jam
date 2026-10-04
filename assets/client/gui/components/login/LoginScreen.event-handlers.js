@@ -455,7 +455,6 @@
             this.loginScreen.clearAuthToken();
             this.loginScreen.clearRefreshToken();
             
-            console.log(`[LoginScreen] DEBUG: Setting credentials - Username: "${account.username}", Password: "${account.password}"`);
             this.loginScreen.username = account.username;
             this.loginScreen.password = account.password;
             
