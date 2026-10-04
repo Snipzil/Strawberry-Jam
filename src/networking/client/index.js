@@ -31,6 +31,13 @@ const BLACKLIST_MESSAGES = new Set([
  */
 const MAX_QUEUE_SIZE = 1000 // From jam-master
 
+/**
+ * Idle time before TCP keepalive probes start on the AJ socket
+ * @type {number}
+ * @constant
+ */
+const KEEPALIVE_DELAY_MS = 30000
+
 module.exports = class Client {
   /**
    * Constructor.
@@ -196,6 +203,12 @@ module.exports = class Client {
         cleanupListeners()
         clearTimeout(connectionTimeout)
         this.connected = true
+
+        // VPNs/NATs drop idle TCP flows (often ~5 min). The game only sends
+        // "ka" every 3 min while the player is active, so idle sessions went
+        // silent and got cut. TCP keepalive probes keep the flow alive.
+        this._aj.setKeepAlive(true, KEEPALIVE_DELAY_MS)
+        this._aj.setNoDelay(true)
 
         if (this._server && this._server.application) { // Check if application exists
             this._server.application.emit('connection:change', true)
