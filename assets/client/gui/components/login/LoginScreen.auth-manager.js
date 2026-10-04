@@ -117,7 +117,9 @@
               userMessage = "Animal Jam servers are temporarily unavailable. Please try again in a moment.";
               break;
             default:
-              if (err.message && err.message.includes('API server is not running')) {
+              if (err.name === "NetworkError") {
+                userMessage = "Couldn't reach Animal Jam. Check your internet or VPN connection and try again.";
+              } else if (err.message && err.message.includes('API server is not running')) {
                 userMessage = err.message;
               } else {
                 globals.reportError("webClient", `Unhandled login error: ${err.stack || err.message}`);

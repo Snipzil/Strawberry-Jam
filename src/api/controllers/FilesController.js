@@ -319,17 +319,42 @@ class FilesController {
       const proxyResponse = await axios({
         method: 'GET',
         url: `${this.baseUrl}${request.path}`,
-        headers: this.baseHeaders,
+        headers: { ...this.baseHeaders, ...this._passthroughRequestHeaders(request) },
         responseType: 'stream',
+        decompress: false,
         timeout: 30000,
         validateStatus: () => true
       })
-      proxyResponse.data.pipe(response)
+      this._pipeProxyResponse(proxyResponse, response)
     } catch (error) {
       if (!response.headersSent) {
         response.status(502).send('Proxy error')
       }
     }
+  }
+
+  /**
+   * Client headers that let the CDN answer with 304s and compressed bodies.
+   */
+  _passthroughRequestHeaders (request) {
+    const headers = {}
+    for (const name of ['if-none-match', 'if-modified-since', 'accept-encoding']) {
+      if (request.headers[name]) headers[name] = request.headers[name]
+    }
+    return headers
+  }
+
+  /**
+   * Relays status and caching headers so the game client can cache assets
+   * instead of re-downloading every one on each load.
+   */
+  _pipeProxyResponse (proxyResponse, response) {
+    response.status(proxyResponse.status)
+    for (const name of ['content-type', 'content-length', 'content-encoding', 'cache-control', 'etag', 'last-modified', 'expires']) {
+      const value = proxyResponse.headers[name]
+      if (value !== undefined) response.set(name, value)
+    }
+    proxyResponse.data.pipe(response)
   }
 
   async _proxyRequest(request, response, { baseUrl, host }) {
@@ -355,14 +380,14 @@ class FilesController {
       const proxyResponse = await axios({
         method: request.method,
         url: `${baseUrl}${request.path}`,
-        headers,
+        headers: { ...headers, ...this._passthroughRequestHeaders(request) },
         data,
         responseType: 'stream',
+        decompress: false,
         timeout: 30000,
         validateStatus: () => true
       })
-      response.status(proxyResponse.status)
-      proxyResponse.data.pipe(response)
+      this._pipeProxyResponse(proxyResponse, response)
     } catch (error) {
       console.error(`[Proxy] Error proxying to ${baseUrl}:`, error.message)
       if (!response.headersSent) {

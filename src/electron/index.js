@@ -518,6 +518,14 @@ class Electron {
     console.error = (message) => logManager.log(message, 'main', logManager.logLevels.ERROR)
     console.warn = (message) => logManager.log(message, 'main', logManager.logLevels.WARN)
 
+    // The game proxy runs in the main window's renderer. When the game window
+    // covers or minimizes it, Chromium throttles it and packets back up until
+    // AJ drops the session ("you were gone too long").
+    app.commandLine.appendSwitch('disable-renderer-backgrounding')
+    app.commandLine.appendSwitch('disable-background-timer-throttling')
+    app.commandLine.appendSwitch('disable-backgrounding-occluded-windows')
+    app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion,IntensiveWakeUpThrottling')
+
     app.whenReady().then(async () => {
       // Clear any problematic cache state early to prevent hangs
       await session.defaultSession.clearCache().catch(() => {})
@@ -627,7 +635,11 @@ class Electron {
     this._patcher = new Patcher(null, assetsPath)
     this._window = new BrowserWindow({
       ...defaultWindowOptions,
-      icon: path.join(assetsPath, 'images', 'icon.png')
+      icon: path.join(assetsPath, 'images', 'icon.png'),
+      webPreferences: {
+        ...defaultWindowOptions.webPreferences,
+        backgroundThrottling: false
+      }
     })
     this.autoUpdateService.window = this._window
     this.appNotificationService.window = this._window

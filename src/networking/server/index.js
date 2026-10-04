@@ -44,6 +44,8 @@ module.exports = class Server {
   }
 
   async _onConnection (connection) {
+    // Relay small game packets immediately instead of letting Nagle batch them.
+    connection.setNoDelay(true)
     try {
       const client = new Client(connection, this)
       await client.connect()

@@ -3,6 +3,15 @@
   <head>
     <meta charset="UTF-8">
     <title>Strawberry Jam Classic</title>
+    <!-- Resolve AJ hosts while the login screen is up; cold DNS can take
+         seconds per host and otherwise lands on the login/loading path.
+         Windows caches the results for the main app's proxy too. -->
+    <link rel="preconnect" href="https://authenticator.animaljam.com" crossorigin>
+    <link rel="preconnect" href="https://www.animaljam.com" crossorigin>
+    <link rel="preconnect" href="https://player-session-data.animaljam.com" crossorigin>
+    <link rel="dns-prefetch" href="https://ajcontent.akamaized.net">
+    <link rel="dns-prefetch" href="https://lb-iss01-classic-prod.animaljam.com">
+    <link rel="dns-prefetch" href="https://lb-iss02-classic-prod.animaljam.com">
   </head>
 
   <body>
@@ -271,9 +280,17 @@
                   }
                 }, 100);
               }
+              else if (err instanceof TypeError && (options.networkRetries || 0) < 2) {
+                // "Failed to fetch": the connection never came up (e.g. a VPN
+                // still connecting), so give it a moment and retry.
+                options.networkRetries = (options.networkRetries || 0) + 1;
+                setTimeout(() => {
+                  globals.fetch(url, options, validCodes).then(resolve, reject);
+                }, 1000);
+              }
               else {
                 console.error(`[SERVER] Network failure for ${url}:`, err);
-                options.error.name = err.name;
+                options.error.name = err instanceof TypeError ? "NetworkError" : err.name;
                 options.error.message = `${err.message} for URL: ${url}`;
                 reject(options.error);
               }
@@ -282,36 +299,10 @@
         },
 
         reportError(section, err) {
-          // Ensure config is loaded before trying to report
-          if (!globals.config || !globals.config.api) {
-            console.error("Error reporting disabled: globals.config.api not set.", section, err);
-            return;
-          }
-          const message = err.stack || err.message || err;
-          const body = JSON.stringify({
-            username: globals.currentUser,
-            version: globals.systemData.version,
-            platform: globals.systemData.platform,
-            message: message.slice(0, 1000),
-            section,
-          });
-          globals.fetch(`${globals.config.api}/v1/reportError`, {
-            method: "POST",
-            mode: "cors",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body,
-            userAbortController: false,  // prevent user from aborting
-          }, [413, 403]).catch(err => {
-            // Silently handle errors in error reporting to prevent cascading error loops
-            // 403 errors on error reporting endpoint are not critical
-            if (err.message && err.message.includes('403')) {
-              console.warn("[ERROR REPORTING] Error reporting endpoint returned 403 - this is non-critical");
-            } else {
-              console.log("[ERROR REPORTING] Failed to report error:", err);
-            }
-          });
+          // Local only: AJ's reportError endpoint would receive the username
+          // plus modded-client stacks, flagging the account.
+          const message = (err && (err.stack || err.message)) || err;
+          console.error(`[ERROR REPORTING] ${section}:`, message);
         },
 
         parseBool(val) {
@@ -496,6 +487,8 @@
           authenticateData.auth_token,
           requestedClientVersion
         );
+
+        console.log(`[SESSION] Assigned game server: ${playerSessionData.game_server} (flashvars default: ${flashVars.smartfoxServer})`);
 
         if (flashVars.deploy_version != requestedClientVersion) {
           flashVars.deploy_version = requestedClientVersion;

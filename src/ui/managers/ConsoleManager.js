@@ -218,10 +218,54 @@ class ConsoleManager {
   }
 
   _appendPacket(message, isIncoming, hidden) {
+    // The game proxy relays packets on this same thread, so rows are built in
+    // batches instead of inline: the login burst is hundreds of large packets
+    // and rendering each one immediately stalled the connection to AJ.
+    if (!this._pendingPackets) this._pendingPackets = []
+    this._pendingPackets.push({ message, isIncoming, hidden, time: this._getTime(true) })
+
+    // Rows past the log limit would be trimmed right after rendering anyway.
+    const overflow = this._pendingPackets.length - this._networkLogLimit
+    if (overflow > 0) this._pendingPackets.splice(0, overflow)
+
+    if (!this._packetFlushTimer) {
+      this._packetFlushTimer = setTimeout(() => this._flushPendingPackets(), 50)
+    }
+  }
+
+  _flushPendingPackets() {
+    this._packetFlushTimer = null
+    const pending = this._pendingPackets || []
+    this._pendingPackets = []
+
     const log = document.getElementById('message-log')
-    if (!log) return
+    if (!log || pending.length === 0) return
     this._initPacketScroll(log)
 
+    const fragment = document.createDocumentFragment()
+    let incoming = 0
+    for (const { message, isIncoming, hidden, time } of pending) {
+      fragment.appendChild(this._buildPacketRow(message, isIncoming, hidden, time))
+      if (isIncoming) incoming++
+    }
+
+    const $totalCount = $('#totalCount')
+    const $incomingCount = $('#incomingCount')
+    const $outgoingCount = $('#outgoingCount')
+    $totalCount.text(parseInt($totalCount.text() || '0', 10) + pending.length)
+    $incomingCount.text(parseInt($incomingCount.text() || '0', 10) + incoming)
+    $outgoingCount.text(parseInt($outgoingCount.text() || '0', 10) + pending.length - incoming)
+
+    log.appendChild(fragment)
+    this._packetLogCount += pending.length
+    if (this._packetLogCount > this._networkLogLimit) {
+      this.cleanOldLogs($(log), true)
+    }
+
+    this._schedulePacketScroll(log)
+  }
+
+  _buildPacketRow(message, isIncoming, hidden, time) {
     const dir = isIncoming ? 'in' : 'out'
     const cmd = this._getPacketCommand(message)
 
@@ -234,7 +278,7 @@ class ConsoleManager {
     const meta = document.createElement('div')
     meta.className = 'pkt-meta'
     meta.innerHTML =
-      `<span class="pkt-time">${this._getTime(true)}</span>` +
+      `<span class="pkt-time">${time}</span>` +
       `<i class="fas ${isIncoming ? 'fa-arrow-down' : 'fa-arrow-up'} pkt-dir"></i>` +
       `<span class="pkt-cmd"></span>`
     meta.lastChild.textContent = cmd
@@ -247,19 +291,7 @@ class ConsoleManager {
     row.appendChild(meta)
     row.appendChild(body)
     if (hidden) row.style.display = 'none'
-
-    const $totalCount = $('#totalCount')
-    const $countEl = isIncoming ? $('#incomingCount') : $('#outgoingCount')
-    $totalCount.text(parseInt($totalCount.text() || '0', 10) + 1)
-    $countEl.text(parseInt($countEl.text() || '0', 10) + 1)
-
-    this._packetLogCount++
-    if (this._packetLogCount > this._networkLogLimit) {
-      this.cleanOldLogs($(log), true)
-    }
-
-    log.appendChild(row)
-    this._schedulePacketScroll(log)
+    return row
   }
 
   updateMessage(messageId, { message, type = 'success' } = {}) {
