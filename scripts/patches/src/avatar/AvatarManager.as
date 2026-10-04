@@ -171,7 +171,7 @@ package avatar
          _acQueue = {};
          try
          {
-            _loc6_ = SharedObject.getLocal("aj_outfit_builder_active");
+            _loc6_ = GuiManager.getPersistentSO("aj_outfit_builder_active");
             delete _loc6_.data.activeOutfit;
             _loc6_.flush();
          }
@@ -2082,7 +2082,7 @@ package avatar
          var _loc7_:Item;
          try
          {
-            _loc1_ = SharedObject.getLocal("aj_outfit_builder_active");
+            _loc1_ = GuiManager.getPersistentSO("aj_outfit_builder_active");
             if(!_loc1_.data.activeOutfit)
             {
                return;

@@ -161,13 +161,40 @@ the file as vanilla and untouched.
   ExternalInterface callbacks `sjModMenuGetState`, `sjModMenuSetToggle`,
   `sjModMenuSetScope`, `sjModMenuSetDenLogin` and `sjModMenuOpenPopup`. They
   are thin wrappers over the existing `ModMenuFeatures`/`GuiManager` calls, so
-  persistence and scopes are unchanged. GameScreen calls them with
+  persistence and scopes are unchanged. `sjModMenuGetState` returns a JSON
+  string: ExternalInterface marshals objects through XML, and the ~45-entry
+  state as an object took about 105ms per call, freezing the game. GameScreen calls them with
   `webview.executeJavaScript` on the Flash `<embed>`. `GuiManager.toggleModMenu()`
   first asks `ModMenuFeatures.toggleHtmlMenu()`, which calls
   `sjModMenu.toggle` (exposed by `gamePreload.js`). That returns false when the
   "Classic Mod Menu" client setting is on or the host isn't ready, and the
   Flash menu opens as before.
 
+- Mod settings survive AJ updates: `src/gui/GuiManager.as`,
+  `src/avatar/AvatarManager.as`, `scripts/modmenu/src/ModMenu.as`. Mod data used
+  `SharedObject.getLocal(name)`, which Flash scopes to the SWF's path
+  (`/<deploy>/ajclient.swf`), so each AJ deploy started with an empty
+  `aj_global_mod_settings` and every mod setting reset (one `.sol` per deploy
+  under `#SharedObjects/*/#localhost/<deploy>/`). They now go through
+  `GuiManager.getPersistentSO(name)`, which uses localPath `"/"` (as AJ's own
+  `com/sbi/login` does) and, the first time, copies over the current deploy's
+  old file. `CustomAvatarNames`, `CustomNametagColors` and
+  `PhantomModeVisibility` still use the per-deploy path (not patched here).
+- Stage quality: `src/gui/GuiManager.as`, `src/MainFrame.as`,
+  `src/gamePlayFlow/GamePlay.as`. `MainFrame.handleResize` forced quality to
+  `medium` (`low` on any high-DPI screen) on every resize, and `GamePlay` init
+  and headless exit forced `medium`. That undid Performance Mode's `low` even
+  though the toggle stayed on. All of them now call
+  `GuiManager.applyStageQuality()`: Performance Mode gives `low`; otherwise the
+  HD Graphics enhancement (`hdGraphics`, opt-in) gives `high`; with it off, the
+  original medium / low-on-HiDPI behaviour. It briefly shipped default-on as
+  `hdGraphicsEnabled` and made startup lag badly (Flash rasterizes on the CPU,
+  and `high` is 4x4 anti-aliasing), so that key is ignored now. It also sets
+  `gMainFrame.currStageQuality`, which minigames restore on exit.
+  `applyLoadedModSettings` no longer clears `_performanceMode` before four
+  setters that each save to disk. The game runs at 24 fps with a fixed 33ms
+  step per frame (`roomMgr.heartbeat(33, ...)`), so movement and timeline
+  animations are frame-locked and the frame rate is deliberately left alone.
 Because `GuiManager` is the single glue class behind every mod toggle
 (6000+ lines, not something this project maintains in full elsewhere), this
 patch carries the *entire* decompiled file with the above changes applied —

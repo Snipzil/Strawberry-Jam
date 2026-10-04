@@ -11,7 +11,7 @@
     { id: "popups", title: "Popups" },
   ];
   const MASTER_KEY = "modsMasterEnabled";
-  const POLL_MS = 1500;
+  const POLL_MS = 3000;
   const PREFS_KEY = "sjHtmlModMenuPrefs";
 
   const ICON_GLOBE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/></svg>`;
@@ -639,7 +639,8 @@
       if (this._refreshing || this._busy.size > 0) return;
       this._refreshing = true;
       try {
-        const state = await this._call("sjModMenuGetState");
+        const raw = await this._call("sjModMenuGetState");
+        const state = typeof raw === "string" ? JSON.parse(raw) : raw;
         if (!state || !Array.isArray(state.toggles)) throw new Error("bad-state");
         const hadState = !!this._state;
         const shapeChanged = !hadState || this._shapeKey(state) !== this._shapeKey(this._state);
@@ -651,6 +652,7 @@
         else this._syncInPlace();
       }
       catch (err) {
+        console.warn("[ModMenu] state refresh failed:", err && err.message);
         if (!this._state) {
           this._error = err && err.message === "not-ready" ? "not-ready" : "failed";
           if (this.isOpen) this._render();

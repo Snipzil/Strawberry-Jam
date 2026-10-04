@@ -125,7 +125,7 @@ package gui
          _prefsLoaded = true;
          try
          {
-            so = SharedObject.getLocal("sjModMenuUi");
+            so = GuiManager.getPersistentSO("sjModMenuUi");
             if(so && so.data)
             {
                if(so.data.hasOwnProperty("query"))
@@ -152,7 +152,7 @@ package gui
          var so:SharedObject;
          try
          {
-            so = SharedObject.getLocal("sjModMenuUi");
+            so = GuiManager.getPersistentSO("sjModMenuUi");
             if(so)
             {
                so.data["query"] = _sessionQuery;

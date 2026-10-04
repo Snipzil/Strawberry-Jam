@@ -479,7 +479,7 @@ package gamePlayFlow
          LoadProgress.init(loadLayer);
          LoadProgress.updateProgress(4);
          initHUDAssets();
-         gMainFrame.stage.quality = "medium";
+         GuiManager.applyStageQuality();
       }
       
       public function get layerManager() : LayerManager
@@ -1677,10 +1677,7 @@ package gamePlayFlow
                _memoryCleanupTimer = null;
                ExternalInterface.call("console.log","Memory cleanup timer stopped");
             }
-            if(gMainFrame && gMainFrame.stage)
-            {
-               gMainFrame.stage.quality = "medium";
-            }
+            GuiManager.applyStageQuality();
             ExternalInterface.call("console.log","Headless mode DISABLED (fallback) - Visual elements restored");
          }
       }

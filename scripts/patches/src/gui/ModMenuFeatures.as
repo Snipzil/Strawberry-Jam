@@ -167,6 +167,12 @@ package gui
             "hotkey":"N/A",
             "category":"enhancements"
          },{
+            "key":"hdGraphics",
+            "label":"HD Graphics",
+            "desc":"High quality anti-aliasing. Sharper, but slower on large or high-DPI windows",
+            "hotkey":"N/A",
+            "category":"enhancements"
+         },{
             "key":"hidePlayerAvatar",
             "label":"Hide Player Avatar",
             "desc":"Great for screenshots",
@@ -186,8 +192,8 @@ package gui
             "category":"enhancements"
          },{
             "key":"performanceMode",
-            "label":"Performance Mode",
-            "desc":"Reduce rendering load for smoother gameplay",
+            "label":"Performance Mode (Low-End PCs)",
+            "desc":"Low quality, throttled animations and periodic cleanup. Only for slow PCs",
             "hotkey":"N/A",
             "category":"enhancements"
          },{
@@ -315,6 +321,9 @@ package gui
                   break;
                case "performanceMode":
                   GuiManager.setPerformanceMode(enabled);
+                  break;
+               case "hdGraphics":
+                  GuiManager.setHdGraphicsEnabled(enabled);
                   break;
                case "headlessMode":
                   GuiManager.setHeadlessMode(enabled);
@@ -472,6 +481,8 @@ package gui
                   return GuiManager.getAlwaysPrivateChatRaw();
                case "performanceMode":
                   return GuiManager.getPerformanceModeRaw();
+               case "hdGraphics":
+                  return GuiManager.getHdGraphicsEnabledRaw();
                case "headlessMode":
                   return GuiManager.getHeadlessModeRaw();
                case "noClip":
@@ -651,7 +662,7 @@ package gui
          return false;
       }
       
-      private static function bridgeGetState() : Object
+      private static function bridgeGetState() : String
       {
          var toggles:Array = [];
          var popups:Array = [];
@@ -686,11 +697,11 @@ package gui
             });
             i++;
          }
-         return {
+         return JSON.stringify({
             "toggles":toggles,
             "popups":popups,
             "den":getDenLoginConfig()
-         };
+         });
       }
       
       private static function bridgeSetToggle(key:String, enabled:Boolean) : Boolean

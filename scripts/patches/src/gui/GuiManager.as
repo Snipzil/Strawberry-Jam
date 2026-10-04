@@ -290,6 +290,10 @@ package gui
       private static var _headlessMode:Boolean = false;
       
       private static var _performanceMode:Boolean = false;
+
+      private static var _hdGraphicsEnabled:Boolean = false;
+
+      private static var _migratedSOs:Object = {};
       
       private static var _noClip:Boolean = false;
       
@@ -607,7 +611,7 @@ package gui
          var globalSharedObj:SharedObject = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_den_startup");
+            globalSharedObj = getPersistentSO("aj_global_den_startup");
             if(globalSharedObj.data.denStartup != null)
             {
                _denStartupEnabled = globalSharedObj.data.denStartup;
@@ -633,7 +637,7 @@ package gui
          var globalSharedObj:SharedObject = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_den_startup");
+            globalSharedObj = getPersistentSO("aj_global_den_startup");
             globalSharedObj.data.denStartup = _denStartupEnabled;
             globalSharedObj.flush();
             DebugUtility.debugTrace("Global den startup preference saved successfully: " + _denStartupEnabled);
@@ -664,7 +668,7 @@ package gui
          var globalSharedObj:SharedObject = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data.featureScopes != null && globalSharedObj.data.featureScopes[featureKey] != null)
             {
                return globalSharedObj.data.featureScopes[featureKey];
@@ -707,7 +711,7 @@ package gui
          globalSharedObj = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data.featureScopes == null)
             {
                globalSharedObj.data.featureScopes = {};
@@ -759,7 +763,7 @@ package gui
          var globalSharedObj:SharedObject = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data.modSettings != null && globalSharedObj.data.modSettings[featureKey] != null)
             {
                return globalSharedObj.data.modSettings[featureKey];
@@ -781,7 +785,7 @@ package gui
             {
                return null;
             }
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data.perUserSettings != null && globalSharedObj.data.perUserSettings[username] != null)
             {
                return globalSharedObj.data.perUserSettings[username][featureKey];
@@ -803,7 +807,7 @@ package gui
             {
                return;
             }
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data.perUserSettings == null)
             {
                globalSharedObj.data.perUserSettings = {};
@@ -864,7 +868,7 @@ package gui
             globalSharedObj = null;
             try
             {
-               globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+               globalSharedObj = getPersistentSO("aj_global_mod_settings");
                if(globalSharedObj.data.modSettings == null)
                {
                   globalSharedObj.data.modSettings = {};
@@ -886,7 +890,7 @@ package gui
             globalSharedObj = null;
             try
             {
-               globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+               globalSharedObj = getPersistentSO("aj_global_mod_settings");
                if(globalSharedObj.data.modSettings == null)
                {
                   globalSharedObj.data.modSettings = {};
@@ -974,7 +978,7 @@ package gui
          var globalSharedObj:SharedObject = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data.featureScopes == null)
             {
                globalSharedObj.data.featureScopes = {};
@@ -991,6 +995,7 @@ package gui
                _alwaysPrivateChat = loadBooleanFeature("alwaysPrivateChat",false);
                GamePlay.alwaysPrivateChatEnabled = _alwaysPrivateChat;
                _performanceMode = loadBooleanFeature("performanceMode",false);
+               _hdGraphicsEnabled = loadBooleanFeature("hdGraphics",false);
                _headlessMode = loadBooleanFeature("headlessMode",false);
                _noClip = loadBooleanFeature("noClip",false);
                _phantomMode = loadBooleanFeature("phantomMode",false);
@@ -1037,7 +1042,7 @@ package gui
                _customEmojiEnabled = loadBooleanFeature("customEmojiEnabled",false);
                _customEmojiUseProxy = loadBooleanFeature("customEmojiUseProxy",false);
                _customEmojiAliasUrl = loadStringFeature("customEmojiAliasUrl","https://raw.githubusercontent.com/DrEmoji/AJPrivChat/refs/heads/main/Emojis/Alias.json");
-               _globalDefaults = ["disableStartupPopups","alwaysOpenGems","wasdMovement","alwaysPrivateChat","performanceMode","headlessMode","noClip","phantomMode","wheelAutoSpin","antiAfkEnabled","denLoginEnabled","autoDismissShopPurchase","allowOwnNametagClick","enhancedAnimalPalette","multiClothingEnabled","cartSystemEnabled","autoRestockEnabled","rememberPriceEnabled","musicEnabled","soundEffectsEnabled","zoomHotkeysEnabled","allAnimalsShopEnabled","allPetsShopEnabled","allPetAccessoriesEnabled","membershipBypassEnabled","modsMasterEnabled","expandedInventoryEnabled","buddyRoomServerInfoEnabled","followBuddyRetryEnabled","denItemCounterEnabled","autoPrivateChatBadText","preventListCrashingEnabled","hidePlayerAvatar","hidePlayerNametag","displayClothesInHud","customEmojiEnabled","customEmojiUseProxy","allDensShopEnabled"];
+               _globalDefaults = ["disableStartupPopups","alwaysOpenGems","wasdMovement","alwaysPrivateChat","performanceMode","headlessMode","noClip","phantomMode","wheelAutoSpin","antiAfkEnabled","denLoginEnabled","autoDismissShopPurchase","allowOwnNametagClick","enhancedAnimalPalette","multiClothingEnabled","cartSystemEnabled","autoRestockEnabled","rememberPriceEnabled","musicEnabled","soundEffectsEnabled","zoomHotkeysEnabled","allAnimalsShopEnabled","allPetsShopEnabled","allPetAccessoriesEnabled","membershipBypassEnabled","modsMasterEnabled","expandedInventoryEnabled","buddyRoomServerInfoEnabled","followBuddyRetryEnabled","denItemCounterEnabled","autoPrivateChatBadText","preventListCrashingEnabled","hidePlayerAvatar","hidePlayerNametag","displayClothesInHud","hdGraphics","customEmojiEnabled","customEmojiUseProxy","allDensShopEnabled"];
                _scopeIdx = 0;
                while(_scopeIdx < _globalDefaults.length)
                {
@@ -1129,7 +1134,7 @@ package gui
                   "customEmojiUseProxy":false,
                   "customEmojiAliasUrl":"https://raw.githubusercontent.com/DrEmoji/AJPrivChat/refs/heads/main/Emojis/Alias.json"
                };
-               _firstRunDefaults = ["disableStartupPopups","alwaysOpenGems","wasdMovement","alwaysPrivateChat","performanceMode","headlessMode","noClip","phantomMode","wheelAutoSpin","antiAfkEnabled","denLoginEnabled","autoDismissShopPurchase","allowOwnNametagClick","enhancedAnimalPalette","multiClothingEnabled","cartSystemEnabled","autoRestockEnabled","rememberPriceEnabled","musicEnabled","soundEffectsEnabled","zoomHotkeysEnabled","allAnimalsShopEnabled","allPetsShopEnabled","allPetAccessoriesEnabled","membershipBypassEnabled","modsMasterEnabled","expandedInventoryEnabled","buddyRoomServerInfoEnabled","followBuddyRetryEnabled","denItemCounterEnabled","autoPrivateChatBadText","preventListCrashingEnabled","hidePlayerAvatar","hidePlayerNametag","displayClothesInHud","customEmojiEnabled","customEmojiUseProxy","allDensShopEnabled"];
+               _firstRunDefaults = ["disableStartupPopups","alwaysOpenGems","wasdMovement","alwaysPrivateChat","performanceMode","headlessMode","noClip","phantomMode","wheelAutoSpin","antiAfkEnabled","denLoginEnabled","autoDismissShopPurchase","allowOwnNametagClick","enhancedAnimalPalette","multiClothingEnabled","cartSystemEnabled","autoRestockEnabled","rememberPriceEnabled","musicEnabled","soundEffectsEnabled","zoomHotkeysEnabled","allAnimalsShopEnabled","allPetsShopEnabled","allPetAccessoriesEnabled","membershipBypassEnabled","modsMasterEnabled","expandedInventoryEnabled","buddyRoomServerInfoEnabled","followBuddyRetryEnabled","denItemCounterEnabled","autoPrivateChatBadText","preventListCrashingEnabled","hidePlayerAvatar","hidePlayerNametag","displayClothesInHud","hdGraphics","customEmojiEnabled","customEmojiUseProxy","allDensShopEnabled"];
                _firstRunIdx = 0;
                while(_firstRunIdx < _firstRunDefaults.length)
                {
@@ -1186,12 +1191,11 @@ package gui
             tempPerformance = _performanceMode;
             _modsMasterEnabled = true;
             _headlessMode = false;
-            _performanceMode = false;
+            setPerformanceMode(tempPerformance);
             setDisableStartupPopups(_disableStartupPopups);
             setAlwaysOpenGems(_alwaysOpenGems);
             setWasdMovement(_wasdMovement);
             setAlwaysPrivateChat(_alwaysPrivateChat);
-            setPerformanceMode(tempPerformance);
             setNoClip(_noClip);
             setPhantomMode(_phantomMode);
             setWheelAutoSpin(_wheelAutoSpin);
@@ -1235,7 +1239,7 @@ package gui
          var globalSharedObj:SharedObject = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data.modSettings == null)
             {
                globalSharedObj.data.modSettings = {};
@@ -1284,6 +1288,7 @@ package gui
             setFeatureValue("hidePlayerNametag",_hidePlayerNametag);
             setFeatureValue("displayClothesInHud",_displayClothesInHudEnabled);
             setFeatureValue("performanceMode",_performanceMode);
+            setFeatureValue("hdGraphics",_hdGraphicsEnabled);
             setFeatureValue("allDensShopEnabled",_allDensShopEnabled);
             if(_inventoryRowsPerColumn >= 3 && _inventoryRowsPerColumn <= 7)
             {
@@ -1311,7 +1316,7 @@ package gui
          var globalSharedObj:SharedObject = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data != null)
             {
                if(globalSharedObj.data.salesLog != null)
@@ -1340,7 +1345,7 @@ package gui
          var globalSharedObj:SharedObject = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data == null)
             {
                globalSharedObj.data = {};
@@ -1369,7 +1374,7 @@ package gui
          var globalSharedObj:SharedObject = null;
          try
          {
-            globalSharedObj = SharedObject.getLocal("aj_global_mod_settings");
+            globalSharedObj = getPersistentSO("aj_global_mod_settings");
             if(globalSharedObj.data == null)
             {
                globalSharedObj.data = {};
@@ -1680,6 +1685,114 @@ package gui
          }
       }
       
+      // Mod data used SharedObject.getLocal(name), which Flash scopes to the SWF path
+      // (/<deploy>/ajclient.swf), so every AJ deploy started from an empty file and
+      // all mod settings reset. "/" survives deploys (AJ's own com/sbi/login uses it);
+      // the first open copies over whatever the current deploy's file still holds.
+      public static function getPersistentSO(name:String) : SharedObject
+      {
+         var so:SharedObject = SharedObject.getLocal(name,"/");
+         var legacy:SharedObject;
+         var key:String;
+         if(_migratedSOs[name])
+         {
+            return so;
+         }
+         _migratedSOs[name] = true;
+         try
+         {
+            if(isEmptySO(so))
+            {
+               legacy = SharedObject.getLocal(name);
+               if(!isEmptySO(legacy))
+               {
+                  for(key in legacy.data)
+                  {
+                     so.data[key] = legacy.data[key];
+                  }
+                  so.flush();
+               }
+            }
+         }
+         catch(e:Error)
+         {
+         }
+         return so;
+      }
+
+      private static function isEmptySO(so:SharedObject) : Boolean
+      {
+         var key:String;
+         if(so == null)
+         {
+            return true;
+         }
+         for(key in so.data)
+         {
+            return false;
+         }
+         return true;
+      }
+
+      // Single stage-quality policy. Resize, game init and headless exit used to
+      // hard-code "medium" (or "low" on high-DPI screens), which silently undid
+      // Performance Mode. Minigames restore gMainFrame.currStageQuality, so keeping
+      // that in sync covers them too. "high" is opt-in: Flash rasterizes on the CPU,
+      // and high's 4x4 anti-aliasing on a large or high-DPI window made startup lag.
+      public static function getPreferredStageQuality() : String
+      {
+         if(_performanceMode)
+         {
+            return "low";
+         }
+         if(_modsMasterEnabled && _hdGraphicsEnabled)
+         {
+            return "high";
+         }
+         try
+         {
+            if(gMainFrame && gMainFrame.stage && gMainFrame.stage.contentsScaleFactor > 1)
+            {
+               return "low";
+            }
+         }
+         catch(e:Error)
+         {
+         }
+         return "medium";
+      }
+
+      public static function applyStageQuality() : void
+      {
+         try
+         {
+            if(!gMainFrame || !gMainFrame.stage)
+            {
+               return;
+            }
+            gMainFrame.currStageQuality = getPreferredStageQuality();
+            if(!_headlessMode)
+            {
+               gMainFrame.stage.quality = gMainFrame.currStageQuality;
+            }
+         }
+         catch(e:Error)
+         {
+         }
+      }
+
+      public static function getHdGraphicsEnabledRaw() : Boolean
+      {
+         return _hdGraphicsEnabled;
+      }
+
+      public static function setHdGraphicsEnabled(value:Boolean) : void
+      {
+         _hdGraphicsEnabled = value;
+         saveModSettings();
+         applyStageQuality();
+      }
+
       public static function getPerformanceMode() : Boolean
       {
          var actualState:Boolean;
@@ -1723,6 +1836,7 @@ package gui
          catch(e:Error)
          {
          }
+         applyStageQuality();
       }
       
       public static function getNoClip() : Boolean
@@ -2493,6 +2607,7 @@ package gui
          var wasEnabled:Boolean = _modsMasterEnabled;
          _modsMasterEnabled = value;
          saveModSettings();
+         applyStageQuality();
          if(!value && wasEnabled)
          {
             try

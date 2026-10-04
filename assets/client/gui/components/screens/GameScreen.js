@@ -481,6 +481,7 @@
             globals.reportError("gameClient", event.args[0]);
           } break;
           case "modMenuToggle": {
+            console.log(`[ModMenu] F10 from game (html menu ${this._useHtmlModMenu() ? "on" : "off"})`);
             if (this._useHtmlModMenu()) this.modMenuPanel.toggle();
           } break;
           case "printImage": {

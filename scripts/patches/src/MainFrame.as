@@ -612,15 +612,7 @@ package
          {
             zoomToApply = autoCalculatedZoom;
          }
-         if(_stage.contentsScaleFactor > 1)
-         {
-            gMainFrame.currStageQuality = "low";
-         }
-         else
-         {
-            gMainFrame.currStageQuality = "medium";
-         }
-         gMainFrame.stage.quality = gMainFrame.currStageQuality;
+         GuiManager.applyStageQuality();
          if(RoomManagerWorld.instance != null)
          {
             RoomManagerWorld.instance.updateRoomZoom(zoomToApply);
