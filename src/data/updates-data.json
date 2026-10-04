@@ -2282,7 +2282,7 @@
   "6.0.5": {
     "version": "6.0.5",
     "releaseDate": "2026-10-03",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "fixes": [
         {
@@ -2295,6 +2295,79 @@
           "icon": "image",
           "title": "Shop Explorer Item Pictures",
           "description": "Item pictures in Shop Explorer now show on every row and line up with their item. Most of them used to be blank.",
+          "priority": "minor"
+        }
+      ]
+    }
+  },
+  "6.1.0": {
+    "version": "6.1.0",
+    "releaseDate": "2026-10-04",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "layout",
+          "title": "New Mod Menu",
+          "description": "The mod menu is now a modern panel that matches your launcher theme. You can drag it anywhere and resize it from any edge or corner, and the mod list spreads into more columns as it gets wider. Prefer the old one? Turn on \"Classic Mod Menu\" in the login screen settings.",
+          "priority": "major"
+        },
+        {
+          "icon": "palette",
+          "title": "Themed Classic Menu",
+          "description": "The classic Flash mod menu now picks up your launcher theme color too.",
+          "priority": "minor"
+        },
+        {
+          "icon": "sparkles",
+          "title": "HD Graphics Toggle",
+          "description": "New HD Graphics option in the mod menu for smoother, anti-aliased visuals. Performance Mode still takes priority when it is on.",
+          "priority": "minor"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "save",
+          "title": "Mod Settings Survive Updates",
+          "description": "Your mod menu settings are now stored in one place, so they no longer reset when Animal Jam updates the client.",
+          "priority": "minor"
+        },
+        {
+          "icon": "gauge",
+          "title": "Smoother Network Console",
+          "description": "The network console handles big bursts of packets without freezing the app, and packet filtering is faster.",
+          "priority": "minor"
+        },
+        {
+          "icon": "zap",
+          "title": "Faster Loading",
+          "description": "Game files can be cached and compressed, and the login screen connects sooner.",
+          "priority": "minor"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "wifi",
+          "title": "Disconnects While Idle or Minimized",
+          "description": "Fixed sessions going silent when the app was minimized or left idle, especially on VPNs and some home routers.",
+          "priority": "major"
+        },
+        {
+          "icon": "mouse-pointer",
+          "title": "Name Clicks in Jag Inbox, Buddy List and Trades",
+          "description": "Clicking names in the jag inbox, buddy list and trade popups works again.",
+          "priority": "minor"
+        },
+        {
+          "icon": "image",
+          "title": "Blank Rows in Den and Clothes Pickers",
+          "description": "Item pictures in the den and clothes pickers no longer go blank while you scroll.",
+          "priority": "minor"
+        },
+        {
+          "icon": "cpu",
+          "title": "Plugin Memory Leaks",
+          "description": "Refreshing plugins now fully stops the old ones instead of leaving them running in the background.",
           "priority": "minor"
         }
       ]

@@ -82,12 +82,13 @@ class SettingsUIManager {
       });
 
       $dropdown.val(selectedFile);
-      if (!$dropdown.val()) $dropdown.val('v6.0.5.swf');
+      if (!$dropdown.val()) $dropdown.val('v6.1.0.swf');
     } catch (error) {
       console.error('Error loading SWF files:', error);
       $dropdown.html(`
-        <option value="v6.0.5.swf">v6.0.5 (latest)</option>
-        <option value="v6.0.4.swf">v6.0.4 (previous)</option>
+        <option value="v6.1.0.swf">v6.1.0 (latest)</option>
+        <option value="v6.0.5.swf">v6.0.5 (previous)</option>
+        <option value="v6.0.4.swf">v6.0.4 (older)</option>
         <option value="v6.0.3.swf">v6.0.3 (older)</option>
         <option value="v6.0.1.swf">v6.0.1 (older)</option>
         <option value="v6.0.0.swf">v6.0.0 (older)</option>
