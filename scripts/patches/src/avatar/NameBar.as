@@ -1001,6 +1001,12 @@ package avatar
             {
                return;
             }
+            if(_avatarUserName == null || _avatarUserName == "")
+            {
+               // Name-only namebars (jag inbox, buddy list, trade popups) never get a
+               // userName; leave the click to the container's own handler.
+               return;
+            }
             param1.stopPropagation();
             param1.stopImmediatePropagation();
             if(isMyAvatar())

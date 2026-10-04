@@ -13,6 +13,15 @@ the file as vanilla and untouched.
   their trade list could never be opened this way. Fixed to open the buddy
   card (with `onlineStatus:1`, since they're visibly present) for other
   players too, mirroring the existing own-nametag branch.
+  `onNameClick` is mod-added (vanilla NameBar has no click handler), and it
+  also ran on name-only namebars: the jag inbox sender, buddy list rows,
+  trade popups. Those call `setAvName(String)`, so `_avatarUserName` stays
+  null, `isMyAvatar()` treats a null name as you, and the handler ate the
+  click with `stopImmediatePropagation`. As a result, clicking a jag sender
+  opened your own card when "own nametag click" was on and did nothing
+  when it was off. It now returns without stopping the event when the
+  namebar has no username, so the container's own handler (for example
+  `ECardInbox.onUsernameClick`) runs.
 - `src/gui/MarketplacePopup.as` (mod-added popup, not vanilla) — the "Trade
   For" and "View User" row buttons called a bare `createButton(...)` instead
   of `ModMenuUIHelper.createButton(...)` (every other button in the file
@@ -61,6 +70,19 @@ the file as vanilla and untouched.
   and clicking an unselected item in a previously used slot did nothing.
   `toggleItemSelection` now decides by item identity, and `onListLoaded`
   rebuilds `_selectedItems` from the items it re-marks.
+  Scrolling the picker left rows blank for about a second. `SBDynamicScrollbar`
+  only shows and loads windows 100ms after scrolling *stops*, and
+  `ItemWindowOriginal.setStatesForVisibility(false)` destroys the icon of
+  every window that leaves the view, so scrolling back rebuilds it from
+  scratch. The picker now passes `keepIconLoaded:true`; with it, a hidden
+  window keeps its icon and only pauses its animations
+  (`src/gui/itemWindows/ItemWindowOriginal.as`, opt-in, so other lists are
+  unchanged). An `enterFrame` prefetch in the picker also watches the scroll
+  target and, when it changes, shows and loads the windows from one screen
+  above it to two below, before the scroll tween reaches them.
+  `SBDynamicScrollbar` itself is not patched: its decompile has broken
+  expressions (`null.width` in `doInsert`) and would not recompile
+  faithfully.
 - `src/MainFrame.as`, `src/room/RoomManagerWorld.as`,
   `src/gamePlayFlow/GamePlay.as` — zoom hotkeys and WASD chat focus.
   - Zoom: the Shift+Plus/Minus hotkeys stepped from
@@ -152,7 +174,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```

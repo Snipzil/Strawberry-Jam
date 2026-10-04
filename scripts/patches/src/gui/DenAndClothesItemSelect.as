@@ -198,6 +198,14 @@ package gui
       private var _filteredDenItemsArray:IitemCollection;
       
       private var _filteredPetsArray:PetItemCollection;
+
+      private var _viewHeight:Number = 0;
+
+      private var _lastPrefetchScrollY:Number = NaN;
+
+      private var _lastPrefetchWindowCount:int = -1;
+      
+      private var _lastPrefetchGenerator:WindowAndScrollbarGenerator;
       
       public function DenAndClothesItemSelect()
       {
@@ -319,6 +327,7 @@ package gui
          _popup.y = 550 * 0.5;
          _guiLayer.addChild(_popup);
          DarkenManager.darken(_popup);
+         _viewHeight = _popup.itemBlock.height;
          setInitialStatesAndVisibility();
          addListeners();
          if(_type == 0 || _type == 3)
@@ -786,7 +795,8 @@ package gui
                "isECard":_type == 1,
                "isChoosingForTradeList":_type == 0 || _type == 3,
                "indexArray":_loc5_,
-               "itemScale":itemScale
+               "itemScale":itemScale,
+               "keepIconLoaded":true
             },onListLoaded);
          }
          else
@@ -2088,6 +2098,43 @@ package gui
          _popup.searchBar.addEventListener("mouseDown",onSearchBarDown,false,0,true);
          _popup.searchBar.addEventListener("mouseOver",onSearchBarOver,false,0,true);
          _popup.searchBar.addEventListener("mouseOut",onSearchBarOut,false,0,true);
+         _popup.addEventListener("enterFrame",onPrefetchFrame,false,0,true);
+      }
+
+      // The scrollbar only shows/loads windows 100ms after scrolling stops, so rows scrolled
+      // into view stay blank. Whenever the scroll target (or window count) changes, show and
+      // load every window from one screen above it to two below, ahead of the scroll tween.
+      private function onPrefetchFrame(param1:Event) : void
+      {
+         if(_currItemWindow == null || _currItemWindow.mediaWindows == null || _viewHeight <= 0)
+         {
+            return;
+         }
+         var scrollY:Number = _currItemWindow.scrollYValue;
+         var windows:Array = _currItemWindow.mediaWindows;
+         if(scrollY == _lastPrefetchScrollY && windows.length == _lastPrefetchWindowCount && _currItemWindow == _lastPrefetchGenerator)
+         {
+            return;
+         }
+         _lastPrefetchScrollY = scrollY;
+         _lastPrefetchWindowCount = windows.length;
+         _lastPrefetchGenerator = _currItemWindow;
+         var top:Number = scrollY - _viewHeight;
+         var bottom:Number = scrollY + _viewHeight * 2;
+         var i:int = 0;
+         while(i < windows.length)
+         {
+            var win:ItemWindowOriginal = windows[i] as ItemWindowOriginal;
+            if(win != null && win.parent != null && win.y + win.height > top && win.y < bottom)
+            {
+               win.loadCurrItem(scrollY,0);
+               if(!win.visible)
+               {
+                  win.setStatesForVisibility(true);
+               }
+            }
+            i++;
+         }
       }
       
       private function removeListeners() : void
@@ -2118,6 +2165,7 @@ package gui
          _popup.searchBar.removeEventListener("mouseDown",onSearchBarDown);
          _popup.searchBar.removeEventListener("mouseOver",onSearchBarOver);
          _popup.searchBar.removeEventListener("mouseOut",onSearchBarOut);
+         _popup.removeEventListener("enterFrame",onPrefetchFrame);
       }
    }
 }
