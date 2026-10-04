@@ -1047,8 +1047,10 @@ function setupIpcHandlers(electronInstance) {
 
   // Global IPC handlers that don't depend on electronInstance directly
   ipcMain.on('packet-event', (event, packetData) => {
+    // Packets originate in the main window, so echoing them back to it just
+    // re-deserializes every packet on the thread that relays game traffic.
     const mainWin = electronInstance._window;
-    if (mainWin && !mainWin.isDestroyed()) {
+    if (mainWin && !mainWin.isDestroyed() && mainWin.webContents !== event.sender) {
       try { mainWin.webContents.send('packet-event', packetData); } catch (e) {}
     }
     electronInstance.pluginWindows.forEach((win) => {

@@ -112,15 +112,17 @@ class PacketFilterManager {
     const self = this
     const $packets = $('#message-log').children('div')
     $packets.each(function () {
-      const $el = $(this)
-      const isIncoming = $el.find('.fa-arrow-down').length > 0
-      const msg = $el.attr('data-message') || $el.text()
+      const body = this.querySelector('.pkt-msg')
+      const isIncoming = this.getAttribute('data-dir') === 'in'
+      const msg = body ? body.textContent : this.textContent
       const visible = self.shouldShow(msg, isIncoming)
-      const currentlyHidden = $el.css('display') === 'none'
+      // Read the inline style rather than computed style so filtering a full
+      // log doesn't force a style recalc per row.
+      const currentlyHidden = this.style.display === 'none'
       if (visible && currentlyHidden) {
-        $el.show()
+        this.style.display = ''
       } else if (!visible && !currentlyHidden) {
-        $el.hide()
+        this.style.display = 'none'
       }
     })
   }

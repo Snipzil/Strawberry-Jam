@@ -9,6 +9,7 @@ class InlinePluginManager {
     this._$container = null
     this._$iframe = null
     this._$nameSpan = null
+    this._packetListeners = new Set()
   }
 
   initialize() {
@@ -20,6 +21,39 @@ class InlinePluginManager {
 
     $('#inlinePluginBackBtn').on('click', () => this.close())
     $('#inlinePluginPopoutBtn').on('click', () => this.popout())
+
+    this._trackPacketListeners()
+  }
+
+  // Inline plugins subscribe with window.parent.addEventListener('jam-packet')
+  // and rarely unsubscribe, so each open/close left a handler on this window
+  // that pinned the dead iframe and still ran for every packet. The iframe is
+  // the only jam-packet consumer here, so every such listener belongs to it.
+  _trackPacketListeners() {
+    const listeners = this._packetListeners
+    const add = window.addEventListener
+    const remove = window.removeEventListener
+
+    window.addEventListener = function (type, listener, options) {
+      if (type === 'jam-packet' && listener) listeners.add({ listener, options })
+      return add.call(this, type, listener, options)
+    }
+    window.removeEventListener = function (type, listener, options) {
+      if (type === 'jam-packet') {
+        for (const entry of listeners) {
+          if (entry.listener === listener) listeners.delete(entry)
+        }
+      }
+      return remove.call(this, type, listener, options)
+    }
+    this._removePacketListener = (entry) => remove.call(window, 'jam-packet', entry.listener, entry.options)
+  }
+
+  _releasePacketListeners() {
+    for (const entry of this._packetListeners) {
+      this._removePacketListener(entry)
+    }
+    this._packetListeners.clear()
   }
 
   open(pluginName) {
@@ -29,6 +63,7 @@ class InlinePluginManager {
     const { filepath, configuration: { main } } = plugin
     const url = `file://${path.join(filepath, main)}`
 
+    this._releasePacketListeners()
     this._currentPlugin = pluginName
     this._$nameSpan.text(pluginName)
     this._$listSection.addClass('hidden')
@@ -63,6 +98,7 @@ class InlinePluginManager {
       this.application.pluginUIManager.updatePluginStatusIndicator(this._currentPlugin, false)
     }
     this._$iframe.attr('src', 'about:blank')
+    this._releasePacketListeners()
     this._$container.addClass('hidden')
     this._$listSection.removeClass('hidden')
     this._$pluginHeader.removeClass('hidden')

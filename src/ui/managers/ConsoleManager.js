@@ -273,7 +273,6 @@ class ConsoleManager {
     row.className = 'pkt-row pkt-' + dir
     row.setAttribute('data-packet', 'true')
     row.setAttribute('data-dir', dir)
-    row.setAttribute('data-message', message)
 
     const meta = document.createElement('div')
     meta.className = 'pkt-meta'

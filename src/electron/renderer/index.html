@@ -2135,7 +2135,7 @@
         const entries = []
         $targets.each(function() {
           const $el = $(this)
-          const msg = $el.attr('data-message') || ''
+          const msg = $el.children('.pkt-msg').text()
           const dir = $el.find('.fa-arrow-down').length > 0 ? 'in' : $el.find('.fa-arrow-up').length > 0 ? 'out' : null
           entries.push({ msg, dir })
         })

@@ -611,6 +611,22 @@ module.exports = class Dispatch {
   }
 
   clearAll () {
+    // On refresh the old game plugin instances would otherwise keep their
+    // timers running alongside the freshly loaded ones.
+    for (const [name, { plugin }] of this.plugins) {
+      if (plugin && typeof plugin.unload === 'function') {
+        try {
+          plugin.unload()
+        } catch (error) {
+          devError(`[Dispatch] Error unloading plugin ${name}:`, error)
+        }
+      }
+    }
+    for (const interval of this.intervals) {
+      clearInterval(interval)
+    }
+    this.intervals.clear()
+
     this.plugins.clear()
     this.commands.clear()
 
