@@ -21,7 +21,7 @@ UsernameLogger
 plugin_packages/
 
 
-RELEASE_NOTES.md
+*.md
 
 # AJ client updater downloads, exports and build output
 scripts/aj-update/work/
