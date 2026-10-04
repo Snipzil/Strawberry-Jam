@@ -266,6 +266,7 @@
       <div id="flash-game-container">
         <webview id="flash-game-webview" plugins preload="gamePreload.js" webpreferences="contextIsolation=false" style="height: 100%; width: 100%;"></webview>
         <button id="mod-menu-btn" title="Toggle Mod Menu (F10)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg><span class="mod-menu-btn-label">Mod Menu <span class="mod-menu-btn-key">F10</span></span></button>
+        <ajd-mod-menu-panel id="mod-menu-panel"></ajd-mod-menu-panel>
       </div>
     </div>
       `;
@@ -274,24 +275,23 @@
       const preloadUrl = new URL('gamePreload.js', window.location.href).href;
       this.webViewElem.setAttribute('preload', preloadUrl);
 
+      this.modMenuPanel = this.shadowRoot.getElementById("mod-menu-panel");
+      this.modMenuPanel.bridge = { call: (method, ...args) => this._callFlash(method, ...args) };
+      this.modMenuPanel.addEventListener("closed", () => {
+        if (this.webViewElem && this._webviewReady) this.webViewElem.focus();
+      });
+      document.addEventListener('mod-menu-classic-changed', () => {
+        if (!this._useHtmlModMenu()) this.modMenuPanel.close();
+        this._sendModMenuConfig();
+      });
+
       this.modMenuBtn = this.shadowRoot.getElementById("mod-menu-btn");
       if (this.modMenuBtn) {
-        this.modMenuBtn.addEventListener("click", () => {
-          if (this.webViewElem && this._webviewReady) {
-            this.webViewElem.sendInputEvent({ type: 'keyDown', keyCode: 'F10' });
-            this.webViewElem.sendInputEvent({ type: 'keyUp', keyCode: 'F10' });
-          }
-        });
+        this.modMenuBtn.addEventListener("click", () => this._toggleModMenu());
         document.addEventListener('mod-menu-btn-changed', (e) => {
           this.modMenuBtn.style.display = e.detail.enabled ? 'flex' : 'none';
         });
-        document.addEventListener('open-mod-menu', () => {
-          if (this.webViewElem && this._webviewReady) {
-            this.webViewElem.focus();
-            this.webViewElem.sendInputEvent({ type: 'keyDown', keyCode: 'F10' });
-            this.webViewElem.sendInputEvent({ type: 'keyUp', keyCode: 'F10' });
-          }
-        });
+        document.addEventListener('open-mod-menu', () => this._toggleModMenu(true));
       }
 
       this._webviewReady = false;
@@ -306,7 +306,10 @@
       document.addEventListener("logout-requested", this._boundLogoutHandler);
 
       // theme vars land on <html> (LoginScreen theme manager); forward changes to the mod menu
-      this._themeObserver = new MutationObserver(() => this._sendModMenuTheme());
+      this._themeObserver = new MutationObserver(() => {
+        this._sendModMenuTheme();
+        if (this.modMenuPanel) this.modMenuPanel.refreshTheme();
+      });
       this._themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
 
       this._boundDragoverHandler = (event) => {
@@ -477,6 +480,9 @@
           case "reportError": {
             globals.reportError("gameClient", event.args[0]);
           } break;
+          case "modMenuToggle": {
+            if (this._useHtmlModMenu()) this.modMenuPanel.toggle();
+          } break;
           case "printImage": {
             const imageData = event.args[0];
             window.ipc.send("systemCommand", {command: "print", width: imageData.width, height: imageData.height, image: imageData.image});
@@ -521,6 +527,7 @@
         this.webViewElem.send("flashVarsReady", flashVars);
         this._sentModMenuTheme = null;
         this._sendModMenuTheme();
+        this._sendModMenuConfig();
 
       };
       this.webViewElem.addEventListener("dom-ready", this._loadDomReadyHandler, {once: true});
@@ -562,6 +569,42 @@
       this.webViewElem.send("modMenuTheme", color);
     }
 
+    _useHtmlModMenu() {
+      return localStorage.getItem('classicModMenu') !== 'true';
+    }
+
+    _sendModMenuConfig() {
+      if (!this._webviewReady || !this.webViewElem) return;
+      this.webViewElem.send("modMenuConfig", { html: this._useHtmlModMenu() });
+    }
+
+    // Classic mode (or a game that isn't up yet) goes through F10 so Flash decides.
+    _toggleModMenu(openOnly) {
+      if (!this.webViewElem || !this._webviewReady) return;
+      if (this._useHtmlModMenu()) {
+        if (openOnly) this.modMenuPanel.open();
+        else this.modMenuPanel.toggle();
+        return;
+      }
+      this.webViewElem.focus();
+      this.webViewElem.sendInputEvent({ type: 'keyDown', keyCode: 'F10' });
+      this.webViewElem.sendInputEvent({ type: 'keyUp', keyCode: 'F10' });
+    }
+
+    // Calls an ExternalInterface callback registered by ModMenuFeatures.initBridge().
+    async _callFlash(method, ...args) {
+      if (!/^sjModMenu[A-Za-z]+$/.test(method)) throw new Error("bad-method");
+      if (!this.webViewElem || !this._webviewReady) throw new Error("not-ready");
+      const code = `(() => {
+        const el = Array.from(document.querySelectorAll("embed, object")).find(e => typeof e.${method} === "function");
+        if (!el) return JSON.stringify({ ok: false, error: "not-ready" });
+        return JSON.stringify({ ok: true, value: el.${method}(...${JSON.stringify(args)}) });
+      })()`;
+      const result = JSON.parse(await this.webViewElem.executeJavaScript(code));
+      if (!result.ok) throw new Error(result.error);
+      return result.value;
+    }
+
     _initModMenuButton() {
       if (!this.modMenuBtn) return;
       this.modMenuBtn.style.display = localStorage.getItem('showModMenuButton') === 'true' ? 'flex' : 'none';
@@ -580,6 +623,7 @@
         }
       } catch (e) {}
 
+      if (this.modMenuPanel) this.modMenuPanel.close();
       this.webViewElem.classList.add("hidden");
       this.retrying = false;
       this.closeGameTimeout = setTimeout(this.resetWebView.bind(this), 1000);

@@ -2600,6 +2600,10 @@ package gui
       
       public static function toggleModMenu() : void
       {
+         if(_modMenu == null && ModMenuFeatures.toggleHtmlMenu())
+         {
+            return;
+         }
          if(_modMenu == null)
          {
             _modMenu = new gui.ModMenu(function():void

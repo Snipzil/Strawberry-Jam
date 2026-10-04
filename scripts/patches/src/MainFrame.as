@@ -26,6 +26,7 @@ package
    import game.MinigameManager;
    import gamePlayFlow.GamePlay;
    import gui.GuiManager;
+   import gui.ModMenuFeatures;
    import loadProgress.LoadProgress;
    import room.LayerManager;
    import room.RoomManagerWorld;
@@ -183,6 +184,7 @@ package
                {
                   ExternalInterface.call("console.log","init:ERROR hit during AJC ext mod setup! msg:" + e.message + " stack:" + e.getStackTrace());
                }
+               gui.ModMenuFeatures.initBridge();
             }
             gMainFrame.clientInfo.extCallsActive = false;
             _configLoadedCallback = param2;

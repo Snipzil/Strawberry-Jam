@@ -269,6 +269,14 @@
         });
       }
 
+      if (this.loginScreen.classicModMenuToggle) {
+        this.loginScreen.classicModMenuToggle.addEventListener('change', () => {
+          const classic = this.loginScreen.classicModMenuToggle.checked;
+          localStorage.setItem('classicModMenu', classic ? 'true' : 'false');
+          document.dispatchEvent(new CustomEvent('mod-menu-classic-changed', { detail: { classic } }));
+        });
+      }
+
       if (this.loginScreen.darkModeToggle) {
         this.loginScreen.darkModeToggle.addEventListener('change', async () => {
           try {

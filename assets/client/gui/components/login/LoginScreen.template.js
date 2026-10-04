@@ -1325,6 +1325,13 @@
                   <div class="settings-toggle"></div>
                 </label>
               </div>
+              <div class="settings-item" title="Use the old in-game Flash mod menu instead of the new one">
+                <span>Classic Mod Menu</span>
+                <label style="display: inline-flex; align-items: center; cursor: pointer; position: relative;">
+                  <input type="checkbox" id="classic-mod-menu-toggle" class="sr-only settings-peer">
+                  <div class="settings-toggle"></div>
+                </label>
+              </div>
               <div class="settings-item">
                 <span>Server Swap</span>
                 <select id="server-swap-select" class="settings-select">

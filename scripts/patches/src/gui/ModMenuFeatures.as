@@ -1,9 +1,13 @@
 package gui
 {
    import com.sbi.client.KeepAlive;
+   import flash.external.ExternalInterface;
+   import flash.utils.setTimeout;
    
    public class ModMenuFeatures
    {
+      
+      private static var _bridgeReady:Boolean = false;
       
       public function ModMenuFeatures()
       {
@@ -606,6 +610,117 @@ package gui
          {
          }
       }
+
+      // HTML mod menu bridge. The launcher draws the menu in the client window and
+      // drives these through ExternalInterface; all state stays in GuiManager.
+      public static function initBridge() : void
+      {
+         if(_bridgeReady || !ExternalInterface.available)
+         {
+            return;
+         }
+         try
+         {
+            ExternalInterface.addCallback("sjModMenuGetState",bridgeGetState);
+            ExternalInterface.addCallback("sjModMenuSetToggle",bridgeSetToggle);
+            ExternalInterface.addCallback("sjModMenuSetScope",bridgeSetScope);
+            ExternalInterface.addCallback("sjModMenuSetDenLogin",bridgeSetDenLogin);
+            ExternalInterface.addCallback("sjModMenuOpenPopup",bridgeOpenPopup);
+            _bridgeReady = true;
+         }
+         catch(e:Error)
+         {
+         }
+      }
+      
+      // F10 asks the launcher to toggle the HTML menu; false means it is off or
+      // unavailable and the caller falls back to the Flash menu.
+      public static function toggleHtmlMenu() : Boolean
+      {
+         if(!_bridgeReady)
+         {
+            return false;
+         }
+         try
+         {
+            return ExternalInterface.call("sjModMenu.toggle") === true;
+         }
+         catch(e:Error)
+         {
+         }
+         return false;
+      }
+      
+      private static function bridgeGetState() : Object
+      {
+         var toggles:Array = [];
+         var popups:Array = [];
+         var features:Array = getToggleFeatures();
+         var popupFeatures:Array = getPopupFeatures();
+         var f:Object;
+         var i:int = 0;
+         while(i < features.length)
+         {
+            f = features[i];
+            toggles.push({
+               "key":f.key,
+               "label":f.label,
+               "desc":f.desc,
+               "hotkey":f.hotkey,
+               "category":f.category,
+               "enabled":getFeatureState(f.key),
+               "global":getFeatureScope(f.key)
+            });
+            i++;
+         }
+         i = 0;
+         while(i < popupFeatures.length)
+         {
+            f = popupFeatures[i];
+            popups.push({
+               "key":f.key,
+               "label":f.label,
+               "desc":f.desc,
+               "hotkey":f.hotkey,
+               "action":f.action
+            });
+            i++;
+         }
+         return {
+            "toggles":toggles,
+            "popups":popups,
+            "den":getDenLoginConfig()
+         };
+      }
+      
+      private static function bridgeSetToggle(key:String, enabled:Boolean) : Boolean
+      {
+         handleFeatureToggle(key,enabled);
+         return getFeatureState(key);
+      }
+      
+      private static function bridgeSetScope(key:String, isGlobal:Boolean) : Boolean
+      {
+         setFeatureScope(key,isGlobal);
+         return getFeatureScope(key);
+      }
+      
+      private static function bridgeSetDenLogin(enabled:Boolean, username:String) : Object
+      {
+         try
+         {
+            GuiManager.setDenLoginConfig(enabled,username);
+         }
+         catch(e:Error)
+         {
+         }
+         return getDenLoginConfig();
+      }
+      
+      private static function bridgeOpenPopup(action:String) : void
+      {
+         // leave the JS call stack before building display objects
+         setTimeout(handlePopupAction,1,action);
+      }
    }
 }
-

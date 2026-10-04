@@ -154,6 +154,19 @@ the file as vanilla and untouched.
 - `src/gui/ModMenuFeatures.as` — registers the new `followBuddyRetryEnabled`
   enhancement toggle ("Retry Follow Buddy (Room Full)") so it shows up in the
   mod menu's Enhancements tab and persists like every other toggle.
+- HTML mod menu bridge: `src/gui/ModMenuFeatures.as`, `src/MainFrame.as`,
+  `src/gui/GuiManager.as`. The F10 menu is now drawn by the client in HTML
+  (`assets/client/gui/components/screens/ModMenuPanel.js`). `MainFrame` calls
+  `ModMenuFeatures.initBridge()` next to the `mec` setup, which registers
+  ExternalInterface callbacks `sjModMenuGetState`, `sjModMenuSetToggle`,
+  `sjModMenuSetScope`, `sjModMenuSetDenLogin` and `sjModMenuOpenPopup`. They
+  are thin wrappers over the existing `ModMenuFeatures`/`GuiManager` calls, so
+  persistence and scopes are unchanged. GameScreen calls them with
+  `webview.executeJavaScript` on the Flash `<embed>`. `GuiManager.toggleModMenu()`
+  first asks `ModMenuFeatures.toggleHtmlMenu()`, which calls
+  `sjModMenu.toggle` (exposed by `gamePreload.js`). That returns false when the
+  "Classic Mod Menu" client setting is on or the host isn't ready, and the
+  Flash menu opens as before.
 
 Because `GuiManager` is the single glue class behind every mod toggle
 (6000+ lines, not something this project maintains in full elsewhere), this

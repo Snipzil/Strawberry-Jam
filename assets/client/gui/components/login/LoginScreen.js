@@ -74,6 +74,7 @@
       this.backgroundProcessingToggle = this.shadowRoot.getElementById("background-processing-toggle");
       this.highPerformanceToggle = this.shadowRoot.getElementById("high-performance-toggle");
       this.modMenuBtnToggle = this.shadowRoot.getElementById("mod-menu-btn-toggle");
+      this.classicModMenuToggle = this.shadowRoot.getElementById("classic-mod-menu-toggle");
       this.darkModeToggle = this.shadowRoot.getElementById("dark-mode-toggle");
       this.showImportAccountsToggle = this.shadowRoot.getElementById("show-import-accounts-toggle");
       this.showWheelAutomationToggle = this.shadowRoot.getElementById("show-wheel-automation-toggle");

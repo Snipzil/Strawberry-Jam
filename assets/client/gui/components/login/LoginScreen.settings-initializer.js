@@ -58,6 +58,10 @@
         this.loginScreen.modMenuBtnToggle.checked = localStorage.getItem('showModMenuButton') === 'true';
       }
 
+      if (this.loginScreen.classicModMenuToggle) {
+        this.loginScreen.classicModMenuToggle.checked = localStorage.getItem('classicModMenu') === 'true';
+      }
+
       window.ipc.invoke('get-setting', 'darkMode')
         .then(darkMode => {
           if (this.loginScreen.darkModeToggle) {
