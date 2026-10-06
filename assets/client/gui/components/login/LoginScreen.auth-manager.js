@@ -107,6 +107,7 @@
             case "EMPTY_USERNAME": userMessage = await globals.translate("usernameRequired"); break;
             case "EMPTY_PASSWORD": userMessage = await globals.translate("emptyPassword"); break;
             case "RATE_LIMITED": userMessage = "Rate limited. Please try again in a few moments."; break;
+            case "IP_BLOCKED": userMessage = "Animal Jam is blocking this connection. If you're on a VPN, switch to a different server or turn it off."; break;
             case "REFRESH_TOKEN_EXPIRED": userMessage = "Your session has expired. Please log in again."; break;
             case "AUTH_TOKEN_EXPIRED":
               console.warn("[LoginScreen] Caught AUTH_TOKEN_EXPIRED. Forcing re-login.");

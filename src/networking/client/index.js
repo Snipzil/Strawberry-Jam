@@ -2,6 +2,9 @@ const { ConnectionMessageTypes, TCP_SERVER_PORTS } = require('../../Constants')
 const tls = require('tls')
 const DelimiterTransform = require('../transform')
 const { Socket } = require('net')
+const fs = require('fs')
+const os = require('os')
+const path = require('path')
 
 /**
  * Messages.
@@ -37,6 +40,22 @@ const MAX_QUEUE_SIZE = 1000 // From jam-master
  * @constant
  */
 const KEEPALIVE_DELAY_MS = 30000
+
+/**
+ * Client-to-AJ silence after which the last "ka" is replayed. Userspace VPNs
+ * answer TCP keepalive probes locally, so only real data keeps their
+ * outbound flow to AJ alive (they cut idle flows after ~3-5 min).
+ * @type {number}
+ * @constant
+ */
+const HEARTBEAT_IDLE_MS = 60000
+
+/**
+ * Connect/disconnect history, so drops can be diagnosed after the fact.
+ * @type {string}
+ * @constant
+ */
+const CONNECTION_LOG_PATH = path.join(process.env.APPDATA || os.homedir(), 'strawberry-jam', 'logs', 'connection.log')
 
 module.exports = class Client {
   /**
@@ -203,6 +222,16 @@ module.exports = class Client {
         cleanupListeners()
         clearTimeout(connectionTimeout)
         this.connected = true
+        this._connectedAt = Date.now()
+        this._lastAjPacketAt = this._connectedAt
+        this._closedBy = null
+        this._ajSocketError = null
+        this._clientIdleKick = false
+        this._lastClientPacketAt = this._connectedAt
+        this._lastClientKa = null
+        this._logConnection(`connected to ${smartfoxServer}:${serverPort} (${secureConnection ? 'tls' : 'tcp'})`)
+        clearInterval(this._heartbeat)
+        this._heartbeat = setInterval(() => this._sendHeartbeat(), 15000)
 
         // VPNs/NATs drop idle TCP flows (often ~5 min). The game only sends
         // "ka" every 3 min while the player is active, so idle sessions went
@@ -316,6 +345,7 @@ module.exports = class Client {
       .pipe(ajTransform)
       .on('data', (message) => {
         message = message.toString() // Already done in DelimiterTransform, but good practice
+        this._lastAjPacketAt = Date.now()
         try {
           const validatedMessage = this.constructor.validate(message)
           if (validatedMessage) {
@@ -335,12 +365,14 @@ module.exports = class Client {
         }
       })
       .once('close', () => { // From jam-master
+        if (!this._closedBy) this._closedBy = 'server'
         if (this._server && this._server.application && !this._manualDisconnect) {
             this._server.application.emit('connection:change', false)
         }
         this.disconnect() // Calls our updated disconnect
       })
       .on('error', (err) => { // Added error handling for _aj socket
+        this._ajSocketError = err.code || err.message
         if (this._server && this._server.application) {
             this._server.application.consoleMessage({
                 message: `AJ Socket Error: ${err.message}`,
@@ -355,6 +387,11 @@ module.exports = class Client {
       .pipe(connectionTransform)
       .on('data', (message) => {
         message = message.toString()
+        // "ft" is the client's own idle kick (KeepAlive.KICK_INTERVAL, 7 min
+        // without Flash mouse/key input), which also shows "gone too long".
+        if (/^%xt%[^%]*%ft%/.test(message)) this._clientIdleKick = true
+        if (/^%xt%[oa]%ka%/.test(message)) this._lastClientKa = message
+        this._lastClientPacketAt = Date.now()
         try {
           const validatedMessage = this.constructor.validate(message)
           if (validatedMessage) {
@@ -373,7 +410,10 @@ module.exports = class Client {
           }
         }
       })
-      .once('close', this.disconnect.bind(this)) // Current project's way
+      .once('close', () => {
+        if (!this._closedBy) this._closedBy = 'client'
+        this.disconnect()
+      })
       .on('error', (err) => { // Added error handling for _connection socket
         if (this._server && this._server.application) {
             this._server.application.consoleMessage({
@@ -685,6 +725,10 @@ module.exports = class Client {
    */
   async disconnect (manual = false) { // From jam-master
     this._manualDisconnect = manual;
+    clearInterval(this._heartbeat);
+    if (this.connected) {
+      this._logConnection(`disconnected${manual ? ' (manual)' : ''}: ${this._describeDisconnect()}`);
+    }
 
     if (this._connection && !this._connection.destroyed) {
       this._connection.destroy();
@@ -720,7 +764,7 @@ module.exports = class Client {
         if (!isGameClosing && !wasJustLaunched) {
           this._recentlyDisconnected = true;
           this._server.application.consoleMessage({
-              message: 'Connection to Animal Jam servers closed.',
+              message: `Connection to Animal Jam servers closed. ${this._describeDisconnect()}`,
               type: 'notify'
           });
           
@@ -744,6 +788,59 @@ module.exports = class Client {
         this._server.clients.delete(this);
     }
   }
+  /**
+   * Replays the game's own last "ka" when the client has gone quiet, so the
+   * AJ flow never idles long enough for a VPN to drop it.
+   * @private
+   */
+  _sendHeartbeat () {
+    if (!this.connected || !this._lastClientKa) return
+    if (Date.now() - this._lastClientPacketAt < HEARTBEAT_IDLE_MS) return
+    this._lastClientPacketAt = Date.now()
+    this.sendRemoteMessage(this._lastClientKa).catch(() => {})
+  }
+
+  /**
+   * @param {string} line
+   * @private
+   */
+  _logConnection (line) {
+    try {
+      fs.mkdirSync(path.dirname(CONNECTION_LOG_PATH), { recursive: true })
+      fs.appendFileSync(CONNECTION_LOG_PATH, `[${new Date().toISOString()}] ${line}
+`)
+    } catch (err) {}
+  }
+
+  /**
+   * Explains who dropped the session, since the game shows "you were gone
+   * too long" for every kind of disconnect.
+   * @returns {string}
+   * @private
+   */
+  _describeDisconnect () {
+    const now = Date.now()
+    const mins = this._connectedAt ? Math.round((now - this._connectedAt) / 60000) : 0
+    const quietSecs = this._lastAjPacketAt ? Math.round((now - this._lastAjPacketAt) / 1000) : 0
+    let reason
+    if (this._clientIdleKick) {
+      reason = 'Idle kick: no mouse/keyboard input in the game for 7 min (turn on Anti-AFK to prevent this).'
+    } else if (this._ajSocketError) {
+      reason = `Network error (${this._ajSocketError}), usually the VPN or internet dropping.`
+    } else if (this._closedBy === 'server' && mins < 1) {
+      // Seen with VPN/datacenter IPs: auth passes, then the game server
+      // drops the socket mid world-login ("Login world error").
+      reason = 'Animal Jam rejected the login. If you are on a VPN, its IP is likely blocked; try another server or turn it off.'
+    } else if (this._closedBy === 'server') {
+      reason = 'Animal Jam closed the connection.'
+    } else if (this._closedBy === 'client') {
+      reason = 'The game client closed the connection.'
+    } else {
+      reason = 'Reason unknown.'
+    }
+    return `${reason} (session ${mins}m, last server packet ${quietSecs}s ago)`
+  }
+
    /**
    * Checks if Animal Jam was just successfully launched.
    * @returns {boolean} True if the game was launched within the last 5 seconds

@@ -1326,6 +1326,19 @@ app.whenReady().then(async () => {
     backgroundColor: "#F5C86D",
   });
   win.setMenu(null);
+
+  // Login failures only showed in DevTools; keep them on disk for diagnosis.
+  // Query strings are dropped since session URLs can carry tokens.
+  const loginLogPath = path.join(strawberryJamClassicPath, 'logs', 'login.log');
+  win.webContents.on('console-message', (event, level, message) => {
+    if (level < 2 && !/^\[(AUTH|SERVER|LoginScreen)\]/.test(message)) return;
+    try {
+      fs.mkdirSync(path.dirname(loginLogPath), { recursive: true });
+      const line = message.replace(/\?[^\s'"]*/g, '?…').slice(0, 1000);
+      fs.appendFileSync(loginLogPath, `[${new Date().toISOString()}] ${line}\n`);
+    } catch (err) {}
+  });
+
   const winState = store.get("window.state");
   if (winState === "fullScreen") {
     win.setFullScreen(true);

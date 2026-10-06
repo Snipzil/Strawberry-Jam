@@ -79,7 +79,15 @@
         cache: "no-store",
         headers: authHeaders,
         body: JSON.stringify(request),
-      }, [401, 403, 422, 500]);
+        // A login POST that timed out may still have reached AJ; firing it
+        // five more times trips rate limits and re-sends OTP emails.
+        timeout: 20000,
+        maxAttempts: 2,
+      }, [401, 403, 422, 429, 500]);
+
+      if (response.status === 429) {
+        throw new Error("RATE_LIMITED");
+      }
 
       if (response.status === 200) {
         const authenticateData = JSON.parse(await response.text());
@@ -141,36 +149,20 @@
       }
 
       if (response.status === 403) {
+        let errorText = '';
         try {
-          const responseText = await response.text();
-          
-          if (responseText) {
-            try {
-              const errorData = JSON.parse(responseText);
-              const errorText = (errorData.error || errorData.message || '').toLowerCase();
-              
-              if (errorText.includes('rate') || errorText.includes('limit') || errorText.includes('too many')) {
-                throw new Error("RATE_LIMITED");
-              }
-            } catch (parseErr) {
-            }
-          }
-          
-          const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
-          
-          if (rateLimitRemaining === '0' || rateLimitRemaining === null) {
-            throw new Error("RATE_LIMITED");
-          }
-          
-          console.error("[AUTH] 403 Forbidden - possible IP block or missing permissions");
-          throw new Error("LOGIN_ERROR");
-        } catch (err) {
-          if (err.message === "RATE_LIMITED" || err.message === "LOGIN_ERROR") {
-            throw err;
-          }
-          console.error("[AUTH] Could not parse 403 response:", err);
-          throw new Error("LOGIN_ERROR");
+          const errorData = JSON.parse(await response.text());
+          errorText = (errorData.error || errorData.message || '').toLowerCase();
+        } catch (parseErr) {
+          // Firewall block pages are HTML, not JSON.
         }
+        if (errorText.includes('rate') || errorText.includes('limit') || errorText.includes('too many') ||
+            response.headers.get('X-RateLimit-Remaining') === '0') {
+          throw new Error("RATE_LIMITED");
+        }
+        // AJ answers 403 to blocked IPs, which is most often a VPN server.
+        console.error("[AUTH] 403 Forbidden - IP blocked (VPN?)");
+        throw new Error("IP_BLOCKED");
       }
 
       console.error("[AUTH] Unexpected response status:", response.status);

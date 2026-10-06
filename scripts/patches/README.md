@@ -195,6 +195,12 @@ the file as vanilla and untouched.
   setters that each save to disk. The game runs at 24 fps with a fixed 33ms
   step per frame (`roomMgr.heartbeat(33, ...)`), so movement and timeline
   animations are frame-locked and the frame rate is deliberately left alone.
+- `src/avatar/AvatarWorldView.as` (mod-added tint, not vanilla): the private
+  chat balloon (`_privBalloon`) is tinted with a `ColorTransform`. It used
+  half red/green with +128 red/blue offsets, which made the bubble pink and
+  its outline purple. It is now light blue (red x0.65, green x0.82, blue x1,
+  no offsets), so the white fill becomes about `#A6D1FF` and the black outline
+  stays black.
 Because `GuiManager` is the single glue class behind every mod toggle
 (6000+ lines, not something this project maintains in full elsewhere), this
 patch carries the *entire* decompiled file with the above changes applied —
@@ -214,7 +220,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```
