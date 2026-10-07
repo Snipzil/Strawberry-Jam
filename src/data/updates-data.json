@@ -2303,7 +2303,7 @@
   "6.1.0": {
     "version": "6.1.0",
     "releaseDate": "2026-10-04",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -2368,6 +2368,61 @@
           "icon": "cpu",
           "title": "Plugin Memory Leaks",
           "description": "Refreshing plugins now fully stops the old ones instead of leaving them running in the background.",
+          "priority": "minor"
+        }
+      ]
+    }
+  },
+  "6.2.0": {
+    "version": "6.2.0",
+    "releaseDate": "2026-10-07",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "store",
+          "title": "Rebuilt Trade Marketplace",
+          "description": "The Trade button now opens a trade request for that exact item, with no detour through the player's card. Search as you type by item or player, filter by Clothing, Den or Pets, sort by item or player, and scroll with the mouse wheel. Rows show item pictures, real Rare and Diamond tags, and duplicates stacked as x4. Masterpieces get a View painting link.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "message-circle",
+          "title": "Blue Private Chat Bubbles",
+          "description": "Private chat bubbles are now light blue instead of pink with a purple outline.",
+          "priority": "minor"
+        },
+        {
+          "icon": "shield-alert",
+          "title": "Clearer VPN Login Errors",
+          "description": "When Animal Jam blocks your connection, most often because of a VPN server, the login screen now tells you so instead of showing a generic error.",
+          "priority": "minor"
+        },
+        {
+          "icon": "file-text",
+          "title": "Connection Logs",
+          "description": "Disconnects and login errors are saved to log files, so a dropped session can be looked into afterwards.",
+          "priority": "minor"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "wifi",
+          "title": "VPN Disconnects While Idle",
+          "description": "Sessions on a VPN no longer drop after a few quiet minutes.",
+          "priority": "major"
+        },
+        {
+          "icon": "mail",
+          "title": "Repeated Login Codes",
+          "description": "A slow login is no longer retried five times, which could hit rate limits and send you several verification emails.",
+          "priority": "minor"
+        },
+        {
+          "icon": "loader",
+          "title": "Marketplace Stuck Loading",
+          "description": "The marketplace no longer freezes behind a loading spinner when a player doesn't answer.",
           "priority": "minor"
         }
       ]
