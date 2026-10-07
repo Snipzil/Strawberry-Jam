@@ -229,6 +229,8 @@ module.exports = class Client {
         this._clientIdleKick = false
         this._lastClientPacketAt = this._connectedAt
         this._lastClientKa = null
+        this._loginReply = null
+        this._recentAjPackets = []
         this._logConnection(`connected to ${smartfoxServer}:${serverPort} (${secureConnection ? 'tls' : 'tcp'})`)
         clearInterval(this._heartbeat)
         this._heartbeat = setInterval(() => this._sendHeartbeat(), 15000)
@@ -346,6 +348,7 @@ module.exports = class Client {
       .on('data', (message) => {
         message = message.toString() // Already done in DelimiterTransform, but good practice
         this._lastAjPacketAt = Date.now()
+        this._trackAjPacket(message)
         try {
           const validatedMessage = this.constructor.validate(message)
           if (validatedMessage) {
@@ -801,6 +804,32 @@ module.exports = class Client {
   }
 
   /**
+   * Keeps the names of the last few server packets, and AJ's verdict on the
+   * world login, so a rejected login can be explained. Payloads are not kept.
+   * @param {string} message
+   * @private
+   */
+  _trackAjPacket (message) {
+    let name = message.slice(0, 24)
+    if (message[0] === '{') {
+      try {
+        const o = JSON.parse(message).b.o
+        name = `json:${o._cmd}`
+        if (o._cmd === 'login') {
+          this._loginReply = `status=${o.status} statusId=${o.statusId}${o.message ? ` message="${String(o.message).slice(0, 200)}"` : ''}`
+        }
+      } catch (err) {}
+    } else if (message.startsWith('%xt%')) {
+      name = `xt:${message.split('%')[2]}`
+    } else if (message[0] === '<') {
+      const action = /action='([^']*)'/.exec(message)
+      name = `xml:${action ? action[1] : '?'}`
+    }
+    this._recentAjPackets.push(name)
+    if (this._recentAjPackets.length > 8) this._recentAjPackets.shift()
+  }
+
+  /**
    * @param {string} line
    * @private
    */
@@ -838,7 +867,9 @@ module.exports = class Client {
     } else {
       reason = 'Reason unknown.'
     }
-    return `${reason} (session ${mins}m, last server packet ${quietSecs}s ago)`
+    const login = this._loginReply ? `, login reply ${this._loginReply}` : ''
+    const recent = this._recentAjPackets && this._recentAjPackets.length ? `, last packets ${this._recentAjPackets.join(' ')}` : ''
+    return `${reason} (session ${mins}m, last server packet ${quietSecs}s ago${login}${recent})`
   }
 
    /**

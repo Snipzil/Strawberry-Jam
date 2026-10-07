@@ -31,6 +31,31 @@ the file as vanilla and untouched.
   actual trade item row, the popup looked "broken" only once there was
   something to show — it silently threw instead of listing the item. Fixed
   by qualifying both calls.
+  The popup has since been rebuilt for usability. Copies of an item from one
+  player share a row (`×4`); colours, masterpiece paintings and pets stay
+  separate. Rows show the item icon (scaled to fit once it loads), the type,
+  real tags (`isRare`, `isDiamond`, `isOcean`; the old "Rarity" column said
+  "Rare" for everything because it only tested `defId`) and the owner. Search
+  is live and matches item, username, avatar name, type and tags, and every
+  word has to match. All/Clothing/Den/Pets chips show counts, the ITEM and
+  PLAYER headers sort, and the list scrolls by wheel or scrollbar
+  (`ModMenuScroller`). Only the rows in view are built. Masterpieces get a
+  "View painting" link (`GuiManager.openMasterpiecePreview`, as on the buddy
+  card). Trade lists are requested one player at a time, 300ms apart, instead
+  of all at once. A player who doesn't answer within 8s is shown as "didn't
+  respond", where the old popup left a blocking loading spiral up forever.
+  Lists are cached for 60s, so reopening doesn't resend, and Refresh forces a
+  reload. **Trade** now opens the trade request for that exact item, the way
+  clicking it on a buddy card's trade tab does. Before, it showed an OK
+  popup telling you to go and find the item yourself.
+- `src/buddy/BuddyManager.as` — `TradeManager.findItem` looks the requested
+  item up only in `getTradeListFromBuddyCard()`, i.e. an open buddy card. The
+  marketplace now lends it the owner's trade list for the duration of
+  `TradeManager.displayRequestTrade` through `setTradeListOverride(list)` /
+  `setTradeListOverride(null)`. `TradeManager` itself is left alone: the mod
+  already changed it heavily and it is 2700 lines, while `BuddyManager`
+  is near-vanilla. Diffed against the current client after a round trip: the
+  hook is the only change.
 - `src/gui/GuiManager.as` (glue class — see below for how much of it this
   patch touches) — `onMarketplacePopupClose()` called
   `_marketplacePopup.destroy()` a second time inside the callback that
@@ -220,7 +245,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```
