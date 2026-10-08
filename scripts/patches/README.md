@@ -226,6 +226,37 @@ the file as vanilla and untouched.
   its outline purple. It is now light blue (red x0.65, green x0.82, blue x1,
   no offsets), so the white fill becomes about `#A6D1FF` and the black outline
   stays black.
+- `src/com/sbi/graphics/LayerAnim.as` — animations got choppier the longer
+  a session ran. Every avatar animation sits in a global pool
+  (`_activePool`), and `LayerAnim.heartbeat()` advances at most 8 of them per
+  tick, round-robin. Vanilla AJ often drops an `AvatarView` without calling
+  `destroy()`: `ShopWithPreview.purchaseComplete` (every clothing purchase),
+  `AvatarSwitcher`, `ItemWindowCustPlayers` (adventure lobbies), the
+  `PVP_*` games, `MinigameManager`, `AdventureJoin`, `StartupPopups` and
+  others. Those animations stayed in the pool for good. Each tick still
+  bounds-checked them, and `trimAnims()` kept their painted frames and source
+  images in memory, so the per-frame work and Flash's heap (and its GC
+  pauses) grew all session. Now, every 48 ticks (~2s), an animation whose
+  bitmap is off the stage, with no load, preload or callback pending, gets
+  a strike. After 3 strikes it is *parked*: removed from the pool, with an
+  `addedToStage` listener on its own bitmap. Nothing global references it
+  then, so a leaked one is garbage-collected along with its frames. One that
+  is reused rejoins the pool when it is added to the stage or when
+  `playAnim`/`preload`/`layers`/`avDefId` start a new load.
+  `LayerAnim.destroy()` also destroys parked animations.
+  Two decompile notes: `_isOnscreen`/`_hasSequence` are function-valued
+  static *vars* (the setters replace them), but FFDec prints them as static
+  methods. Recompiling that form would break `LayerAnim.isOnscreen = ...` in
+  `Utility`, so the source restores the var form. Also, `pruneOrphans()`
+  (used only by Performance Mode) reads `anim.parent`, which `LayerAnim`
+  doesn't have. It throws, which aborts the rest of
+  `PerformanceManager.performPerformanceCleanup()`. It is deliberately left
+  as is: the steps it skips (`cleanChatBubbles`, `cleanDisplayLists`) destroy
+  live chat balloons and room foreground art, and need fixing first.
+- `src/avatar/AvatarManager.as` heartbeat: the mod wrapped the whole
+  per-avatar `heartbeat` loop in one `try`. So an avatar that threw stopped
+  every avatar after it from moving for as long as it kept throwing. The
+  `try` is now inside the loop.
 Because `GuiManager` is the single glue class behind every mod toggle
 (6000+ lines, not something this project maintains in full elsewhere), this
 patch carries the *entire* decompiled file with the above changes applied —
@@ -245,7 +276,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```

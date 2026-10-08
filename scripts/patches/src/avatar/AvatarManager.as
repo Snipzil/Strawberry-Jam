@@ -1469,9 +1469,11 @@ package avatar
          var _loc5_:*;
          var _loc3_:avatar.AvatarWorldView = null;
          var _loc4_:Array = [];
-         try
+         // Per avatar: with the try around the whole loop, one avatar that
+         // throws froze every avatar after it for as long as it kept throwing.
+         for(_loc5_ in _avatarList)
          {
-            for(_loc5_ in _avatarList)
+            try
             {
                _loc3_ = _avatarViewList[_loc5_];
                if(_loc3_ && !_loc3_.heartbeat(param1,param2))
@@ -1479,9 +1481,9 @@ package avatar
                   _loc4_.push(_loc5_);
                }
             }
-         }
-         catch(heartbeatErr:Error)
-         {
+            catch(heartbeatErr:Error)
+            {
+            }
          }
          while(_loc4_.length > 0)
          {
