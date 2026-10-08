@@ -2376,7 +2376,7 @@
   "6.2.0": {
     "version": "6.2.0",
     "releaseDate": "2026-10-07",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -2423,6 +2423,27 @@
           "icon": "loader",
           "title": "Marketplace Stuck Loading",
           "description": "The marketplace no longer freezes behind a loading spinner when a player doesn't answer.",
+          "priority": "minor"
+        }
+      ]
+    }
+  },
+  "6.2.1": {
+    "version": "6.2.1",
+    "releaseDate": "2026-10-08",
+    "isLatest": true,
+    "categories": {
+      "fixes": [
+        {
+          "icon": "zap",
+          "title": "Choppy Animals in Long Sessions",
+          "description": "Animals no longer get choppier the longer you play. Avatar previews from closed screens (shops, the animal switcher, adventure and minigame lobbies) used to stay loaded for the whole session and slow the game down; they are now released.",
+          "priority": "major"
+        },
+        {
+          "icon": "paw-print",
+          "title": "Animals Freezing in Place",
+          "description": "One glitched player in a room can no longer stop the animals after it from moving.",
           "priority": "minor"
         }
       ]
