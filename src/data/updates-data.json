@@ -2452,7 +2452,7 @@
   "6.2.2": {
     "version": "6.2.2",
     "releaseDate": "2026-10-09",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -2481,6 +2481,33 @@
           "icon": "key",
           "title": "New ID Button",
           "description": "The UUID spoofer's New ID button now actually generates a new device ID.",
+          "priority": "minor"
+        }
+      ]
+    }
+  },
+  "6.2.3": {
+    "version": "6.2.3",
+    "releaseDate": "2026-10-10",
+    "isLatest": true,
+    "categories": {
+      "fixes": [
+        {
+          "icon": "shopping-cart",
+          "title": "New Clothes Not Staying On",
+          "description": "After buying something, picking clothes in the avatar editor could show them on your animal but not keep them once you closed it. A purchase that was cancelled or failed partway left the game ignoring which clothes you had on until you logged out. Clothes you put on now always stick.",
+          "priority": "major"
+        },
+        {
+          "icon": "store",
+          "title": "Outfit Search Breaking Shops",
+          "description": "Searching outfits in a shop could stop the item list from loading when an outfit was priced in more than one currency.",
+          "priority": "minor"
+        },
+        {
+          "icon": "shield",
+          "title": "Login Popups",
+          "description": "The two-step verification, message, forgot password and rename popups no longer hit an error when they open. They now use your theme colour and your chosen language.",
           "priority": "minor"
         }
       ]
