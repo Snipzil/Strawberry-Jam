@@ -936,7 +936,12 @@
             margin-top: -2px;
           }
 
-          #uuid-spoofing-warning.show + #uuid-regenerate-row {
+          #uuid-autorotate-row {
+            display: none;
+          }
+
+          #uuid-spoofing-warning.show + #uuid-regenerate-row,
+          #uuid-spoofing-warning.show ~ #uuid-autorotate-row {
             display: flex;
           }
 
@@ -1303,6 +1308,13 @@
               <div id="uuid-regenerate-row" class="settings-item">
                 <span class="settings-mono" id="uuid-current-id" title="Current spoofed device ID">ID: …</span>
                 <button id="uuid-regenerate-btn" class="settings-mini-btn" title="Generate a new random device ID">New ID</button>
+              </div>
+              <div id="uuid-autorotate-row" class="settings-item" title="On: a new device ID is generated on every login. Off: the ID only changes when you press New ID.">
+                <span>Auto-Rotate ID</span>
+                <label style="display: inline-flex; align-items: center; cursor: pointer; position: relative;">
+                  <input type="checkbox" id="uuid-autorotate-toggle" class="sr-only settings-peer">
+                  <div class="settings-toggle"></div>
+                </label>
               </div>
               <div class="settings-item" title="Unlocks GPU rendering, disables background throttling, and raises the client's process priority. Applies on the next client launch.">
                 <span>High Performance Mode</span>

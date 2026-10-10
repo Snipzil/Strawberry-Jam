@@ -32,6 +32,7 @@ const sendWhitelist = new Set()
   .add("toggle-uuid-spoofing")
   .add("winReady")
   .add("refresh-df")
+  .add("regenerate-df")
   .add('get-saved-accounts')
   .add('get-account-tokens')
   .add('save-account')
@@ -60,7 +61,8 @@ const receiveWhitelist = new Set()
   .add("request-toggle-game-client-devtools")
   .add("show-exit-confirmation")
   .add("game-webview-console-error")
-  .add("port-error");
+  .add("port-error")
+  .add("update-df");
 
 contextBridge.exposeInMainWorld(
   "ipc", {

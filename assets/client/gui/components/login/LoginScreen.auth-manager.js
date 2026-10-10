@@ -22,7 +22,22 @@
       }, 30000);
 
       try {
-        if (globals.df === null || (this.loginScreen.uuidSpooferToggle && this.loginScreen.uuidSpooferToggle.checked)) {
+        const uuidSpoofing = this.loginScreen.uuidSpooferToggle && this.loginScreen.uuidSpooferToggle.checked;
+        // An OTP resubmit has to reuse the ID the code was issued for, so only
+        // rotate on a fresh login attempt.
+        const autoRotate = uuidSpoofing && !this.loginScreen.otp &&
+          this.loginScreen.uuidAutoRotateToggle && this.loginScreen.uuidAutoRotateToggle.checked;
+        if (autoRotate) {
+          try {
+            const rotatedDf = await window.ipc.invoke('regenerate-df', 'auto');
+            if (rotatedDf) {
+              globals.df = rotatedDf;
+              console.log(`[DEFPACKS] Auto-rotated DF: ${rotatedDf.substr(0, 8)}...`);
+            }
+          } catch (dfErr) {
+            console.error('[DEFPACKS] Error auto-rotating DF:', dfErr && dfErr.message ? dfErr.message : dfErr);
+          }
+        } else if (globals.df === null || uuidSpoofing) {
           console.log('[DEFPACKS] Refreshing DF before login...');
           try {
             const newDf = await window.ipc.refreshDf();

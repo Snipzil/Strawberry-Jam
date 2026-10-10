@@ -1103,14 +1103,14 @@ ipcMain.handle('get-df', async () => {
   }
 });
 
-ipcMain.handle("regenerate-df", async (event) => {
+ipcMain.handle("regenerate-df", async (event, source) => {
   if (!store.get(STORE_KEY_UUID_SPOOFER, false)) {
     return null;
   }
   const newUuid = uuidv4();
   spoofedUuid = newUuid;
   store.set(STORE_KEY_SPOOFED_DF, newUuid);
-  log("info", `[DF] User regenerated spoofed UUID: ${newUuid.substr(0, 8)}...`);
+  log("info", `[DF] ${source === 'auto' ? 'Auto-rotated' : 'User regenerated'} spoofed UUID: ${newUuid.substr(0, 8)}...`);
   return newUuid;
 });
 

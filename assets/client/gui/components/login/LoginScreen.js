@@ -71,6 +71,7 @@
       this._setupLoginHelpPrompt();
       
       this.uuidSpooferToggle = this.shadowRoot.getElementById("uuid-spoofer-toggle");
+      this.uuidAutoRotateToggle = this.shadowRoot.getElementById("uuid-autorotate-toggle");
       this.backgroundProcessingToggle = this.shadowRoot.getElementById("background-processing-toggle");
       this.highPerformanceToggle = this.shadowRoot.getElementById("high-performance-toggle");
       this.modMenuBtnToggle = this.shadowRoot.getElementById("mod-menu-btn-toggle");
@@ -169,6 +170,14 @@
 
     canRetry() {
       return this.authManager.canRetry();
+    }
+
+    updateUuidRotationNote() {
+      if (!this.uuidSpoofingWarning) return;
+      const autoRotate = this.uuidAutoRotateToggle && this.uuidAutoRotateToggle.checked;
+      this.uuidSpoofingWarning.textContent = autoRotate
+        ? 'Gets a new fake device ID on every login, so 2FA will ask each time.'
+        : 'Uses one fixed fake device ID, so 2FA only asks once per device. Generating a new ID makes 2FA ask again.';
     }
 
     get loginBlocked() {

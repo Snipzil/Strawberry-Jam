@@ -242,7 +242,17 @@
               setTimeout(() => { uuidRegenBtn.textContent = 'New ID'; }, 1200);
             }
           } catch (err) {
-            console.error('[UUID] Failed to regenerate spoofed ID:', err);
+            console.error('[UUID] Failed to regenerate spoofed ID:', err && err.message ? err.message : err);
+          }
+        });
+      }
+      if (this.loginScreen.uuidAutoRotateToggle) {
+        this.loginScreen.uuidAutoRotateToggle.addEventListener('change', async () => {
+          this.loginScreen.updateUuidRotationNote();
+          try {
+            await window.ipc.invoke('set-setting', 'uuidAutoRotate', this.loginScreen.uuidAutoRotateToggle.checked);
+          } catch (err) {
+            console.error('Failed to save UUID auto-rotate setting:', err && err.message ? err.message : err);
           }
         });
       }

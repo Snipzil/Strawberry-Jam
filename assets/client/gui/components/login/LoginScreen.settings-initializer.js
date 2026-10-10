@@ -252,7 +252,8 @@
           showWheelAutomation,
           fruitTheme,
           uuidSpooferEnabledAlt,
-          hideDevToolsBadge
+          hideDevToolsBadge,
+          uuidAutoRotate
         ] = await Promise.all([
           window.ipc.invoke('get-setting', 'uuidSpoofingEnabled').catch(() => false),
           window.ipc.invoke('get-setting', 'debug.locale').catch(() => ''),
@@ -261,7 +262,8 @@
           window.ipc.invoke('get-setting', 'ui.showWheelAutomation').catch(() => false),
           window.ipc.invoke('get-setting', 'fruitTheme').catch(() => null),
           window.ipc.invoke('get-setting', 'uuid_spoofer_enabled').catch(() => false),
-          window.ipc.invoke('get-setting', 'ui.hideDevToolsBadge').catch(() => false)
+          window.ipc.invoke('get-setting', 'ui.hideDevToolsBadge').catch(() => false),
+          window.ipc.invoke('get-setting', 'uuidAutoRotate').catch(() => false)
         ]);
 
         const effectiveUuidSpoofing = uuidSpoofingEnabled || uuidSpooferEnabledAlt;
@@ -272,6 +274,11 @@
             this.loginScreen.uuidSpoofingWarning.classList.add('show');
           }
         }
+
+        if (this.loginScreen.uuidAutoRotateToggle) {
+          this.loginScreen.uuidAutoRotateToggle.checked = uuidAutoRotate === true;
+        }
+        this.loginScreen.updateUuidRotationNote();
 
         if (this.loginScreen.serverSwapSelect) {
           this.loginScreen.serverSwapSelect.value = locale || '';
