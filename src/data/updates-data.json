@@ -2431,7 +2431,7 @@
   "6.2.1": {
     "version": "6.2.1",
     "releaseDate": "2026-10-08",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "fixes": [
         {
@@ -2444,6 +2444,43 @@
           "icon": "paw-print",
           "title": "Animals Freezing in Place",
           "description": "One glitched player in a room can no longer stop the animals after it from moving.",
+          "priority": "minor"
+        }
+      ]
+    }
+  },
+  "6.2.2": {
+    "version": "6.2.2",
+    "releaseDate": "2026-10-09",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "palette",
+          "title": "Masterpieces",
+          "description": "New in the mod menu's Popups: type a username to see the masterpiece paintings that player owns, or press Mine for your own. Click a painting to see it in its frame with the artist's name and likes. This takes over from the old masterpiece search, whose website has shut down.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "layout-grid",
+          "title": "Compact Trade Marketplace",
+          "description": "Items are now cards, three across, so about 20 fit on screen instead of 7. Each card shows the item, its owner, Rare and Diamond tags, and Trade and Profile buttons. The window is wider so item names fit.",
+          "priority": "minor"
+        },
+        {
+          "icon": "refresh-cw",
+          "title": "Auto-Rotate Device ID",
+          "description": "With the UUID spoofer on, the new Auto-Rotate ID setting gives you a new fake device ID on every login. Leave it off to keep one ID, so two-step verification only asks once.",
+          "priority": "minor"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "key",
+          "title": "New ID Button",
+          "description": "The UUID spoofer's New ID button now actually generates a new device ID.",
           "priority": "minor"
         }
       ]
