@@ -39,7 +39,13 @@ the file as vanilla and untouched.
   is live and matches item, username, avatar name, type and tags, and every
   word has to match. All/Clothing/Den/Pets chips show counts, the ITEM and
   PLAYER headers sort, and the list scrolls by wheel or scrollbar
-  (`ModMenuScroller`). Only the rows in view are built. Masterpieces get a
+  (`ModMenuScroller`). Items are cards, three across in an 860px panel: the
+  icon (with a `×4` badge for copies) on the left, then the name, the owner
+  with their avatar's name in grey, and the tags or link next to small Trade
+  and Profile buttons. About 20 show at once where the old two-line rows
+  showed 7. Long names end in "…". The status sits beside the title and the
+  sort (ITEM / PLAYER) at the end of the filter row, since a grid has no
+  columns to head. Only the rows of cards in view are built. Masterpieces get a
   "View painting" link (`GuiManager.openMasterpiecePreview`, as on the buddy
   card). Trade lists are requested one player at a time, 300ms apart, instead
   of all at once. A player who doesn't answer within 8s is shown as "didn't
@@ -257,6 +263,25 @@ the file as vanilla and untouched.
   per-avatar `heartbeat` loop in one `try`. So an avatar that threw stopped
   every avatar after it from moving for as long as it kept throwing. The
   `try` is now inside the loop.
+- Masterpieces popup: `src/gui/MasterpiecesPopup.as` (new class, mod-added),
+  plus `showMasterpiecesPopup()` in `src/gui/GuiManager.as` and a
+  "Masterpieces" entry in `ModMenuFeatures.getPopupFeatures()` (both menus
+  list popups from there). It replaces the old Masterpieces Viewer plugin,
+  which searched jam.exposed; that site is gone. You type a username (or press
+  Mine) and it shows the approved paintings that player owns. Copies of one
+  painting share a tile (`×3`). Clicking a tile opens the game's own preview
+  (`GuiManager.openMasterpiecePreview`, as the buddy card and marketplace do),
+  which looks up the artist's name from the owner and writes it back onto the
+  item, so the tile shows "by" and the artist's name after that.
+  A search sends one `dmi` request, the one the Jammer Wall sends to show
+  someone else's masterpieces. At most one is in flight, they are at least
+  1.5s apart, a reply that hasn't come in 10s counts as no answer, and results
+  are cached for 60s. Your own name reads your den inventory instead of
+  asking. `DenXtCommManager` keeps a single `dmi` callback and the reply
+  doesn't name the player, so a reply that arrives with nothing pending is
+  dropped. Paintings come from the content CDN through `MasterpieceDefHelper`,
+  for the rows in view only and at most 6 at a time. A painting that hasn't
+  loaded in 15s shows "Couldn't load".
 Because `GuiManager` is the single glue class behind every mod toggle
 (6000+ lines, not something this project maintains in full elsewhere), this
 patch carries the *entire* decompiled file with the above changes applied —
@@ -276,7 +301,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView,gui.MasterpiecesPopup
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```
@@ -292,3 +317,11 @@ rebuilt one.
 `PatchTool` takes a comma-separated list of source directories and a
 comma-separated list of fully-qualified class names, so more patched classes
 can be added later without a new tool.
+
+A listed class with a source file but no script in the SWF (a brand-new mod
+class, like `gui.MasterpiecesPopup` the first time) is added before the
+replace: `PatchTool` compiles an empty `package x { public class Y { } }` into
+the ABC that holds the other targets, which is what FFDec's "Add class" does,
+and prints `added new class ...`. New classes compile first, so the classes
+that use them see the real class. Once a client contains the class, later
+builds just replace it like any other.

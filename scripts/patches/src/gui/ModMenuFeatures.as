@@ -253,6 +253,13 @@ package gui
             "action":"openNametagColorPicker",
             "category":"popups"
          },{
+            "key":"masterpieces",
+            "label":"Masterpieces",
+            "desc":"Look up the masterpiece paintings a player owns",
+            "hotkey":"N/A",
+            "action":"openMasterpieces",
+            "category":"popups"
+         },{
             "key":"roomScanner",
             "label":"Room User Scan",
             "desc":"Scan for users in rooms",
@@ -442,6 +449,9 @@ package gui
                   break;
                case "openMarketplace":
                   GuiManager.showMarketplacePopup();
+                  break;
+               case "openMasterpieces":
+                  GuiManager.showMasterpiecesPopup();
                   break;
                case "openShopExplorer":
                   GuiManager.showShopExplorerPopup();

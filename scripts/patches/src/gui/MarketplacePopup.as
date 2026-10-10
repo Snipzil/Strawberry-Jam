@@ -27,23 +27,49 @@ package gui
    public class MarketplacePopup
    {
 
-      private static const PANEL_W:int = 720;
+      // Nearly the whole 900px stage, so three cards fit side by side.
+      private static const PANEL_W:int = 860;
 
       private static const PANEL_H:int = 520;
 
-      private static const LIST_X:int = -340;
+      private static const LIST_X:int = -410;
 
-      private static const LIST_Y:int = -116;
+      private static const LIST_Y:int = -164;
 
-      private static const LIST_W:int = 680;
+      private static const LIST_W:int = 820;
 
-      private static const LIST_H:int = 360;
+      private static const LIST_H:int = 410;
 
-      private static const ROW_W:int = 664;
+      // Items are cards, three to a row, so about 20 show at once.
+      private static const COLS:int = 3;
 
-      private static const ROW_H:int = 48;
+      private static const CARD_W:int = 262;
 
-      private static const ICON_BOX:int = 36;
+      private static const CARD_H:int = 56;
+
+      private static const CARD_GAP:int = 9;
+
+      private static const ROW_H:int = 62;
+
+      private static const ICON_X:int = 6;
+
+      private static const ICON_Y:int = 6;
+
+      private static const ICON_BOX:int = 44;
+
+      private static const TEXT_X:int = 58;
+
+      private static const TEXT_W:int = 198;
+
+      private static const TRADE_W:int = 46;
+
+      private static const PROFILE_W:int = 52;
+
+      private static const BTN_H:int = 20;
+
+      private static const CLOSE_X:int = 382;
+
+      private static const REFRESH_X:int = 294;
 
       private static const COLOR_NEUTRAL_BTN:uint = 3818070;
 
@@ -153,6 +179,7 @@ package gui
       private function createInterface() : void
       {
          var title:TextField;
+         var sortLabel:TextField;
          var searchBox:MovieClip;
          var placeholderFormat:TextFormat;
          var divider:Shape;
@@ -165,29 +192,30 @@ package gui
          _popup.addChild(_panelBg);
          title = makeText("Trade Marketplace",20,ModMenuUIHelper.COLOR_TEXT,true);
          title.x = LIST_X;
-         title.y = -246;
+         title.y = -248;
          title.width = 400;
          title.height = 30;
          _popup.addChild(title);
+         // The status sits beside the title instead of on a line of its own.
          _statusTxt = makeText("",12,ModMenuUIHelper.COLOR_TEXT_DIM,false);
-         _statusTxt.x = LIST_X;
-         _statusTxt.y = -216;
-         _statusTxt.width = 540;
+         _statusTxt.x = LIST_X + int(title.textWidth) + 18;
+         _statusTxt.y = -241;
+         _statusTxt.width = REFRESH_X - 8 - _statusTxt.x;
          _statusTxt.height = 18;
          _popup.addChild(_statusTxt);
          _refreshBtn = ModMenuUIHelper.createButton("Refresh",COLOR_NEUTRAL_BTN,80,28);
-         _refreshBtn.x = 224;
-         _refreshBtn.y = -246;
+         _refreshBtn.x = REFRESH_X;
+         _refreshBtn.y = -248;
          _refreshBtn.addEventListener("mouseDown",onRefreshDown,false,0,true);
          _popup.addChild(_refreshBtn);
          _closeBtn = ModMenuUIHelper.createCloseXButton();
-         _closeBtn.x = 312;
-         _closeBtn.y = -246;
+         _closeBtn.x = CLOSE_X;
+         _closeBtn.y = -248;
          _closeBtn.addEventListener("mouseDown",onCloseDown,false,0,true);
          _popup.addChild(_closeBtn);
-         searchBox = ModMenuUIHelper.createSearchField(290,30);
+         searchBox = ModMenuUIHelper.createSearchField(260,30);
          searchBox.x = LIST_X;
-         searchBox.y = -186;
+         searchBox.y = -210;
          _popup.addChild(searchBox);
          _searchInput = searchBox["input"] as TextField;
          _searchPlaceholder = searchBox["placeholder"] as TextField;
@@ -198,17 +226,25 @@ package gui
          _searchPlaceholder.setTextFormat(placeholderFormat);
          _searchInput.addEventListener(Event.CHANGE,onSearchChanged,false,0,true);
          _searchInput.addEventListener(KeyboardEvent.KEY_DOWN,onSearchKeyDown,false,0,true);
-         addChip("All",FILTER_ALL,70,-40);
-         addChip("Clothing",TradeItem.ITEM_TYPE_ACCESSORY_ITEM,100,36);
-         addChip("Den",TradeItem.ITEM_TYPE_DEN_ITEM,84,142);
-         addChip("Pets",TradeItem.ITEM_TYPE_PET_ITEM,76,232);
+         addChip("All",FILTER_ALL,70,-140);
+         addChip("Clothing",TradeItem.ITEM_TYPE_ACCESSORY_ITEM,100,-64);
+         addChip("Den",TradeItem.ITEM_TYPE_DEN_ITEM,84,42);
+         addChip("Pets",TradeItem.ITEM_TYPE_PET_ITEM,76,132);
+         // A grid has no columns to head, so the sort sits at the end of the
+         // filter row.
+         sortLabel = makeText("SORT",11,ModMenuUIHelper.COLOR_TEXT_FAINT,true);
+         sortLabel.x = 226;
+         sortLabel.y = -202;
+         sortLabel.width = 40;
+         sortLabel.height = 18;
+         _popup.addChild(sortLabel);
+         addHeader("ITEM",SORT_ITEM,262,58);
+         addHeader("PLAYER",SORT_PLAYER,326,72);
+         updateHeaders();
          divider = ModMenuUIHelper.createHeaderDivider(LIST_W);
          divider.x = LIST_X;
-         divider.y = -146;
+         divider.y = -172;
          _popup.addChild(divider);
-         addHeader("ITEM",SORT_ITEM,LIST_X + 52);
-         addHeader("PLAYER",SORT_PLAYER,LIST_X + 318);
-         updateHeaders();
          _listContent = new Sprite();
          _listContent.x = LIST_X;
          _listContent.y = LIST_Y;
@@ -230,13 +266,13 @@ package gui
          _scroller.setOnScrollChangeCallback(onListScrolled);
          _emptyTitle = makeText("",15,ModMenuUIHelper.COLOR_TEXT,true,"center");
          _emptyTitle.x = LIST_X;
-         _emptyTitle.y = LIST_Y + 110;
+         _emptyTitle.y = LIST_Y + 130;
          _emptyTitle.width = LIST_W;
          _emptyTitle.height = 24;
          _popup.addChild(_emptyTitle);
          _emptyHint = makeText("",12,ModMenuUIHelper.COLOR_TEXT_DIM,false,"center");
          _emptyHint.x = LIST_X;
-         _emptyHint.y = LIST_Y + 138;
+         _emptyHint.y = LIST_Y + 158;
          _emptyHint.width = LIST_W;
          _emptyHint.height = 20;
          _popup.addChild(_emptyHint);
@@ -272,7 +308,7 @@ package gui
       {
          var chip:MovieClip = ModMenuUIHelper.createToggleChip(label,width,filterType == _filterType);
          chip.x = x;
-         chip.y = -186;
+         chip.y = -210;
          chip.filterType = filterType;
          chip.baseLabel = label;
          chip.addEventListener("mouseDown",onChipDown,false,0,true);
@@ -297,7 +333,7 @@ package gui
          lf.textColor = chip["isOn"] ? ModMenuUIHelper.COLOR_TEXT : ModMenuUIHelper.COLOR_TEXT_DIM;
       }
 
-      private function addHeader(label:String, sortMode:int, x:int) : void
+      private function addHeader(label:String, sortMode:int, x:int, width:int) : void
       {
          var header:MovieClip = new MovieClip();
          var tf:TextField = makeText(label,11,ModMenuUIHelper.COLOR_TEXT_DIM,true);
@@ -305,10 +341,10 @@ package gui
          tf.height = 18;
          header.addChild(tf);
          header.graphics.beginFill(0,0);
-         header.graphics.drawRect(0,0,90,18);
+         header.graphics.drawRect(0,0,width,18);
          header.graphics.endFill();
          header.x = x;
-         header.y = -138;
+         header.y = -202;
          header.buttonMode = true;
          header.mouseChildren = false;
          header.labelField = tf;
@@ -733,13 +769,18 @@ package gui
       private function layoutList(resetScroll:Boolean) : void
       {
          clearRows();
-         _scroller.setMaxScrollForHeight(_visible.length * ROW_H);
+         _scroller.setMaxScrollForHeight(rowCount() * ROW_H);
          if(resetScroll)
          {
             _scroller.resetScroll();
          }
          renderVisibleRows();
          updateEmptyState();
+      }
+
+      private function rowCount() : int
+      {
+         return Math.ceil(_visible.length / COLS);
       }
 
       private function clearRows() : void
@@ -757,13 +798,13 @@ package gui
          renderVisibleRows();
       }
 
-      // Only the rows in view (plus one either side) exist, so a busy room
-      // doesn't build hundreds of rows and icons on every keystroke.
+      // Only the rows of cards in view (plus one either side) exist, so a busy
+      // room doesn't build hundreds of cards and icons on every keystroke.
       private function renderVisibleRows() : void
       {
          var scrollY:int = _scroller.getScrollY();
          var first:int = Math.max(0,int(scrollY / ROW_H) - 1);
-         var last:int = Math.min(_visible.length - 1,int((scrollY + LIST_H) / ROW_H) + 1);
+         var last:int = Math.min(rowCount() - 1,int((scrollY + LIST_H) / ROW_H) + 1);
          var stale:Array = [];
          var key:String;
          var idx:int;
@@ -790,7 +831,7 @@ package gui
          {
             if(!_rowsByIndex[idx])
             {
-               row = createRow(_visible[idx]);
+               row = createRow(idx);
                row.y = idx * ROW_H;
                _listContent.addChild(row);
                _rowsByIndex[idx] = row;
@@ -799,68 +840,127 @@ package gui
          }
       }
 
-      private function createRow(entry:Object) : MovieClip
+      private function createRow(rowIdx:int) : MovieClip
       {
          var row:MovieClip = new MovieClip();
+         var col:int = 0;
+         var entryIdx:int;
+         var card:MovieClip;
+         while(col < COLS)
+         {
+            entryIdx = rowIdx * COLS + col;
+            if(entryIdx >= _visible.length)
+            {
+               break;
+            }
+            card = createCard(_visible[entryIdx]);
+            card.x = col * (CARD_W + CARD_GAP);
+            row.addChild(card);
+            col++;
+         }
+         return row;
+      }
+
+      // Icon on the left; name, then owner, then tags and the two buttons.
+      private function createCard(entry:Object) : MovieClip
+      {
+         var card:MovieClip = new MovieClip();
          var bg:MovieClip = new MovieClip();
          var iconBox:Shape = new Shape();
          var holder:Sprite = new Sprite();
          var nameTxt:TextField;
+         var ownerTxt:TextField;
          var countChip:Sprite;
          var countTxt:TextField;
-         var nameRight:int;
-         var subTxt:TextField;
+         var tags:String;
+         var tagsTxt:TextField;
          var link:MovieClip;
          var linkTxt:TextField;
          var linkFormat:TextFormat;
-         var ownerTxt:TextField;
-         var avatarTxt:TextField;
+         var flowX:int = TEXT_X;
          var tradeBtn:MovieClip;
          var profileBtn:MovieClip;
-         ModMenuUIHelper.drawRowBackground(bg,ROW_W,ROW_H - 4,false);
-         row.addChild(bg);
-         row.bg = bg;
-         row.addEventListener(MouseEvent.ROLL_OVER,onRowOver,false,0,true);
-         row.addEventListener(MouseEvent.ROLL_OUT,onRowOut,false,0,true);
+         var tagsRight:int;
+         ModMenuUIHelper.drawRowBackground(bg,CARD_W,CARD_H,false);
+         card.addChild(bg);
+         card.bg = bg;
+         card.addEventListener(MouseEvent.ROLL_OVER,onCardOver,false,0,true);
+         card.addEventListener(MouseEvent.ROLL_OUT,onCardOut,false,0,true);
          iconBox.graphics.beginFill(ModMenuUIHelper.COLOR_TEXT,0.05);
-         iconBox.graphics.drawRoundRect(6,4,ICON_BOX,ICON_BOX,8,8);
+         iconBox.graphics.drawRoundRect(ICON_X,ICON_Y,ICON_BOX,ICON_BOX,8,8);
          iconBox.graphics.endFill();
-         row.addChild(iconBox);
+         card.addChild(iconBox);
          holder.mouseEnabled = false;
          holder.mouseChildren = false;
-         row.addChild(holder);
+         card.addChild(holder);
          attachIcon(holder,entry.item);
-         nameTxt = makeText(entry.name,13,ModMenuUIHelper.COLOR_TEXT,true);
-         nameTxt.x = 52;
-         nameTxt.y = 5;
-         nameTxt.width = 250;
-         nameTxt.height = 20;
-         row.addChild(nameTxt);
+         // Copies show as a badge on the icon's corner.
          if(entry.count > 1)
          {
-            nameRight = 52 + Math.min(int(nameTxt.textWidth) + 4,250);
             countTxt = makeText("×" + entry.count,10,ModMenuUIHelper.COLOR_TEXT,true);
             countTxt.autoSize = "left";
-            countTxt.x = 6;
-            countTxt.y = 0;
+            countTxt.x = 4;
+            countTxt.y = -1;
             countChip = new Sprite();
-            countChip.graphics.beginFill(ModMenuUIHelper.COLOR_ACCENT_BLUE,0.35);
-            countChip.graphics.drawRoundRect(0,0,int(countTxt.textWidth) + 16,16,8,8);
+            countChip.graphics.beginFill(ModMenuUIHelper.COLOR_ACCENT_BLUE,0.9);
+            countChip.graphics.drawRoundRect(0,0,int(countTxt.textWidth) + 12,15,8,8);
             countChip.graphics.endFill();
             countChip.addChild(countTxt);
-            countChip.x = nameRight + 6;
-            countChip.y = 7;
+            countChip.x = ICON_X + ICON_BOX + 3 - (int(countTxt.textWidth) + 12);
+            countChip.y = ICON_Y + ICON_BOX - 12;
             countChip.mouseEnabled = false;
             countChip.mouseChildren = false;
-            row.addChild(countChip);
+            card.addChild(countChip);
          }
-         subTxt = makeText("",11,ModMenuUIHelper.COLOR_TEXT_DIM,false);
-         subTxt.htmlText = subLineHtml(entry);
-         subTxt.x = 52;
-         subTxt.y = 24;
-         subTxt.width = 250;
-         subTxt.height = 18;
-         row.addChild(subTxt);
+         nameTxt = makeText(entry.name,12,ModMenuUIHelper.COLOR_TEXT,true);
+         nameTxt.x = TEXT_X;
+         nameTxt.y = 3;
+         nameTxt.width = TEXT_W;
+         nameTxt.height = 18;
+         fitText(nameTxt,TEXT_W);
+         card.addChild(nameTxt);
+         ownerTxt = makeText("",11,ModMenuUIHelper.COLOR_TEXT,false);
+         ownerTxt.htmlText = ownerHtml(entry);
+         if(ownerTxt.textWidth + 4 > TEXT_W)
+         {
+            ownerTxt.text = entry.owner;
+            fitText(ownerTxt,TEXT_W);
+         }
+         ownerTxt.x = TEXT_X;
+         ownerTxt.y = 19;
+         ownerTxt.width = TEXT_W;
+         ownerTxt.height = 17;
+         card.addChild(ownerTxt);
+         profileBtn = ModMenuUIHelper.createButton("Profile",COLOR_NEUTRAL_BTN,PROFILE_W,BTN_H);
+         profileBtn.x = CARD_W - 6 - PROFILE_W;
+         profileBtn.y = CARD_H - 3 - BTN_H;
+         profileBtn.entry = entry;
+         profileBtn.addEventListener("mouseDown",onProfileDown,false,0,true);
+         card.addChild(profileBtn);
+         tradeBtn = ModMenuUIHelper.createButton("Trade",ModMenuUIHelper.COLOR_BTN_PRIMARY,TRADE_W,BTN_H);
+         tradeBtn.x = profileBtn.x - 4 - TRADE_W;
+         tradeBtn.y = profileBtn.y;
+         tradeBtn.entry = entry;
+         tradeBtn.addEventListener("mouseDown",onTradeDown,false,0,true);
+         card.addChild(tradeBtn);
+         tagsRight = tradeBtn.x - 4;
+         tags = tagsHtml(entry);
+         if(tags != "")
+         {
+            tagsTxt = makeText("",11,ModMenuUIHelper.COLOR_TEXT_DIM,false);
+            tagsTxt.htmlText = tags;
+            tagsTxt.autoSize = "left";
+            tagsTxt.x = flowX;
+            tagsTxt.y = 35;
+            if(tagsTxt.x + tagsTxt.width > tagsRight)
+            {
+               tagsTxt.autoSize = "none";
+               tagsTxt.width = tagsRight - tagsTxt.x;
+               tagsTxt.height = 17;
+            }
+            card.addChild(tagsTxt);
+            flowX = tagsTxt.x + int(tagsTxt.width) + 4;
+         }
          if(entry.isMasterpiece)
          {
             link = new MovieClip();
@@ -870,39 +970,28 @@ package gui
             linkTxt.setTextFormat(linkFormat);
             linkTxt.autoSize = "left";
             link.addChild(linkTxt);
-            link.x = 52 + int(subTxt.textWidth) + 12;
-            link.y = 24;
+            link.x = flowX;
+            link.y = 35;
             link.buttonMode = true;
             link.mouseChildren = false;
             link.entry = entry;
             link.addEventListener("mouseDown",onPreviewDown,false,0,true);
-            row.addChild(link);
+            card.addChild(link);
          }
-         ownerTxt = makeText(entry.owner,13,ModMenuUIHelper.COLOR_TEXT,false);
-         ownerTxt.x = 318;
-         ownerTxt.y = 5;
-         ownerTxt.width = 180;
-         ownerTxt.height = 20;
-         row.addChild(ownerTxt);
-         avatarTxt = makeText(entry.avatarName,11,ModMenuUIHelper.COLOR_TEXT_DIM,false);
-         avatarTxt.x = 318;
-         avatarTxt.y = 24;
-         avatarTxt.width = 180;
-         avatarTxt.height = 18;
-         row.addChild(avatarTxt);
-         tradeBtn = ModMenuUIHelper.createButton("Trade",ModMenuUIHelper.COLOR_BTN_PRIMARY,72,28);
-         tradeBtn.x = 508;
-         tradeBtn.y = 8;
-         tradeBtn.entry = entry;
-         tradeBtn.addEventListener("mouseDown",onTradeDown,false,0,true);
-         row.addChild(tradeBtn);
-         profileBtn = ModMenuUIHelper.createButton("Profile",COLOR_NEUTRAL_BTN,68,28);
-         profileBtn.x = 588;
-         profileBtn.y = 8;
-         profileBtn.entry = entry;
-         profileBtn.addEventListener("mouseDown",onProfileDown,false,0,true);
-         row.addChild(profileBtn);
-         return row;
+         return card;
+      }
+
+      // Shortens a single-line field to maxW with "…" instead of cutting it off
+      // mid-letter.
+      private static function fitText(tf:TextField, maxW:int) : void
+      {
+         var full:String = tf.text;
+         var n:int = full.length;
+         while(n > 1 && tf.textWidth + 4 > maxW)
+         {
+            n--;
+            tf.text = full.substr(0,n) + "…";
+         }
       }
 
       private static function escapeHtml(text:String) : String
@@ -910,20 +999,37 @@ package gui
          return text.split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;");
       }
 
-      private static function subLineHtml(entry:Object) : String
+      private static function tagsHtml(entry:Object) : String
       {
-         var html:String = escapeHtml(entry.typeLabel);
+         var parts:Array = [];
          if(entry.isRare)
          {
-            html += "   <font color=\'#FFC94D\'><b>Rare</b></font>";
+            parts.push("<font color=\'#FFC94D\'><b>Rare</b></font>");
          }
          if(entry.isDiamond)
          {
-            html += "   <font color=\'#6FD8FF\'><b>Diamond</b></font>";
+            parts.push("<font color=\'#6FD8FF\'><b>Diamond</b></font>");
          }
          if(entry.isOcean)
          {
-            html += "   <font color=\'#5FB3FF\'>Ocean</font>";
+            parts.push("<font color=\'#5FB3FF\'>Ocean</font>");
+         }
+         return parts.join("  ");
+      }
+
+      // The username, then the avatar's name in grey when there's room for it.
+      private static function ownerHtml(entry:Object) : String
+      {
+         var html:String = escapeHtml(entry.owner);
+         var dim:String;
+         if(entry.avatarName)
+         {
+            dim = ModMenuUIHelper.COLOR_TEXT_DIM.toString(16);
+            while(dim.length < 6)
+            {
+               dim = "0" + dim;
+            }
+            html += "  <font size=\'11\' color=\'#" + dim + "\'>" + escapeHtml(entry.avatarName) + "</font>";
          }
          return html;
       }
@@ -1017,8 +1123,8 @@ package gui
          scale = Math.min(ICON_BOX / bounds.width,ICON_BOX / bounds.height);
          holder.scaleX = scale;
          holder.scaleY = scale;
-         holder.x = 6 + ICON_BOX / 2 - (bounds.x + bounds.width / 2) * scale;
-         holder.y = 4 + ICON_BOX / 2 - (bounds.y + bounds.height / 2) * scale;
+         holder.x = ICON_X + ICON_BOX / 2 - (bounds.x + bounds.width / 2) * scale;
+         holder.y = ICON_Y + ICON_BOX / 2 - (bounds.y + bounds.height / 2) * scale;
          holder.visible = true;
          return true;
       }
@@ -1118,14 +1224,14 @@ package gui
          _refreshBtn.mouseEnabled = !isLoading;
       }
 
-      private function onRowOver(e:MouseEvent) : void
+      private function onCardOver(e:MouseEvent) : void
       {
-         ModMenuUIHelper.drawRowBackground(e.currentTarget.bg,ROW_W,ROW_H - 4,true);
+         ModMenuUIHelper.drawRowBackground(e.currentTarget.bg,CARD_W,CARD_H,true);
       }
 
-      private function onRowOut(e:MouseEvent) : void
+      private function onCardOut(e:MouseEvent) : void
       {
-         ModMenuUIHelper.drawRowBackground(e.currentTarget.bg,ROW_W,ROW_H - 4,false);
+         ModMenuUIHelper.drawRowBackground(e.currentTarget.bg,CARD_W,CARD_H,false);
       }
 
       private function onChipDown(e:MouseEvent) : void

@@ -186,7 +186,9 @@ package gui
       private static var _roomScannerPopup:RoomScannerPopup;
       
       private static var _marketplacePopup:MarketplacePopup;
-      
+
+      private static var _masterpiecesPopup:MasterpiecesPopup;
+
       private static var _shopExplorerPopup:ShopExplorerPopup;
       
       private static var _nametagColorPickerPopup:NametagColorPickerPopup;
@@ -6217,6 +6219,24 @@ package gui
          }
       }
       
+      public static function showMasterpiecesPopup() : void
+      {
+         if(_masterpiecesPopup)
+         {
+            _masterpiecesPopup.destroy();
+         }
+         _masterpiecesPopup = new MasterpiecesPopup(onMasterpiecesPopupClose);
+      }
+
+      private static function onMasterpiecesPopupClose() : void
+      {
+         _masterpiecesPopup = null;
+         if(_modMenu)
+         {
+            _modMenu.refreshAndActivate();
+         }
+      }
+
       public static function showShopExplorerPopup() : void
       {
          try
