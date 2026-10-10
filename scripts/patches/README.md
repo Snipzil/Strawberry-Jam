@@ -282,6 +282,30 @@ the file as vanilla and untouched.
   dropped. Paintings come from the content CDN through `MasterpieceDefHelper`,
   for the rows in view only and at most 6 at a time. A painting that hasn't
   loaded in 15s shows "Couldn't load".
+- `src/shop/Shop.as` and `src/item/ItemXtCommManager.as` — after buying
+  something, a player could pick an item in the avatar editor, see it on the
+  preview, close the editor and still not be wearing it. Every shop purchase
+  goes through the mod's bulk-purchase path (the quantity popup, even for
+  one item), which calls `ItemXtCommManager.setIgnoreAutoEquip(true)` so
+  bought items aren't marked as worn. That flag also gates
+  `itemsInUseResponse`, the server's in-use list that answers the avatar
+  editor's `iu` request. Only a completed purchase cleared it (5s later).
+  An aborted one left it on for the rest of the session: a failed buy,
+  closing the shop, any of the validation returns in
+  `onQuantityInputComplete`, or the 1s continuation of a multi-item buy
+  throwing. The server saved the outfit, but the client never marked the
+  items worn. Now `requestItemUse` clears the suppression before sending
+  (an explicit wear always wins), `resetBulkPurchaseState()` clears it
+  unless the purchase completed (`resetBulkPurchaseState(true)` keeps the
+  5s grace), `setIgnoreAutoEquip(true)` moved to just before
+  `startBulkPurchase()`, and the continuation resets the bulk state if it
+  throws.
+  `setupCombinedTag` threw `#1065` when outfit search listed a
+  combined-currency item in a shop whose art has no `mid_tallTag`, which
+  aborted the whole `setupShopWindows` pass (and with it a bulk purchase's
+  next step). It now skips the tall-tag rows when the definition is missing.
+  Diffed against the v6.2.2 client after a round trip: only these hunks,
+  plus two `int(...)` coercions FFDec adds on `int` assignments.
 Because `GuiManager` is the single glue class behind every mod toggle
 (6000+ lines, not something this project maintains in full elsewhere), this
 patch carries the *entire* decompiled file with the above changes applied —
@@ -301,7 +325,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView,gui.MasterpiecesPopup
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics,..\src\shop,..\src\item com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView,gui.MasterpiecesPopup,shop.Shop,item.ItemXtCommManager
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```
