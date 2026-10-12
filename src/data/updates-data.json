@@ -2489,7 +2489,7 @@
   "6.2.3": {
     "version": "6.2.3",
     "releaseDate": "2026-10-10",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "fixes": [
         {
@@ -2508,6 +2508,53 @@
           "icon": "shield",
           "title": "Login Popups",
           "description": "The two-step verification, message, forgot password and rename popups no longer hit an error when they open. They now use your theme colour and your chosen language.",
+          "priority": "minor"
+        }
+      ]
+    }
+  },
+  "6.3.0": {
+    "version": "6.3.0",
+    "releaseDate": "2026-10-12",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "palette",
+          "title": "Redesigned Masterpiece Painter",
+          "description": "The mod's painting controls are tidied into panels that no longer cover the game's own buttons: colour (hex and RGB) at the top left, tools at the top right, brush size, opacity, softness and zoom at the bottom, and a layers column with thumbnails on the right. Undo and redo go back up to 40 steps.",
+          "priority": "major"
+        },
+        {
+          "icon": "sliders-horizontal",
+          "title": "Photoshop-Style Tools",
+          "description": "A new menu adds Brightness/Contrast, Hue/Saturation, Invert, Black & White, flips, Blur, Sharpen, Outline and Drop Shadow, plus layer duplicate, merge visible, lock transparency and blend modes (Multiply, Screen, Overlay and more). There's also a gradient tool, a hand tool (or hold Space) to move around when zoomed, flip view, stroke smoothing, filled shapes and a brush-size ring. Alt+click picks a colour and 1-0 set opacity.",
+          "priority": "major"
+        },
+        {
+          "icon": "image",
+          "title": "Resize Imported Images",
+          "description": "Imported images can be moved and resized (or set to Fit, Fill or original size) before they're painted onto the layer, in both painters.",
+          "priority": "minor"
+        },
+        {
+          "icon": "layers",
+          "title": "Better Pixel Painting",
+          "description": "The pixel painter gets hex and RGB colour entry, an eraser, a colour picker, an always-on grid, mirror painting, image import, PNG export, multi-step undo and an outline on the cell you're about to paint. Quick strokes no longer skip cells.",
+          "priority": "minor"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "upload",
+          "title": "Masterpiece Submit Stuck Loading",
+          "description": "Submitting a masterpiece no longer leaves the loading spinner up forever. The painting now reaches Animal Jam, unpainted areas come out white instead of black, and if the servers don't answer you get the normal error instead of an endless wait.",
+          "priority": "major"
+        },
+        {
+          "icon": "server",
+          "title": "Server Status",
+          "description": "The server status no longer says AJ is online when logins are failing. It now checks the game servers too and shows \"Partly Down\" when one of them isn't answering.",
           "priority": "minor"
         }
       ]
