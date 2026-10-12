@@ -5,6 +5,9 @@
 
 const HttpClient = require('./HttpClient');
 
+// Public SmartFox load balancers the client is assigned to.
+const GAME_SERVER_HOSTS = ['lb-iss01-classic-prod.animaljam.com', 'lb-iss02-classic-prod.animaljam.com'];
+
 class ServerStatusChecker {
   /**
    * Check if Animal Jam servers are online by attempting authentication
@@ -68,7 +71,8 @@ class ServerStatusChecker {
         result.isOnline = true;
         
         try {
-          const errorData = JSON.parse(response.body);
+          // axios has usually parsed the JSON already
+          const errorData = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;
           const errorCode = errorData.error_code;
           
           // Map error codes like the actual game does
@@ -149,6 +153,9 @@ class ServerStatusChecker {
         } catch (serverInfoError) {
           // Ignore errors getting server info - we already know servers are up
         }
+        // The login service answering doesn't mean the game servers are up:
+        // on 2026-10-12 it was fine while lb-iss02 dropped every connection.
+        await this.applyGameServerStatus(result, serverHost);
       }
       
     } catch (error) {
@@ -209,64 +216,105 @@ class ServerStatusChecker {
   }
   
   /**
-   * Fallback check that directly pings the game server
+   * Game servers to probe: the public load balancers, plus serverHost when
+   * it is another public host.
+   * @param {string} serverHost
+   * @returns {string[]}
+   * @private
+   */
+  static gameServerHosts(serverHost) {
+    const hosts = [...GAME_SERVER_HOSTS];
+    if (serverHost && serverHost.endsWith('.animaljam.com') && !hosts.includes(serverHost)) {
+      hosts.push(serverHost);
+    }
+    return hosts;
+  }
+
+  /**
+   * Opens a TLS connection to a SmartFox game server on 443 (the port the
+   * client uses) and sends the client's version check. A live server sends
+   * something back; a broken one closes the connection without a byte or
+   * never answers.
+   * @param {string} host
+   * @param {number} [timeoutMs=6000]
+   * @returns {Promise<{host: string, ok: boolean, responseTime: number, reason: string}>}
+   */
+  static probeGameServer(host, timeoutMs = 6000) {
+    const tls = require('tls');
+    return new Promise((resolve) => {
+      const start = performance.now();
+      let settled = false;
+      let socket = null;
+      const finish = (ok, reason) => {
+        if (settled) return;
+        settled = true;
+        if (socket) socket.destroy();
+        resolve({ host, ok, responseTime: Math.round(performance.now() - start), reason });
+      };
+      try {
+        socket = tls.connect({ host, port: 443, servername: host, rejectUnauthorized: false });
+      } catch (error) {
+        finish(false, error.message);
+        return;
+      }
+      socket.setTimeout(timeoutMs);
+      socket.on('secureConnect', () => {
+        socket.write("<msg t='sys'><body action='verChk' r='0'><ver v='165' /></body></msg>\0");
+      });
+      socket.on('data', () => finish(true, 'responding'));
+      socket.on('timeout', () => finish(false, 'no reply'));
+      socket.on('error', (error) => finish(false, error.code || error.message));
+      socket.on('close', () => finish(false, 'closed the connection without replying'));
+    });
+  }
+
+  /**
+   * Probes the game servers and downgrades result when any are down.
+   * @param {object} result - Status result to update in place
+   * @param {string} serverHost
+   * @private
+   */
+  static async applyGameServerStatus(result, serverHost) {
+    const probes = await Promise.all(this.gameServerHosts(serverHost).map((host) => this.probeGameServer(host)));
+    const down = probes.filter((probe) => !probe.ok);
+    result.gameServers = probes;
+    if (down.length === 0) return;
+    const downText = down.map((probe) => `${probe.host.replace(/^lb-|-classic-prod\.animaljam\.com$/g, '')} (${probe.reason})`).join(', ');
+    if (down.length === probes.length) {
+      result.isOnline = false;
+      result.accessStatus = 'server_error';
+      result.details = `Login service is up but no game server is responding: ${downText}`;
+    } else {
+      result.accessStatus = 'partial';
+      result.details = `Some game servers are down: ${downText}. Logins sent to them will fail.`;
+    }
+  }
+
+  /**
+   * Fallback when the login service can't be reached at all: report
+   * whether any game server still answers.
    * @param {string} serverHost - The server host to check
-   * @param {number} [port=7680] - The port to check on the server
    * @returns {Promise<{isOnline: boolean, responseTime: number, timestamp: number, server: string, accessStatus: string, statusCode: number|null, details: string}>} Status result
    * @private
    */
-  static async fallbackServerCheck(serverHost, port = 7680) {
+  static async fallbackServerCheck(serverHost) {
     const result = {
-      isOnline: false,
+      isOnline: true,
       responseTime: 0,
       timestamp: Date.now(),
       server: serverHost,
-      accessStatus: 'unknown',
+      accessStatus: 'auth_error',
       statusCode: null,
-      details: ''
+      details: 'Cannot reach the login service'
     };
-    
-    try {
-      const startTime = performance.now();
-      
-      // Try to connect to the SmartFox server port (this is what the game actually connects to)
-      const options = {
-        url: `https://${serverHost}:${port}`,
-        timeout: 5000,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) AJClassic/1.5.7 Chrome/87.0.4280.141 Electron/11.5.0 Safari/537.36',
-          'Accept': '*/*',
-          'Connection': 'close'
-        },
-        resolveWithFullResponse: true,
-        simple: false
-      };
-      
-      const response = await HttpClient.get(options);
-      const endTime = performance.now();
-      
-      result.responseTime = Math.round(endTime - startTime);
-      result.statusCode = response.statusCode;
-      
-      // Any response means the server is up
-      result.isOnline = true;
-      result.accessStatus = 'ok';
-      result.details = `Game server responding on port ${port} (HTTP ${response.statusCode})`;
-      
-    } catch (error) {
-      // Check if it's a connection refused or timeout (indicating server might be down)
-      if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
-        result.isOnline = false;
-        result.accessStatus = 'network_error';
-        result.details = `Cannot connect to game server ${serverHost}:${port} - Server appears to be offline`;
-      } else {
-        // Other errors might indicate server is up but not responding to HTTP
-        result.isOnline = true;
-        result.accessStatus = 'ok';
-        result.details = `Game server ${serverHost} appears to be running (rejected HTTP connection as expected)`;
+    await this.applyGameServerStatus(result, serverHost);
+    if (result.isOnline) {
+      result.responseTime = Math.min(...result.gameServers.filter((probe) => probe.ok).map((probe) => probe.responseTime));
+      if (result.accessStatus !== 'partial') {
+        result.details = 'Cannot reach the login service, but the game servers are responding';
       }
+      result.accessStatus = 'auth_error';
     }
-    
     return result;
   }
 }

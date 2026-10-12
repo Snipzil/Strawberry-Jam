@@ -81,6 +81,14 @@ class ConnectionStatusManager {
           
           statusElement.setAttribute('title', `${this.serverStatus.details || 'Authentication service issues'}`)
         }
+        else if (this.serverStatus.accessStatus === 'partial') {
+          statusElement.querySelector('span:last-child').textContent = 'AJ Servers: Partly Down'
+          statusElement.classList.add('text-highlight-yellow')
+          dotElement.classList.add('bg-highlight-yellow')
+          dotElement.classList.add('pulse-yellow')
+
+          statusElement.setAttribute('title', `${this.serverStatus.details || 'Some game servers are not responding'}`)
+        }
         else if (this.serverStatus.accessStatus === 'unusual') {
           statusElement.querySelector('span:last-child').textContent = 'AJ Servers: Unusual Status'
           statusElement.classList.add('text-highlight-yellow')
@@ -191,6 +199,9 @@ class ConnectionStatusManager {
             if (result.details) {
               message += ` - ${result.details}`
             }
+            messageType = 'warn'
+          } else if (result.accessStatus === 'partial') {
+            message = `AJ Servers are partly down. ${result.details}`
             messageType = 'warn'
           } else if (result.accessStatus === 'unusual') {
             message = `AJ Servers are responding with unusual status. ${displayServer} (${result.responseTime}ms)`
