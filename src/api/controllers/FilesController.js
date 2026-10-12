@@ -316,7 +316,9 @@ class FilesController {
       })
     }
 
-    if (requestPath.startsWith('/game/mp')) {
+    // mdUrl points here: art uploads go to /game/mp (masterpieces) and
+    // /game/fb (the Art Studio "submit" feedback form).
+    if (requestPath.startsWith('/game/mp') || (requestPath.startsWith('/game/') && request.method === 'POST')) {
       return this._proxyRequest(request, response, {
         baseUrl: 'https://jammercentral.animaljam.com',
         host: 'jammercentral.animaljam.com'
@@ -372,7 +374,6 @@ class FilesController {
     }
     if (request.headers['content-type']) headers['Content-Type'] = request.headers['content-type']
     if (request.headers['user-agent']) headers['User-Agent'] = request.headers['user-agent']
-    if (request.headers['content-length']) headers['Content-Length'] = request.headers['content-length']
 
     let data = undefined
     if (request.body !== undefined && request.body !== null) {
@@ -383,6 +384,9 @@ class FilesController {
         if (!headers['Content-Type']) headers['Content-Type'] = 'application/json'
       }
     }
+    // Length of what is actually sent, never the client's header: a parsed
+    // or missing body would otherwise leave upstream waiting for bytes.
+    if (data !== undefined) headers['Content-Length'] = Buffer.byteLength(data)
 
     try {
       const proxyResponse = await axios({

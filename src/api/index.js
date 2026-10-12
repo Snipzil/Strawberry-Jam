@@ -9,6 +9,10 @@ const app = express()
 
 let actualApiPort = null
 
+// Requests relayed to AJ's servers keep their exact body. Without this a
+// multipart masterpiece upload reached the proxy with no body parsed, was
+// forwarded empty with the original Content-Length, and hung until timeout.
+app.use(['/game', '/wall'], express.raw({ type: () => true, limit: '25mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
