@@ -2516,7 +2516,7 @@
   "6.3.0": {
     "version": "6.3.0",
     "releaseDate": "2026-10-12",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -2556,6 +2556,21 @@
           "title": "Server Status",
           "description": "The server status no longer says AJ is online when logins are failing. It now checks the game servers too and shows \"Partly Down\" when one of them isn't answering.",
           "priority": "minor"
+        }
+      ]
+    }
+  },
+  "6.3.1": {
+    "version": "6.3.1",
+    "releaseDate": "2026-10-12",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "shopping-cart",
+          "title": "Buy Several Masterpiece Copies",
+          "description": "When you create a den item from a masterpiece, clicking Buy now asks how many copies you want. Each copy is bought one after another with the payment you chose for the first (tokens or diamonds), limited to your free den slots and what you can afford. If something goes wrong partway, it stops and tells you how many were bought. Works in both the masterpiece and pixel painters.",
+          "priority": "major"
         }
       ]
     }

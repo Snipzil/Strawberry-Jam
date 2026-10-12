@@ -5,14 +5,15 @@ const fsPromises = fs.promises
 
 // The client shipped with this release. Bump it (and add the file to
 // assets/flash/options) whenever a new ajclient.swf is released.
-const LATEST_SWF_FILE = 'v6.3.0.swf'
+const LATEST_SWF_FILE = 'v6.3.1.swf'
 // Earlier "latest" clients. Anyone still on one of these is moved to
 // LATEST_SWF_FILE on startup, since it was the default rather than a choice.
 // anim-pool-fix-test.swf was the pre-release test build of v6.2.1,
 // masterpieces-test.swf a pre-release test build of v6.2.2,
-// equip-fix-test.swf the pre-release test build of v6.2.3, and
-// art-studio-test.swf the pre-release test build of v6.3.0.
-const PREVIOUS_LATEST_SWF_FILES = ['v6.0.0.swf', 'v6.0.1.swf', 'v6.0.3.swf', 'v6.0.4.swf', 'v6.0.5.swf', 'v6.1.0.swf', 'v6.2.0.swf', 'v6.2.1.swf', 'v6.2.2.swf', 'v6.2.3.swf', 'anim-pool-fix-test.swf', 'masterpieces-test.swf', 'equip-fix-test.swf', 'art-studio-test.swf']
+// equip-fix-test.swf the pre-release test build of v6.2.3,
+// art-studio-test.swf the pre-release test build of v6.3.0, and
+// mp-copies-test.swf the pre-release test build of v6.3.1.
+const PREVIOUS_LATEST_SWF_FILES = ['v6.0.0.swf', 'v6.0.1.swf', 'v6.0.3.swf', 'v6.0.4.swf', 'v6.0.5.swf', 'v6.1.0.swf', 'v6.2.0.swf', 'v6.2.1.swf', 'v6.2.2.swf', 'v6.2.3.swf', 'v6.3.0.swf', 'anim-pool-fix-test.swf', 'masterpieces-test.swf', 'equip-fix-test.swf', 'art-studio-test.swf', 'mp-copies-test.swf']
 
 class FilesController {
   constructor(app = null) {
@@ -220,7 +221,7 @@ class FilesController {
       const files = entries
         .filter(entry => !entry.isDirectory() && entry.name.endsWith('.swf'))
         .map(entry => entry.name)
-      const order = [LATEST_SWF_FILE, 'v6.2.3.swf', 'v6.2.2.swf', 'v6.2.1.swf', 'v6.2.0.swf', 'v6.1.0.swf', 'v6.0.5.swf', 'v6.0.4.swf', 'v6.0.3.swf', 'v6.0.1.swf', 'v6.0.0.swf', 'v5.2.0.swf', 'v4.2.3.swf', 'non-purple-private-chat.swf', 'unmodded-ajclient.swf']
+      const order = [LATEST_SWF_FILE, 'v6.3.0.swf', 'v6.2.3.swf', 'v6.2.2.swf', 'v6.2.1.swf', 'v6.2.0.swf', 'v6.1.0.swf', 'v6.0.5.swf', 'v6.0.4.swf', 'v6.0.3.swf', 'v6.0.1.swf', 'v6.0.0.swf', 'v5.2.0.swf', 'v4.2.3.swf', 'non-purple-private-chat.swf', 'unmodded-ajclient.swf']
       return [...new Set(files)].sort((a, b) => {
         const ai = order.indexOf(a)
         const bi = order.indexOf(b)
@@ -238,8 +239,9 @@ class FilesController {
   async getSwfFileInfo () {
     const files = await this.getAvailableSwfFiles()
     const displayNames = {
-      'v6.3.0.swf': 'v6.3.0 (latest)',
-      'v6.2.3.swf': 'v6.2.3 (previous)',
+      'v6.3.1.swf': 'v6.3.1 (latest)',
+      'v6.3.0.swf': 'v6.3.0 (previous)',
+      'v6.2.3.swf': 'v6.2.3 (older)',
       'v6.2.2.swf': 'v6.2.2 (older)',
       'v6.2.1.swf': 'v6.2.1 (older)',
       'v6.2.0.swf': 'v6.2.0 (older)',
