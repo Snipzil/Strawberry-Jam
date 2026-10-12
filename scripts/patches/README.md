@@ -306,6 +306,66 @@ the file as vanilla and untouched.
   next step). It now skips the tall-tag rows when the definition is missing.
   Diffed against the v6.2.2 client after a round trip: only these hunks,
   plus two `int(...)` coercions FFDec adds on `int` assignments.
+- Art Studio painters: `src/game/artStudioPainting/ArtStudioPainting.as`
+  (masterpiece painting, already heavily modded), `src/game/artStudioGridDrawing/ArtStudioGridDrawing.as`
+  (pixel painting, vanilla until now) and `src/game/ArtStudioKit.as` (new
+  class, shared look: wood panels, cream buttons with drawn icons, the native
+  yellow "selected" outline, tooltips, sliders, the colour readout).
+  - Submitting a masterpiece showed the loading spiral forever. The
+    multipart upload goes to `mdUrl + "mp"`, which points at our API, and the
+    API only parsed JSON and urlencoded bodies. Express 5 left `req.body`
+    undefined, so `_proxyRequest` forwarded the client's `Content-Length`
+    with no body and jammercentral waited for bytes that never came.
+    `src/api/index.js` now reads `/game` and `/wall` bodies raw, the proxy
+    sends the real length, and POSTs to `/game/fb` (the Art Studio submit
+    form) go to jammercentral too instead of a GET to the CDN. Both painters
+    also put a timeout on each step (20s for the `gmtkn` token reply, 60s for
+    the upload) that drops the spiral and shows the normal failure popup.
+  - Masterpieces were JPEG-encoded from the transparent layer stack, and
+    the encoder ignores alpha, so every unpainted pixel came out black. The
+    painting is flattened onto white first (visible layers, at their opacity),
+    which is also what the preview tiles show.
+  - The masterpiece painter's mod controls had been scattered over the frame
+    edges and on top of the native buttons (the F/zoom row covered the trash
+    and storage buttons). They are now in four panels in the free space:
+    colour (swatch, hex, RGB) top left; pen, eraser, blur, colour picker,
+    import and export top right; size, opacity, softness and zoom bottom left;
+    layers on the right, with thumbnails, hide, move, merge and layer opacity.
+    Undo and redo replace the native one-step undo button in its own slot
+    (the mod had disabled it). The native tool/size highlights hide while a
+    mod tool or slider size is in use. Undo keeps copies of only the layers
+    an action touched, capped at 40 steps, instead of all seven layers for
+    100 steps. Clear clears every layer, moving a layer moves its opacity,
+    and export/save/submit respect hidden layers and layer opacity. Shortcuts:
+    Ctrl+Z/Y, Ctrl +/-/0, [ ], P, E, I, H. A hand tool (or holding Space)
+    drags the canvas at any zoom, kept partly in view; zooming keeps
+    the view in place (Ctrl+wheel zooms at the pointer) instead of
+    re-centring. Import no longer stamps the image straight in: it floats
+    over the canvas (`ArtStudioKit.beginPlace`) to be moved, resized by its
+    corners (aspect kept, Shift for free) or set to Fit / Fill / 1:1, then
+    Place (Enter) paints it over the active layer, or Cancel (Esc). The
+    pixel painter uses the same placement and turns the result into cells
+    over the existing drawing. A menu button (`ArtStudioKit.openMenu`)
+    holds import/export plus artist features on the active layer:
+    Brightness/Contrast, Hue/Saturation/Lightness, Blur and Outline with a
+    live-preview slider dialog (`openDialog`; Cancel drops the undo step),
+    Invert, Black & White, flips, Sharpen, Drop Shadow; Duplicate (needs the
+    top layer empty), Clear, Merge Visible, Lock Transparency (alpha put
+    back from the undo step after each change); per-layer blend modes
+    (display, export, submit and merges); Flip View, Filled Shapes and
+    stroke smoothing. Also a Gradient tool (G), a brush-size ring under the
+    pointer, Alt+click to pick a colour, 1-0 for opacity, Ctrl+I invert,
+    Ctrl+J duplicate and V flip view. Layer blend modes and locks are part
+    of undo steps that record layer properties. The FPS toggle is gone; the painter
+    always runs at 60fps while open, as it already did by default.
+  - The pixel painter gets the same colour panel, eraser and colour picker,
+    an always-show-grid toggle, mirror painting, import (an image turned into
+    cells) and PNG export, multi-step undo/redo in the native undo slot, an
+    outline on the hovered cell, and strokes that fill every cell between
+    mouse samples. Shortcuts: Ctrl+Z/Y, P, B, E, I, G, M.
+  The layout was checked by screenshotting both painters with the real UI
+  art, the real Tiki font and these layout functions in Electron 11 +
+  PepperFlash, not in game.
 Because `GuiManager` is the single glue class behind every mod toggle
 (6000+ lines, not something this project maintains in full elsewhere), this
 patch carries the *entire* decompiled file with the above changes applied —
@@ -325,7 +385,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics,..\src\shop,..\src\item com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView,gui.MasterpiecesPopup,shop.Shop,item.ItemXtCommManager
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics,..\src\shop,..\src\item,..\src\game,..\src\game\artStudioPainting,..\src\game\artStudioGridDrawing com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView,gui.MasterpiecesPopup,shop.Shop,item.ItemXtCommManager,game.ArtStudioKit,game.artStudioPainting.ArtStudioPainting,game.artStudioGridDrawing.ArtStudioGridDrawing
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```
