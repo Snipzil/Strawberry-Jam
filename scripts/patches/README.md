@@ -363,6 +363,14 @@ the file as vanilla and untouched.
     cells) and PNG export, multi-step undo/redo in the native undo slot, an
     outline on the hovered cell, and strokes that fill every cell between
     mouse samples. Shortcuts: Ctrl+Z/Y, P, B, E, I, G, M.
+  - Buying several copies of a masterpiece (both painters): Buy on the
+    frame preview asks how many (the shop's `QuantityInputPopup`), capped
+    by free den slots. Copy 1 is the vanilla flow; after the rules popup
+    the count is capped by tokens or diamonds for the chosen payment.
+    Each later copy re-sends `gmtkn`, re-uploads the same encoded painting
+    for a new uuid and buys it with the same payment, 1.2s apart, skipping
+    the rules popup. Any failure stops the run and a banner shows how many
+    were bought.
   The layout was checked by screenshotting both painters with the real UI
   art, the real Tiki font and these layout functions in Electron 11 +
   PepperFlash, not in game.

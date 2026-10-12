@@ -74,6 +74,7 @@ package game.artStudioPainting
    import flash.display.BitmapDataChannel;
    import flash.filters.ColorMatrixFilter;
    import flash.filters.ConvolutionFilter;
+   import gui.QuantityInputPopup;
    
    public class ArtStudioPainting extends GameBase implements IMinigame
    {
@@ -133,6 +134,8 @@ package game.artStudioPainting
       private var _spaceHeld:Boolean;
       
       private static const TOKEN_TIMEOUT_MS:int = 20000;
+
+      private static const COPY_GAP_MS:int = 1200;
       
       private static const UPLOAD_TIMEOUT_MS:int = 60000;
       
@@ -186,6 +189,20 @@ package game.artStudioPainting
       
       private var _canvasMask:Shape;
       
+      private var _copyPopup:QuantityInputPopup;
+
+      private var _copyFreeSlots:int = 1;
+
+      private var _copiesWanted:int = 1;
+
+      private var _copiesDone:int;
+
+      private var _copiesNote:String = "";
+
+      private var _copyBanner:Sprite;
+
+      private var _copyBannerStamp:int;
+
       private var _submitPending:Boolean;
       
       private var _submitTimer:uint;
@@ -443,6 +460,13 @@ package game.artStudioPainting
          var k:int = 0;
          stopSubmitWatchdog();
          _submitPending = false;
+         _copiesWanted = 1;
+         _copiesDone = 0;
+         if(_copyPopup != null)
+         {
+            _copyPopup.destroy();
+            _copyPopup = null;
+         }
          ArtStudioKit.cancelPlace();
          ArtStudioKit.closeMenu();
          ArtStudioKit.closeDialog(false);
@@ -2446,8 +2470,7 @@ package game.artStudioPainting
          {
             if(Utility.numDenItemsInList(gMainFrame.userInfo.playerUserInfo.denItemsFull,0) < ShopManager.maxDenItems)
             {
-               _isMasterpieceSubmit = true;
-               encodeImage();
+               askCopyCount();
             }
             else
             {
@@ -2476,8 +2499,13 @@ package game.artStudioPainting
          _submissionRules.destroy();
          _submissionRules = null;
          _isUsingTokens = param2;
+         if(!param1)
+         {
+            stopCopies();
+         }
          if(param1)
          {
+            capCopiesToFunds();
             DarkenManager.showLoadingSpiral(true);
             DenXtCommManager.requestBuy(true,0,221,onPreviewItemBuy,onPreviewBuyInventoryResponse,0,null,_currItemVersion,1,true,_isUsingTokens,_masterpieceUuid);
          }
@@ -2524,7 +2552,10 @@ package game.artStudioPainting
       {
          if(param1 == 1)
          {
-            onChooseMasterpiecePopupClose(null);
+            if(_copiesDone == 0)
+            {
+               onChooseMasterpiecePopupClose(null);
+            }
             UserCurrency.setCurrency(param2,3);
             _denPreviewInvId = param3;
          }
@@ -2534,11 +2565,22 @@ package game.artStudioPainting
             new SBOkPopup(_guiLayer,LocalizationManager.translateIdOnly(14798));
             ItemXtCommManager.setItemBuyIlCallback(null);
             _denPreviewInvId = 0;
+            stopCopies();
          }
       }
       
       private function onPreviewBuyInventoryResponse() : void
       {
+         _copiesDone++;
+         if(_copiesDone < _copiesWanted)
+         {
+            _denPreviewInvId = 0;
+            DenXtCommManager.denEditorDIResponseCallback = null;
+            showCopyBanner("Buying copies... " + _copiesDone + " of " + _copiesWanted + " done");
+            setTimeout(nextCopy,COPY_GAP_MS);
+            return;
+         }
+         finishCopies();
          var _loc3_:DenItem = null;
          var _loc2_:int = 0;
          DarkenManager.showLoadingSpiral(false);
@@ -2935,6 +2977,11 @@ package game.artStudioPainting
                   {
                      _masterpieceUuid = _loc3_.uuid;
                      setNumMasterpieceIcons();
+                     if(_copiesDone > 0)
+                     {
+                        buyCurrentCopy();
+                        return;
+                     }
                      _submissionRules = new SubmissionRulesPopup(DiamondXtCommManager.getDiamondDef(221).value,_numMasterpieceTokens,_guiLayer,onSubmissionRulesClose);
                      SBTracker.trackPageview("/game/play/miniGame/#MasterpiceSubmitted");
                      return;
@@ -2983,6 +3030,7 @@ package game.artStudioPainting
       
       private function displayMasterpieceFailedPopup() : void
       {
+         stopCopies();
          DarkenManager.showLoadingSpiral(false);
          new SBOkPopup(_guiLayer,LocalizationManager.translateIdOnly(25198));
          if(_masterpiecePreviewPopup)
@@ -3011,6 +3059,7 @@ package game.artStudioPainting
          DarkenManager.showLoadingSpiral(false);
          if(_isMasterpieceSubmit)
          {
+            stopCopies();
             if(_URLStatus == 403)
             {
                new SBOkPopup(GuiManager.guiLayer,LocalizationManager.translateIdOnly(28329));
@@ -4423,6 +4472,145 @@ package game.artStudioPainting
       {
          _smX += (x - _smX) * (1 - _smoothing);
          _smY += (y - _smY) * (1 - _smoothing);
+      }
+
+      // Mod: buy several copies of the masterpiece in one go, like the bulk
+      // purchase in item shops. Each copy is the vanilla flow (upload the
+      // painting for a new id, then buy it); copies after the first reuse the
+      // encoded painting and the first copy's token/diamond choice, and skip
+      // the rules popup. Capped by free den slots and by what you can afford;
+      // the first failure stops the run.
+      private function askCopyCount() : void
+      {
+         var free:int = ShopManager.maxDenItems - Utility.numDenItemsInList(gMainFrame.userInfo.playerUserInfo.denItemsFull,0);
+         if(_copyPopup != null)
+         {
+            _copyPopup.destroy();
+         }
+         _copyFreeSlots = Math.max(1,free);
+         _copyPopup = new QuantityInputPopup(_guiLayer,"Masterpiece (" + _copyFreeSlots + (_copyFreeSlots == 1 ? " den slot" : " den slots") + " free)",onCopyCountChosen);
+      }
+
+      private function onCopyCountChosen(result:Object) : void
+      {
+         var asked:int = int(result.quantity);
+         _copyPopup = null;
+         if(!result.status)
+         {
+            if(_masterpiecePreviewPopup)
+            {
+               _masterpiecePreviewPopup.closeCallback = onPreviewClose;
+            }
+            return;
+         }
+         _copiesWanted = Math.max(1,Math.min(asked,_copyFreeSlots));
+         _copiesNote = asked > _copiesWanted ? " (only " + _copiesWanted + " den slots were free)" : "";
+         _copiesDone = 0;
+         _isMasterpieceSubmit = true;
+         encodeImage();
+      }
+
+      private function capCopiesToFunds() : void
+      {
+         var price:int = int(DiamondXtCommManager.getDiamondDef(221).value);
+         var afford:int = _isUsingTokens ? _numMasterpieceTokens : (price > 0 ? int(UserCurrency.getCurrency(3) / price) : _copiesWanted);
+         if(_copiesWanted > 1 && afford < _copiesWanted)
+         {
+            _copiesWanted = Math.max(1,afford);
+            _copiesNote = " (you could afford " + _copiesWanted + ")";
+         }
+      }
+
+      private function buyCurrentCopy() : void
+      {
+         DarkenManager.showLoadingSpiral(true);
+         DenXtCommManager.requestBuy(true,0,221,onPreviewItemBuy,onPreviewBuyInventoryResponse,0,null,_currItemVersion,1,true,_isUsingTokens,_masterpieceUuid);
+      }
+
+      private function nextCopy() : void
+      {
+         if(_guiLayer == null)
+         {
+            return;
+         }
+         if(_copiesDone >= _copiesWanted || _jpgEncoder == null)
+         {
+            stopCopies();
+            DarkenManager.showLoadingSpiral(false);
+            return;
+         }
+         _isMasterpieceSubmit = true;
+         _URLStatus = 0;
+         startSubmitWatchdog(TOKEN_TIMEOUT_MS);
+         MinigameManager.msg(["gmtkn","0","1"]);
+      }
+
+      private function finishCopies() : void
+      {
+         if(_copiesWanted > 1)
+         {
+            showCopyBanner("Bought " + _copiesDone + " copies" + _copiesNote);
+         }
+         _copiesWanted = 1;
+         _copiesDone = 0;
+         _copiesNote = "";
+      }
+
+      private function stopCopies() : void
+      {
+         if(_copiesWanted > 1 && _copiesDone > 0)
+         {
+            showCopyBanner("Stopped: bought " + _copiesDone + " of " + _copiesWanted + " copies");
+         }
+         else
+         {
+            hideCopyBanner();
+         }
+         _copiesWanted = 1;
+         _copiesDone = 0;
+         _copiesNote = "";
+      }
+
+      private function showCopyBanner(msg:String) : void
+      {
+         var tf:TextField = ArtStudioKit.text(msg,15,ArtStudioKit.TEXT_LIGHT,520,"center");
+         var w:int = 0;
+         hideCopyBanner();
+         if(_guiLayer == null)
+         {
+            return;
+         }
+         tf.autoSize = "center";
+         w = int(tf.width) + 28;
+         _copyBanner = new Sprite();
+         _copyBanner.mouseEnabled = false;
+         _copyBanner.mouseChildren = false;
+         ArtStudioKit.panel(_copyBanner,0,0,w,32);
+         tf.x = int((w - tf.width) / 2);
+         tf.y = 5;
+         _copyBanner.addChild(tf);
+         _copyBanner.x = int(494 - w / 2);
+         _copyBanner.y = 60;
+         _guiLayer.addChild(_copyBanner);
+         _copyBannerStamp = getTimer();
+         setTimeout(autoHideCopyBanner,6000);
+      }
+
+      private function autoHideCopyBanner() : void
+      {
+         if(getTimer() - _copyBannerStamp >= 5900 && _copiesWanted <= 1)
+         {
+            hideCopyBanner();
+         }
+      }
+
+      private function hideCopyBanner() : void
+      {
+         if(_copyBanner != null && _copyBanner.parent != null)
+         {
+            _copyBanner.parent.removeChild(_copyBanner);
+         }
+         _copyBanner = null;
       }
    }
 }
