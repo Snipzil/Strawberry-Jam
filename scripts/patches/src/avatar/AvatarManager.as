@@ -4,6 +4,7 @@ package avatar
    import buddy.BuddyManager;
    import collection.AccItemCollection;
    import collection.DenItemCollection;
+   import com.sbi.client.SFEvent;
    import com.sbi.debug.DebugUtility;
    import com.sbi.graphics.SortLayer;
    import com.sbi.loader.LoaderEvent;
@@ -32,6 +33,7 @@ package avatar
    import quest.QuestManager;
    import quest.QuestXtCommManager;
    import room.LayerManager;
+   import room.RoomJoinType;
    import room.RoomManagerWorld;
    import room.RoomXtCommManager;
    
@@ -1788,6 +1790,118 @@ package avatar
          }
       }
       
+      // Animation plugin: the launcher injects %xt%jamanim%-1%<id>%<flip>%<broadcast>%
+      // into this client only. Id 0 returns to the normal idle. Broadcast 1 or 2
+      // stores the anim on the server through "au". Unmodded clients only animate
+      // you live for actions like :dance:, so those go out as the action. Any other
+      // anim goes out as an "sja:<id>,<flip>" action message: unmodded clients find
+      // no action for it and drop it silently, patched clients play it on you
+      // (sjUserCommXtReply). Broadcast 2 also rejoins the same room instance at the
+      // same spot so the server sends everyone a fresh "ac" with the stored anim;
+      // sjApplyRejoinAnim re-holds it once the room has loaded, before onRoomLoaded's "au".
+      private static var _sjRejoinAnim:int = 0;
+
+      private static var _sjRejoinFlip:Boolean;
+
+      public static function sjApplyRejoinAnim() : void
+      {
+         if(_sjRejoinAnim > 0 && playerAvatarWorldView)
+         {
+            playerAvatarWorldView.holdIdleAnim(_sjRejoinAnim,_sjRejoinFlip);
+         }
+         _sjRejoinAnim = 0;
+      }
+
+      public static function sjAnimXtReply(param1:SFEvent) : void
+      {
+         var data:Array = param1.obj;
+         var view:avatar.AvatarWorldView = playerAvatarWorldView;
+         if(data[0] != "jamanim" || !view || joiningNewRoom)
+         {
+            return;
+         }
+         var anim:int = int(data[2]);
+         var flip:Boolean = data[3] == "1";
+         if(anim <= 0)
+         {
+            anim = view.getBaseIdle();
+         }
+         if(anim > 255)
+         {
+            return;
+         }
+         view.holdIdleAnim(anim,flip);
+         var broadcast:int = int(data[4]);
+         if(broadcast < 1 || gMainFrame.clientInfo.invisMode || MinigameManager.inMinigame() || QuestManager.isSideScrollQuest())
+         {
+            return;
+         }
+         var packed:* = anim | (flip ? 2147483648 : 0);
+         gMainFrame.server.setXtObject_Str("au",["1",int(view.avatarPos.x),int(view.avatarPos.y),packed,"1"]);
+         for each(var act in avatar.AvatarWorldView._actionLookup)
+         {
+            if(act.flip == flip && int(view.roomType == 0 ? act.land : act.water) == anim)
+            {
+               gMainFrame.server.sendMessage(act.name + UserCommXtCommManager.RAW_STR + 3 + UserCommXtCommManager.RAW_STR + anim);
+               return;
+            }
+         }
+         gMainFrame.server.sendMessage("sja:" + anim + "," + (flip ? 1 : 0) + UserCommXtCommManager.RAW_STR + 3 + UserCommXtCommManager.RAW_STR + 0);
+         var roomName:String = RoomManagerWorld.instance.getLastGoodRoomName();
+         // The server never answers a "dj" for the den you are in, which leaves
+         // the loading spiral up forever, so dens are skipped.
+         if(broadcast < 2 || !roomName || roomName.slice(0,3) == "den" || QuestManager.inQuestRoom())
+         {
+            return;
+         }
+         _sjRejoinAnim = anim;
+         _sjRejoinFlip = flip;
+         RoomManagerWorld.instance.setGotoSpawnLocation(int(view.avatarPos.x),int(view.avatarPos.y));
+         RoomXtCommManager.sjAllowSameRoom = true;
+         RoomXtCommManager.sjRejoinWaiting = true;
+         RoomXtCommManager.sendRoomJoinRequest(roomName,-1,false,false,true,RoomJoinType.DIRECT_JOIN_AND_HALT_ON_FAILURE);
+         RoomXtCommManager.sjAllowSameRoom = false;
+         setTimeout(sjRejoinTimeout,15000);
+      }
+
+      // Undoes the join state if the server ignored the rejoin, so the game
+      // isn't stuck behind the loading spiral.
+      private static function sjRejoinTimeout() : void
+      {
+         if(!RoomXtCommManager.sjRejoinWaiting)
+         {
+            return;
+         }
+         RoomXtCommManager.sjRejoinWaiting = false;
+         RoomXtCommManager.loadingNewRoom = false;
+         joiningNewRoom = false;
+         _sjRejoinAnim = 0;
+         DarkenManager.showLoadingSpiral(false);
+      }
+
+      // Sits in front of UserCommXtCommManager for "u" replies (see GamePlay) and
+      // takes "uc" action messages of the form "sja:<id>,<flip>", which play that
+      // anim on the sender's avatar. Everything else is passed through unchanged.
+      public static function sjUserCommXtReply(param1:SFEvent) : void
+      {
+         var data:Array = param1.obj;
+         var text:String = data[0] == "uc" && int(data[4]) == 3 ? String(data[3]) : null;
+         if(!text || text.indexOf("sja:") != 0)
+         {
+            UserCommXtCommManager.handleXtReply(param1);
+            return;
+         }
+         var userId:int = int(data[2]);
+         var view:avatar.AvatarWorldView = _avatarViewList[userId];
+         var parts:Array = text.substr(4).split(",");
+         var anim:int = int(parts[0]);
+         if(userId == _playerSfsUserId || !view || anim <= 0 || anim > 255 || MinigameManager.inMinigame())
+         {
+            return;
+         }
+         view.holdIdleAnim(anim,parts[1] == "1");
+      }
+
       public static function avatarUpdateResponse(param1:Array) : void
       {
          var _loc3_:int = 0;

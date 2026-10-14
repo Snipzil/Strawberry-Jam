@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Animations</title>
+  <link href="app://assets/styles/style.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <script>window.jQuery = window.$ = require('jquery');</script>
+  <style>
+    .anim-section {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(156,163,175,0.1);
+    }
+    .anim-section:last-child {
+      border-bottom: none;
+    }
+    .anim-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .anim-hint {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      margin: -2px 0 6px;
+    }
+    .anim-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 4px;
+    }
+    .anim-tile {
+      position: relative;
+      text-align: left;
+      padding: 5px 7px;
+      border-radius: 5px;
+      border: 1px solid rgba(156,163,175,0.12);
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .anim-tile:hover {
+      background: rgba(255,255,255,0.09);
+    }
+    .anim-tile.active {
+      border-color: var(--theme-primary, #e83d52);
+      background: rgba(232,61,82,0.15);
+    }
+    .anim-tile .anim-id {
+      font-family: monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+    }
+    .anim-tile .anim-live {
+      position: absolute;
+      top: 4px;
+      right: 5px;
+      font-size: 8px;
+      color: #10b981;
+    }
+    .anim-input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(156,163,175,0.15);
+      border-radius: 4px;
+      padding: 4px 8px;
+      color: #fff;
+      font-size: 12px;
+    }
+    .anim-btn {
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+    .anim-btn:hover {
+      background: rgba(255,255,255,0.14);
+    }
+    .anim-btn-reset {
+      background: rgba(239,68,68,0.2);
+      color: #ef4444;
+    }
+    .anim-btn-reset:hover {
+      background: rgba(239,68,68,0.3);
+    }
+    .anim-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Animations</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <div class="jam-plugin-content" style="padding: 0; overflow-y: auto;">
+
+    <div class="anim-section">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+        <label class="anim-toggle" title="Mirror the animation left/right">
+          <input type="checkbox" id="mirror"> Mirror
+        </label>
+        <label class="anim-toggle" title="Strawberry Jam players see every animation live. Players on the normal AJ client only see the ones marked with a dot.">
+          <input type="checkbox" id="broadcast" checked> Show others
+        </label>
+        <label class="anim-toggle" title="For animations without a dot: quickly rejoin the room so players on the normal AJ client may see it too.">
+          <input type="checkbox" id="rejoin"> Rejoin for non-SJ
+        </label>
+        <button id="resetBtn" class="anim-btn anim-btn-reset" style="margin-left: auto;">
+          <i class="fas fa-undo mr-1"></i> Reset
+        </button>
+      </div>
+      <div style="display: flex; gap: 6px; margin-top: 8px;">
+        <input type="number" id="customId" class="anim-input" min="1" max="255" placeholder="Any ID (1-255)" style="flex: 1;">
+        <button id="customBtn" class="anim-btn">Play</button>
+        <button id="prevBtn" class="anim-btn" title="Previous ID"><i class="fas fa-chevron-left"></i></button>
+        <button id="nextBtn" class="anim-btn" title="Next ID"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      <div id="status" style="font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 6px;">
+        <i class="fas fa-circle" style="font-size: 7px; color: #10b981;"></i> live for everyone; the rest live for Strawberry Jam players. Walking ends any animation.
+      </div>
+    </div>
+
+    <div id="groups"></div>
+
+  </div>
+
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script src="index.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
+</body>
+</html>

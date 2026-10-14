@@ -946,7 +946,7 @@ package gamePlayFlow
          MinigameXtCommManager.init();
          ECardXtCommManager.init();
          AvatarXtCommManager.init(AvatarManager.avatarCreateResponse,AvatarManager.avatarUpdateResponse,AvatarManager.avatarPaintResponse,AvatarManager.avatarRemoveResponse,BuddyManager.avatarListResponse,AvatarManager.avatarList,AvatarManager.getAvatarByUserName,AvatarSwitch.avatarSwitchResponse);
-         XtReplyDemuxer.addModule(UserCommXtCommManager.handleXtReply,"u");
+         XtReplyDemuxer.addModule(AvatarManager.sjUserCommXtReply,"u");
          XtReplyDemuxer.addModule(ItemXtCommManager.handleXtReply,"i");
          XtReplyDemuxer.addModule(ECardXtCommManager.handleXtReply,"e");
          XtReplyDemuxer.addModule(FacilitatorXtCommManager.handleXtReply,"f");
@@ -962,6 +962,7 @@ package gamePlayFlow
          XtReplyDemuxer.addModule(VerificationXtCommManager.handleXtReply,"v");
          XtReplyDemuxer.addModule(NewspaperXtCommManager.handleXtReply,"np");
          XtReplyDemuxer.addModule(NodeHopXtCommManager.handleXtReply,"n");
+         XtReplyDemuxer.addModule(AvatarManager.sjAnimXtReply,"jamanim");
          _loc1_.addChild(_debugConnectionModeTxt);
          _loc1_.addChild(_debugServerNodeTxt);
          _loc1_.addChild(_debugShardIdTxt);

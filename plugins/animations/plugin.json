@@ -1,0 +1,9 @@
+{
+  "name": "Animations",
+  "description": "Play any avatar animation: poses, walks, idles, water moves and hidden minigame anims.",
+  "main": "index.html",
+  "author": "Snipzil",
+  "version": "1.0.0",
+  "type": "ui",
+  "game": "animal-jam-classic"
+}

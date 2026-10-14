@@ -379,6 +379,40 @@ Because `GuiManager` is the single glue class behind every mod toggle
 patch carries the *entire* decompiled file with the above changes applied —
 treat everything else in it as vanilla-plus-existing-mods, unchanged.
 
+- Animation hook for the `animations` plugin (`AvatarManager`,
+  `AvatarWorldView`, `GamePlay`). The plugin injects
+  `%xt%jamanim%-1%<id>%<flip>%<broadcast>%` into the client with
+  `sendConnectionMessage`; it never reaches the server. `GamePlay` registers
+  `AvatarManager.sjAnimXtReply` for it (no other xt module starts with `j`).
+  The handler calls the new `AvatarWorldView.holdIdleAnim`, which plays the
+  anim and stores it as `_lastIdleAnim`, so heartbeat keeps it and walking
+  replaces it. Id 0 goes back to `getBaseIdle()`. With broadcast on, it sends
+  `au` at the current position with the anim (flip in bit 31), the value the
+  server hands to anyone who loads you later (`createAvatar` plays it). The
+  server echoes `au` without the anim, so other clients only animate you
+  live for actions: an anim that matches an `_actionLookup` entry goes out
+  as that action string. Any other anim goes out as a type-3 action message
+  `sja:<id>,<flip>`. An unmodded client finds no action for it and drops it
+  without a bubble (the `_loc13_` path in `userCommChatResponse`). Patched
+  clients route "u" replies through `AvatarManager.sjUserCommXtReply`
+  (registered in `GamePlay` in place of `UserCommXtCommManager.handleXtReply`),
+  which plays `sja:` anims on the sender and passes everything else on.
+  With broadcast 2 (the plugin's "Rejoin for non-SJ"), a non-action anim also rejoins the same room instance
+  (`getLastGoodRoomName()`, e.g. `sarepia.room_main#6`, direct join) at the
+  same spot (`setGotoSpawnLocation`, as vanilla does after NPC minigames),
+  so the server sends everyone a fresh `ac`. `RoomManagerWorld.onRoomLoaded`
+  calls `AvatarManager.sjApplyRejoinAnim()` right after its idle `playAnim`,
+  so the `au` it sends next carries the anim too. Skipped while invisible,
+  in minigames, in side-scroll quests (as vanilla `updateAvatar` does) and,
+  for the rejoin, in quest rooms and dens. The room join refuses to rejoin
+  the room you are already in (`sendRoomJoinRequestFull` compares against
+  `getCurrentRoomName()`), so `src/room/RoomXtCommManager.as` (otherwise the
+  vanilla v6.3.1 decompile) adds `sjAllowSameRoom`, set for that one call,
+  and `sjRejoinWaiting`, cleared when the `rj` reply arrives. If no reply
+  comes within 15s, `AvatarManager.sjRejoinTimeout` clears the join state
+  and the loading spiral. Dens are skipped because the server never answers
+  a `dj` for the den you are in (tested 2026-10-13: the spiral stayed up).
+
 ## Rebuild (Windows, JDK + JPEXS Free Flash Decompiler installed)
 
 Combine with the ModMenu rebuild (see `scripts/modmenu/README.md`) by running
@@ -393,7 +427,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics,..\src\shop,..\src\item,..\src\game,..\src\game\artStudioPainting,..\src\game\artStudioGridDrawing com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView,gui.MasterpiecesPopup,shop.Shop,item.ItemXtCommManager,game.ArtStudioKit,game.artStudioPainting.ArtStudioPainting,game.artStudioGridDrawing.ArtStudioGridDrawing
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics,..\src\shop,..\src\item,..\src\game,..\src\game\artStudioPainting,..\src\game\artStudioGridDrawing com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView,gui.MasterpiecesPopup,shop.Shop,item.ItemXtCommManager,room.RoomXtCommManager,game.ArtStudioKit,game.artStudioPainting.ArtStudioPainting,game.artStudioGridDrawing.ArtStudioGridDrawing
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```

@@ -695,6 +695,7 @@ package room
          _scrollOffset.x = 900 * 0.5 - _loc3_.x;
          _scrollOffset.y = 550 * 0.5 - _loc3_.y;
          AvatarManager.playerAvatarWorldView.playAnim(_roomEnviroType == 0 ? 14 : 32);
+         AvatarManager.sjApplyRejoinAnim();
          AvatarManager.resetThrottle();
          AvatarManager.updateAvatar(AvatarManager.playerSfsUserId,_loc4_.x,_loc4_.y,true,false);
          QuestManager.checkQuestOffScreenUsers();

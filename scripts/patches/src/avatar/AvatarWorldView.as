@@ -740,7 +740,16 @@ package avatar
       {
          return _lastIdleFlip;
       }
-      
+
+      // Animation plugin: plays any anim id and keeps it as the idle, so it
+      // survives heartbeat and goes out with the next "au". Walking resets it.
+      public function holdIdleAnim(param1:int, param2:Boolean) : void
+      {
+         _lastIdleAnim = param1;
+         _lastIdleFlip = param2;
+         playAnim(param1,param2);
+      }
+
       public function get splashLiquid() : String
       {
          return _splashLiquid;
