@@ -47,6 +47,8 @@ class ConnectionStatusManager {
       statusElement.classList.add('text-gray-400')
       
       statusElement.setAttribute('title', 'Checking Animal Jam server status...')
+    } else if (this.application.burrowMode && this.application.burrowMode.active) {
+      this.application.burrowMode.checkStatus()
     } else {
       const dotElement = statusElement.querySelector('span:first-child')
       dotElement.classList.remove('bg-highlight-green', 'bg-error-red', 'bg-highlight-yellow', 'bg-tertiary-bg')
@@ -138,6 +140,10 @@ class ConnectionStatusManager {
   }
 
   async checkServerStatus() {
+    // In Burrow mode the status bar is the Burrow server's (BurrowMode.checkStatus)
+    if (this.application.burrowMode && this.application.burrowMode.active) {
+      return this.application.burrowMode.checkStatus()
+    }
     try {
       this.serverStatus.isChecking = true
       this.updateConnectionStatus(false)

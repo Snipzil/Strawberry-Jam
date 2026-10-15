@@ -13,6 +13,7 @@ const PluginListChecker = require('../../ui/managers/PluginListChecker')
 const application = new Application()
 
 const connectionStatusManager = new ConnectionStatusManager(application, ipcRenderer)
+application.connectionStatusManager = connectionStatusManager
 const windowControlsManager = new WindowControlsManager(application, ipcRenderer)
 const appInitializer = new AppInitializer(application, ipcRenderer)
 const commandRegistrar = new CommandRegistrar(ipcRenderer)

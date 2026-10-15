@@ -480,6 +480,9 @@
           case "reportError": {
             globals.reportError("gameClient", event.args[0]);
           } break;
+          case "modMenuOpenTab": {
+            if (this.modMenuPanel && typeof event.args[0] === "string") this.modMenuPanel.openTab(event.args[0]);
+          } break;
           case "modMenuToggle": {
             console.log(`[ModMenu] F10 from game (html menu ${this._useHtmlModMenu() ? "on" : "off"})`);
             if (this._useHtmlModMenu()) this.modMenuPanel.toggle();
@@ -512,7 +515,7 @@
       if (this._loadFailHandler) this.webViewElem.removeEventListener("did-fail-load", this._loadFailHandler);
 
       this.webViewElem.classList.remove("hidden");
-      this.webViewElem.src = globals.config.gameWebClient;
+      this.webViewElem.src = globals.gamePageUrl || globals.config.gameWebClient;
       this._loadDomReadyHandler = () => {
         this._webviewReady = true;
         if (this._pendingDevToolsToggle) {
@@ -571,12 +574,14 @@
     }
 
     _useHtmlModMenu() {
+      // Burrow's game client has no Flash mod menu; the HTML one holds its item finder
+      if (globals.gamePageUrl) return true;
       return localStorage.getItem('classicModMenu') !== 'true';
     }
 
     _sendModMenuConfig() {
       if (!this._webviewReady || !this.webViewElem) return;
-      this.webViewElem.send("modMenuConfig", { html: this._useHtmlModMenu() });
+      this.webViewElem.send("modMenuConfig", { html: this._useHtmlModMenu(), burrow: !!globals.burrowServer });
     }
 
     // Classic mode (or a game that isn't up yet) goes through F10 so Flash decides.

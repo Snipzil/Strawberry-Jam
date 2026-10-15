@@ -5,6 +5,7 @@ const SettingsUIManager = require('../../../../ui/managers/SettingsUIManager');
 const SettingsLoader = require('../../../../ui/managers/SettingsLoader');
 const SettingsSaver = require('../../../../ui/managers/SettingsSaver');
 const SettingsEventHandler = require('../../../../ui/managers/SettingsEventHandler');
+const BurrowSettingsManager = require('../../../../ui/managers/BurrowSettingsManager');
 
 /**
  * Module name
@@ -29,6 +30,7 @@ exports.render = async function (app, data = {}) {
   
   eventHandler.setupEventHandlers($modal, app, uiManager);
   await settingsLoader.loadSettings($modal, app, uiManager);
+  BurrowSettingsManager.bind($modal, app);
   
   $modal.css({
     'opacity': '0',

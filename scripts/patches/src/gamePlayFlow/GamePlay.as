@@ -32,6 +32,7 @@ package gamePlayFlow
    import com.sbi.popup.SBOkPopup;
    import com.sbi.popup.SBPopupManager;
    import com.sbi.popup.SBStandardPopup;
+   import com.sbi.popup.SBYesNoPopup;
    import currency.UserCurrency;
    import den.DenXtCommManager;
    import ecard.ECardManager;
@@ -909,6 +910,27 @@ package gamePlayFlow
          stage.addEventListener("keyDown",keyDownListener,false,0,true);
       }
       
+      // Burrow's server replies to its chat commands with `xtl`, and asks
+      // for confirmations (for example, !again) with `xyn`.  The stock
+      // client does not know either extension, so handle only those exact
+      // messages here and leave other x-prefixed extensions untouched.
+      private function sjBurrowXtReply(param1:SFEvent) : void
+      {
+         var data:Array = param1.obj;
+         // "xcc" (custom colours) is handled in XtReplyDemuxer
+         if(data[0] == "xtl")
+         {
+            new SBOkPopup(GuiManager.guiLayer,String(data[2]));
+         }
+         else if(data[0] == "xyn")
+         {
+            new SBYesNoPopup(GuiManager.guiLayer,String(data[3]),true,sjBurrowYesNo,int(data[2]));
+         }
+      }
+      private function sjBurrowYesNo(param1:Object) : void
+      {
+         gMainFrame.server.setXtObject_Str("xyn",[param1.passback,param1.status ? 1 : 0]);
+      }
       public function initAssets() : void
       {
          LoadProgress.updateProgress(7);
@@ -963,6 +985,7 @@ package gamePlayFlow
          XtReplyDemuxer.addModule(NewspaperXtCommManager.handleXtReply,"np");
          XtReplyDemuxer.addModule(NodeHopXtCommManager.handleXtReply,"n");
          XtReplyDemuxer.addModule(AvatarManager.sjAnimXtReply,"jamanim");
+         XtReplyDemuxer.addModule(sjBurrowXtReply,"x");
          _loc1_.addChild(_debugConnectionModeTxt);
          _loc1_.addChild(_debugServerNodeTxt);
          _loc1_.addChild(_debugShardIdTxt);

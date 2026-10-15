@@ -128,7 +128,7 @@ class PluginUIManager {
 
     const statusColor = isUI ? 'bg-red-500' : 'bg-yellow-500'
 
-    const hidden = this._getHiddenPlugins().includes(name)
+    const hidden = this._getHiddenPlugins().includes(name) || this._burrowHides(name)
     const descText = description || 'No description available'
     const openHint = isUI
       ? '<span class="plugin-tile-open" aria-hidden="true"><i class="fas fa-chevron-right"></i></span>'
@@ -562,7 +562,7 @@ class PluginUIManager {
       const type = $(el).data('plugin-type')
       const searchText = String($(el).attr('data-plugin-search') || String(name).toLowerCase())
       const matchesSearch = !query || searchText.indexOf(query) !== -1
-      const shouldHide = hiddenPlugins.includes(name) || (hideGamePlugins && type === 'game') || !matchesSearch
+      const shouldHide = hiddenPlugins.includes(name) || (hideGamePlugins && type === 'game') || !matchesSearch || this._burrowHides(name)
       if (shouldHide) {
         $(el).hide()
       } else {
@@ -573,6 +573,34 @@ class PluginUIManager {
 
     this.updateEmptyPluginMessage()
     this.renderRecentRow()
+    this._renderBurrowNote()
+  }
+
+  // Burrow mode hides the plugins that only work on Animal Jam (BurrowMode.AJ_ONLY_PLUGINS)
+  _burrowHides(name) {
+    const burrowMode = this.application.burrowMode
+    return !!(burrowMode && burrowMode.hiddenReason(name))
+  }
+
+  // a line under the plugin list naming what Burrow mode hides, and why
+  _renderBurrowNote() {
+    const $list = this.application.$pluginList
+    let $note = $('#burrowPluginNote')
+    const burrowMode = this.application.burrowMode
+    const hidden = !burrowMode || !burrowMode.active ? [] : $list.children('li').toArray()
+      .map(el => String($(el).data('plugin-name')))
+      .filter(name => burrowMode.hiddenReason(name))
+    if (!hidden.length) {
+      $note.remove()
+      return
+    }
+    if (!$note.length) {
+      $note = $('<div id="burrowPluginNote" class="burrow-plugin-note"></div>')
+      $list.after($note)
+    }
+    const escape = text => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+    $note.html(`<i class="fas fa-info-circle"></i><span>Burrow mode hides ${hidden.length} Animal Jam-only plugin${hidden.length === 1 ? '' : 's'}: ` +
+      hidden.map(name => `<b title="${escape(burrowMode.hiddenReason(name))}">${escape(name)}</b>`).join(', ') + '.</span>')
   }
 
   _getHideGamePlugins() {

@@ -10,6 +10,11 @@
     { id: "enhancements", title: "Enhancements" },
     { id: "popups", title: "Popups" },
   ];
+  // on a Burrow server, after the mods (or alone, with Burrow's own client)
+  const BURROW_TABS = [
+    { id: "burrow-items", title: "Item Finder" },
+    { id: "burrow", title: "Burrow" },
+  ];
   const MASTER_KEY = "modsMasterEnabled";
   const POLL_MS = 3000;
   const PREFS_KEY = "sjHtmlModMenuPrefs";
@@ -625,7 +630,7 @@
       this._denSaveTimer = null;
 
       const prefs = readPrefs();
-      this._tab = TABS.some(t => t.id === prefs.tab) ? prefs.tab : "mods";
+      this._tab = TABS.concat(BURROW_TABS).some(t => t.id === prefs.tab) ? prefs.tab : "mods";
       this._query = typeof prefs.query === "string" ? prefs.query : "";
       this._enabledOnly = prefs.enabledOnly === true;
       // Position/size as fractions of the game area (so it survives window resizes); null = centred default.
@@ -674,6 +679,11 @@
       root.querySelector(".backdrop").addEventListener("mousedown", () => this.close());
       root.querySelector(".close").addEventListener("click", () => this.close());
       this._search.addEventListener("input", () => {
+        const section = this._burrowSection();
+        if (section) {
+          if (section.setQuery) section.setQuery(this._search.value);
+          return;
+        }
         this._query = this._search.value;
         this._savePrefs();
         this._render();
@@ -687,10 +697,7 @@
       this._nav.addEventListener("click", (event) => {
         const btn = event.target.closest("button[data-tab]");
         if (!btn) return;
-        this._tab = btn.dataset.tab;
-        this._savePrefs();
-        this._body.scrollTop = 0;
-        this._render();
+        this._selectTab(btn.dataset.tab);
       });
       this._body.addEventListener("click", (event) => this._onBodyClick(event));
       this._body.addEventListener("input", (event) => {
@@ -819,11 +826,28 @@
       window.addEventListener("resize", this._onWindowResize);
       requestAnimationFrame(() => this.setAttribute("visible", ""));
       this._panel.focus();
+      // On a Burrow server the menu adds Burrow's tabs. With Burrow's own
+      // game client (globals.gamePageUrl) there are no SWF mods to show.
+      const burrow = window.BurrowItemFinder && window.BurrowTools ? globals.burrowServer || null : null;
+      this._setMode(burrow, !(burrow && globals.gamePageUrl));
       this._render();
+      const section = this._burrowSection();
+      if (section && section.activate) section.activate();
+      if (!this._modsAvailable) {
+        clearInterval(this._pollTimer);
+        this._pollTimer = null;
+        return;
+      }
       this._refresh();
       clearInterval(this._pollTimer);
       // hotkeys and plugins can flip mods while the menu is open
       this._pollTimer = setInterval(() => this._refresh(), POLL_MS);
+    }
+
+    // opened on a given tab (the game's Settings rows on Burrow)
+    openTab(id) {
+      this.open();
+      this._selectTab(id);
     }
 
     close() {
@@ -853,13 +877,65 @@
       this.style.setProperty("--mm-on-accent", isLight ? "#1b1b1f" : "#ffffff");
     }
 
+    // The tabs shown: the SWF's mods when the game client has them, and on a
+    // Burrow server its tools (BurrowItemFinder.js, BurrowTools.js).
+    _tabs() {
+      return (this._modsAvailable !== false ? TABS : []).concat(this._burrowServer ? BURROW_TABS : []);
+    }
+
+    // The Burrow tab showing, if one is: it owns the body, and the search box
+    // when it has a placeholder for it.
+    _burrowSection() {
+      if (this._tab === "burrow-items") return this._finder || null;
+      if (this._tab === "burrow") return this._tools || null;
+      return null;
+    }
+
+    _setMode(burrowServer, modsAvailable) {
+      if (burrowServer && !this._finder) {
+        this._finder = new window.BurrowItemFinder(this);
+        this._tools = new window.BurrowTools(this);
+      }
+      this._burrowServer = burrowServer;
+      this._modsAvailable = modsAvailable;
+      const tabs = this._tabs();
+      if (!tabs.some(t => t.id === this._tab)) this._tab = tabs[0].id;
+      this._syncChrome();
+    }
+
+    // header, search box and footer for the tab showing
+    _syncChrome() {
+      const root = this.shadowRoot;
+      const section = this._burrowSection();
+      const title = this._modsAvailable === false ? "Burrow" : "Mod Menu";
+      root.querySelector(".title h2").textContent = title;
+      this._panel.setAttribute("aria-label", title);
+      root.querySelector(".search").style.display = section && !section.placeholder ? "none" : "";
+      this._search.placeholder = section ? section.placeholder || "" : "Search mods…";
+      this._search.value = section ? section.query || "" : this._query;
+      this._enabledChip.style.display = section ? "none" : "";
+      root.querySelector("footer").style.display = section ? "none" : "";
+      if (!section) this._body.classList.remove("bif-body");
+    }
+
+    _selectTab(id) {
+      if (!this._tabs().some(t => t.id === id)) return;
+      this._tab = id;
+      this._savePrefs();
+      this._body.scrollTop = 0;
+      this._syncChrome();
+      this._render();
+      const section = this._burrowSection();
+      if (section && section.activate) section.activate();
+    }
+
     async _call(method, ...args) {
       if (!this.bridge) throw new Error("not-ready");
       return this.bridge.call(method, ...args);
     }
 
     async _refresh() {
-      if (this._refreshing || this._busy.size > 0) return;
+      if (this._modsAvailable === false || this._refreshing || this._busy.size > 0) return;
       this._refreshing = true;
       try {
         const raw = await this._call("sjModMenuGetState");
@@ -871,6 +947,11 @@
         this._state = state;
         this._error = null;
         if (!this.isOpen) return;
+        // a Burrow tab keeps the body; the tab counts still follow the mods
+        if (this._burrowSection()) {
+          if (shapeChanged) this._renderTabs();
+          return;
+        }
         if (shapeChanged || (enabledChanged && this._enabledOnly)) this._render();
         else this._syncInPlace();
       }
@@ -878,7 +959,7 @@
         console.warn("[ModMenu] state refresh failed:", err && err.message);
         if (!this._state) {
           this._error = err && err.message === "not-ready" ? "not-ready" : "failed";
-          if (this.isOpen) this._render();
+          if (this.isOpen && !this._burrowSection()) this._render();
         }
       }
       finally {
@@ -925,8 +1006,15 @@
     }
 
     _render() {
-      this._renderSummary();
       this._renderTabs();
+      const section = this._burrowSection();
+      if (section) {
+        this._summary.innerHTML = section.summary();
+        section.render(this._body);
+        return;
+      }
+      this._body.classList.remove("bif-body");
+      this._renderSummary();
       if (!this._state) {
         this._body.innerHTML = this._error === "failed"
           ? `<div class="status">Couldn't reach the game's mod menu.<br><button type="button" data-action="retry">Try again</button></div>`
@@ -973,10 +1061,11 @@
 
     _renderTabs() {
       const filtered = !!this._query.trim() || this._enabledOnly;
-      this._nav.innerHTML = TABS.map(tab => {
-        const { all, shown } = this._itemsFor(tab.id);
+      this._nav.innerHTML = this._tabs().map(tab => {
+        const isMods = TABS.indexOf(tab) !== -1;
+        const { all, shown } = isMods ? this._itemsFor(tab.id) : { all: [], shown: [] };
         let count = "";
-        if (this._state) {
+        if (this._state && isMods) {
           const showRatio = filtered && (tab.id !== "popups" || this._query.trim());
           count = `<span class="count">${showRatio ? `${shown.length}/${all.length}` : all.length}</span>`;
         }
@@ -1059,6 +1148,11 @@
     }
 
     _onBodyClick(event) {
+      const section = this._burrowSection();
+      if (section) {
+        section.onClick(event);
+        return;
+      }
       if (event.target.closest("[data-action='retry']")) {
         this._error = null;
         this._render();
@@ -1195,6 +1289,11 @@
         event.preventDefault();
         if (event.key === "Escape" && this.shadowRoot.activeElement === this._search && this._search.value) {
           this._search.value = "";
+          const section = this._burrowSection();
+          if (section) {
+            if (section.setQuery) section.setQuery("");
+            return;
+          }
           this._query = "";
           this._savePrefs();
           this._render();
@@ -1212,11 +1311,9 @@
       if (event.ctrlKey && (event.key === "Tab" || event.key === "PageDown" || event.key === "PageUp")) {
         event.preventDefault();
         const step = event.shiftKey || event.key === "PageUp" ? -1 : 1;
-        const index = TABS.findIndex(t => t.id === this._tab);
-        this._tab = TABS[(index + step + TABS.length) % TABS.length].id;
-        this._savePrefs();
-        this._body.scrollTop = 0;
-        this._render();
+        const tabs = this._tabs();
+        const index = tabs.findIndex(t => t.id === this._tab);
+        this._selectTab(tabs[(index + step + tabs.length) % tabs.length].id);
       }
     }
 

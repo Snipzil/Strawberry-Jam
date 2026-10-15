@@ -2,6 +2,7 @@ const axios = require('axios')
 const path = require('path')
 const fs = require('fs')
 const fsPromises = fs.promises
+const GameServerTarget = require('../../services/network/GameServerTarget')
 
 // The client shipped with this release. Bump it (and add the file to
 // assets/flash/options) whenever a new ajclient.swf is released.
@@ -11,9 +12,10 @@ const LATEST_SWF_FILE = 'v6.3.1.swf'
 // anim-pool-fix-test.swf was the pre-release test build of v6.2.1,
 // masterpieces-test.swf a pre-release test build of v6.2.2,
 // equip-fix-test.swf the pre-release test build of v6.2.3,
-// art-studio-test.swf the pre-release test build of v6.3.0, and
-// mp-copies-test.swf the pre-release test build of v6.3.1.
-const PREVIOUS_LATEST_SWF_FILES = ['v6.0.0.swf', 'v6.0.1.swf', 'v6.0.3.swf', 'v6.0.4.swf', 'v6.0.5.swf', 'v6.1.0.swf', 'v6.2.0.swf', 'v6.2.1.swf', 'v6.2.2.swf', 'v6.2.3.swf', 'v6.3.0.swf', 'anim-pool-fix-test.swf', 'masterpieces-test.swf', 'equip-fix-test.swf', 'art-studio-test.swf', 'mp-copies-test.swf']
+// art-studio-test.swf the pre-release test build of v6.3.0,
+// mp-copies-test.swf the pre-release test build of v6.3.1, and
+// burrow-test.swf the Burrow mode test build (6.3.2-burrow.1).
+const PREVIOUS_LATEST_SWF_FILES = ['v6.0.0.swf', 'v6.0.1.swf', 'v6.0.3.swf', 'v6.0.4.swf', 'v6.0.5.swf', 'v6.1.0.swf', 'v6.2.0.swf', 'v6.2.1.swf', 'v6.2.2.swf', 'v6.2.3.swf', 'v6.3.0.swf', 'anim-pool-fix-test.swf', 'masterpieces-test.swf', 'equip-fix-test.swf', 'art-studio-test.swf', 'mp-copies-test.swf', 'burrow-test.swf']
 
 class FilesController {
   constructor(app = null) {
@@ -81,16 +83,19 @@ class FilesController {
    * Host endpoint.
    */
   get baseUrl () {
-    return 'https://ajcontent.akamaized.net'
+    // In Burrow mode the game's content is the Burrow server's: its mirror of
+    // the CDN plus the files it changes (item tables, HUD, themed rooms).
+    return GameServerTarget.burrowUrl() || 'https://ajcontent.akamaized.net'
   }
 
   /**
    * Request headers.
    */
   get baseHeaders () {
+    const burrow = GameServerTarget.burrowUrl()
     return {
-      Host: 'ajcontent.akamaized.net',
-      Referer: 'https://desktop.animaljam.com/gameClient/game/index.html'
+      Host: burrow ? new URL(burrow).host : 'ajcontent.akamaized.net',
+      Referer: burrow ? `${burrow}/gameClient/game/index.html` : 'https://desktop.animaljam.com/gameClient/game/index.html'
     }
   }
 
@@ -254,7 +259,8 @@ class FilesController {
       'v5.2.0.swf': 'v5.2.0 (older)',
       'v4.2.3.swf': 'v4.2.3 (older)',
       'non-purple-private-chat.swf': 'Non-Colored Private Chat (outdated)',
-      'unmodded-ajclient.swf': 'Unmodded (latest)'
+      'unmodded-ajclient.swf': 'Unmodded (latest)',
+      'burrow-test.swf': 'Burrow test (animations)'
     }
 
     return Promise.all(files.map(async (filename) => {
@@ -312,6 +318,13 @@ class FilesController {
       }
     }
     
+    // A Burrow server answers the wall (POST /wall) and art uploads
+    // (/game/mp) itself.
+    const burrow = GameServerTarget.burrowUrl()
+    if (burrow && (requestPath.startsWith('/wall') || requestPath.startsWith('/game/'))) {
+      return this._proxyRequest(request, response, { baseUrl: burrow, host: new URL(burrow).host })
+    }
+
     // Handle wall requests - proxy to prod-wall.animaljam.com instead of ajcontent.akamaized.net
     if (requestPath.startsWith('/wall')) {
       return this._proxyRequest(request, response, {

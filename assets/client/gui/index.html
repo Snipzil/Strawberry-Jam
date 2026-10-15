@@ -118,7 +118,7 @@
 
         const sendWhitelist = new Set([
           "about", "clearAuthToken", "clearRefreshToken", "keyEvent", "loaded",
-          "loginSucceeded", "openExternal", "ready", "rememberMeStateUpdated",
+          "loginSucceeded", "burrowLoginSucceeded", "openExternal", "ready", "rememberMeStateUpdated",
           "systemCommand", "translate", "get-setting", "set-setting", "get-api-port",
           "get-server-port", "terminate-port", "get-app-state", "set-app-state",
           "get-df", "toggle-uuid-spoofing", "winReady", "refresh-df", "regenerate-df",
@@ -180,6 +180,7 @@
       }
     </script>
     <script src="AuthService.js"></script>
+    <script src="BurrowAuth.js"></script>
     <script>
       "use strict";
 
@@ -332,7 +333,15 @@
           return port;
         },
 
+        // the Burrow server logged in to, or null on Animal Jam
+        burrowServer: null,
+        // the game page to load: a Burrow server's own (with its own client),
+        // or null for the usual one
+        gamePageUrl: null,
+
         async authenticateWithAuthToken(authToken) {
+          // saved Animal Jam tokens are never sent to a Burrow server
+          if (await window.BurrowAuth.serverUrl()) throw new Error("AUTH_TOKEN_EXPIRED");
           if (!authServiceInstance) {
             authServiceInstance = new AuthService({
               globals: globals,
@@ -344,6 +353,7 @@
         },
 
         async authenticateWithRefreshToken(refreshToken, otp) {
+          if (await window.BurrowAuth.serverUrl()) throw new Error("REFRESH_TOKEN_EXPIRED");
           if (!authServiceInstance) {
             authServiceInstance = new AuthService({
               globals: globals,
@@ -355,6 +365,18 @@
         },
 
         async authenticateWithPassword(username, password, otp, customDf) {
+          const burrowTarget = await window.BurrowAuth.target();
+          if (burrowTarget) {
+            const result = await window.BurrowAuth.logIn(burrowTarget, username, password, otp, showOtpModal);
+            globals.authToken = result.userData.authToken;
+            globals.currentUser = result.userData.username;
+            globals.reloadFlashVars = null;
+            globals.burrowServer = result.server;
+            globals.gamePageUrl = result.gamePageUrl;
+            return { userData: result.userData, flashVars: result.flashVars, burrow: true };
+          }
+          globals.burrowServer = null;
+          globals.gamePageUrl = null;
           if (!authServiceInstance) {
             authServiceInstance = new AuthService({
               globals: globals,
@@ -704,7 +726,8 @@
     <script async src="components/controls/AutoWheelButton.js"></script>
     <script src="components/screens/UserTray.js"></script>
     <script src="components/screens/ModMenuPanel.js"></script>
-    <script src="components/screens/GameScreen.js"></script>
+    <script src="components/screens/BurrowItemFinder.js"></script>
+    <script src="components/screens/BurrowTools.js"></script>    <script src="components/screens/GameScreen.js"></script>
     <script src="components/controls/TextInput.js"></script>
     <script src="components/controls/ErrorTip.js"></script>
     <script src="components/controls/BubbleButton.js"></script>

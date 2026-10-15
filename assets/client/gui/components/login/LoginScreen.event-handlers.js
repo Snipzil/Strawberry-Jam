@@ -41,6 +41,14 @@
           console.log(`[CREATE ACCOUNT] Create account blocked, returning early`);
           return;
         }
+        // Burrow accounts are made on the server's own sign-up page
+        const burrowServer = await window.BurrowAuth.serverUrl();
+        if (burrowServer) {
+          window.ipc.send("openExternal", {url: `${burrowServer}/register`});
+          return;
+        }
+        globals.burrowServer = null;
+        globals.gamePageUrl = null;
         this.loginScreen.loginBlocked = true;
         try {
           console.log(`[CREATE ACCOUNT] Requesting FlashVars for account creation`);

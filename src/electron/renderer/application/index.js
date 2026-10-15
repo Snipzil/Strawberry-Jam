@@ -13,6 +13,7 @@ const TooltipManager = require('../../../ui/managers/TooltipManager')
 const NetworkEventHandler = require('../../../managers/network/NetworkEventHandler')
 const ConsoleManager = require('../../../ui/managers/ConsoleManager')
 const GameLauncher = require('../../../managers/game/GameLauncher')
+const BurrowMode = require('../../../managers/burrow/BurrowMode')
 const PluginUIManager = require('../../../ui/managers/PluginUIManager')
 const IPCManager = require('../../../managers/ipc/IPCManager')
 const AutoCompleteManager = require('../../../ui/managers/AutoCompleteManager')
@@ -522,6 +523,7 @@ module.exports = class Application extends EventEmitter {
     )
 
     this.gameLauncher = new GameLauncher(this)
+    this.burrowMode = new BurrowMode(this)
     this.pluginUIManager = new PluginUIManager(this)
     this.consoleDrawerManager = new ConsoleDrawerManager(this)
     this.inlinePluginManager = new InlinePluginManager(this)
@@ -604,6 +606,9 @@ module.exports = class Application extends EventEmitter {
     }
     
     this.emit('ready')
+
+    // the header switch, status bar and plugin list for the saved server
+    this.burrowMode.apply()
 
     this._portConflicts = []
     this._checkPortConflicts()

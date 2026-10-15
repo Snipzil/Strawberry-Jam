@@ -74,6 +74,11 @@ try {
 const STORE_KEY_UUID_SPOOFER = 'uuid_spoofer_enabled';
 const STORE_KEY_SPOOFED_DF = 'uuid_spoofer_df';
 const STORE_KEY_SAVED_ACCOUNTS = 'saved_accounts';
+// Burrow accounts are kept apart from the Animal Jam ones: their own saved
+// list, passwords and last login, used while a Burrow server is picked.
+const savedAccountsKey = () => (burrowServerUrl() ? 'burrow_saved_accounts' : STORE_KEY_SAVED_ACCOUNTS);
+const savedPasswordsKey = () => (burrowServerUrl() ? 'burrowSavedAccountPasswords' : 'savedAccountPasswords');
+const lastLoginKey = () => (burrowServerUrl() ? 'burrowLogin' : 'login');
 
 const AUTO_UPDATE_STARTUP_DELAY_MS = 2000;
 const AUTO_UPDATE_PERIODIC_DELAY_MS = 1 * 60 * 60 * 1000;
@@ -326,12 +331,12 @@ if (!config.noUpdater) {
 
 ipcMain.on("loaded", async (event, message) => {
   webview = event.sender;
-  const username = store.get("login.username") || "";
-  const rememberMe = store.get("login.rememberMe") !== false;
+  const username = store.get(`${lastLoginKey()}.username`) || "";
+  const rememberMe = store.get(`${lastLoginKey()}.rememberMe`) !== false;
   let password = "";
 
   if (username && rememberMe) {
-    password = store.get(`savedAccountPasswords.${username}`) || "";
+    password = store.get(`${savedPasswordsKey()}.${username}`) || "";
   }
 
   const df = await getDf();
@@ -485,7 +490,25 @@ ipcMain.handle('get-account-tokens', async (event, username) => {
 
 ipcMain.on("rememberMeStateUpdated", async (event, message) => {
   log('debug', `[IPC] rememberMeStateUpdated received: ${message.newValue}`);
-  store.set("login.rememberMe", message.newValue);
+  store.set(`${lastLoginKey()}.rememberMe`, message.newValue);
+});
+
+// A Burrow login: its name is filled in next time, and with "Remember me"
+// the account joins the Burrow saved accounts (password included, as the
+// account panel keeps them). Animal Jam's own tokens are never touched.
+ipcMain.on("burrowLoginSucceeded", async (event, message) => {
+  if (!message || !message.username || !burrowServerUrl()) return;
+  store.set("burrowLogin.username", message.username);
+  store.set("burrowLogin.rememberMe", !!message.rememberMe);
+  if (!message.rememberMe || !message.password) return;
+  const accounts = store.get(savedAccountsKey(), []);
+  const list = Array.isArray(accounts) ? accounts : [];
+  if (!list.some(acc => acc && acc.username && acc.username.toLowerCase() === message.username.toLowerCase())) {
+    list.push({ username: message.username });
+    store.set(savedAccountsKey(), list);
+  }
+  store.set(`${savedPasswordsKey()}.${message.username}`, message.password);
+  log('info', `[AccMan] Remembered Burrow account ${message.username}`);
 });
 
 ipcMain.on("clearAuthToken", async (event, message) => {
@@ -854,6 +877,91 @@ ipcMain.handle('get-server-port', async () => {
   return TCP_SERVER_PORTS[0];
 });
 
+// The game server picked in Strawberry Jam's Burrow mode (its
+// GameServerTarget.js writes this file): a Burrow private server's base URL,
+// or null for Animal Jam.
+const GAME_SERVER_TARGET_PATH = path.join(process.env.APPDATA || os.homedir(), 'strawberry-jam', 'game-server.json');
+
+const readGameServerTarget = () => {
+  try {
+    const target = JSON.parse(fs.readFileSync(GAME_SERVER_TARGET_PATH, 'utf8'));
+    if (!target || target.server !== 'burrow' || typeof target.url !== 'string') return null;
+    const url = new URL(target.url);
+    if (!['http:', 'https:'].includes(url.protocol)) return null;
+    // the game client: Strawberry Jam's modded SWF unless the server's own was picked
+    return { url: url.origin, client: target.client === 'burrow' ? 'burrow' : 'strawberry' };
+  } catch (_) {
+    return null;
+  }
+};
+
+const burrowServerUrl = () => {
+  const target = readGameServerTarget();
+  return target ? target.url : null;
+};
+
+// the mod menu's Burrow tabs: item finder, themes, outfits and den layouts
+require("./burrowItems.js").register(ipcMain, burrowServerUrl);
+ipcMain.handle('get-game-server-target', async () => {
+  const target = readGameServerTarget();
+  return target ? { server: 'burrow', url: target.url, client: target.client } : { server: 'animaljam' };
+});
+
+// A Burrow server with Cloudflare Turnstile asks for a captcha before it looks
+// at a password. The widget does not run in the login page (a file), so the
+// server's own /captcha page opens in a small window, as in Burrow's client.
+// Resolves to the answer, or "" when the window is closed without one.
+let burrowCaptchaWindow = null;
+ipcMain.handle('burrow-captcha', (event, action) => new Promise(resolve => {
+  const server = burrowServerUrl();
+  if (!server || !win || event.sender.id !== win.webContents.id || burrowCaptchaWindow) {
+    resolve("");
+    return;
+  }
+  const box = new BrowserWindow({
+    parent: win,
+    modal: true,
+    width: 360,
+    height: 200,
+    useContentSize: true,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    backgroundColor: "#000000",
+    title: "Burrow",
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: path.join(__dirname, "gui/burrowCaptchaPreload.js"),
+      partition: "burrow-captcha",
+    },
+  });
+  box.setMenu(null);
+  burrowCaptchaWindow = box;
+  const id = box.webContents.id;
+  let answered = false;
+  const answer = token => {
+    if (!answered) {
+      answered = true;
+      resolve(token);
+    }
+  };
+  const onDone = (doneEvent, token) => {
+    if (doneEvent.sender.id === id) {
+      answer(typeof token === "string" && token.length <= 2048 ? token : "");
+      box.close();
+    }
+  };
+  ipcMain.on("burrowCaptchaDone", onDone);
+  box.on("closed", () => {
+    ipcMain.removeListener("burrowCaptchaDone", onDone);
+    burrowCaptchaWindow = null;
+    answer("");
+  });
+  box.loadURL(`${server}/captcha?action=${action === "signup" ? "signup" : "login"}`);
+}));
+
 ipcMain.handle('get-app-state', async () => {
   log('debug', '[IPC] Handling get-app-state request');
   return appState;
@@ -897,10 +1005,10 @@ ipcMain.handle('set-app-state', async (event, newState) => {
 
 async function getSavedAccountsData() {
   log('debug', '[AccMan Helper] Fetching saved accounts data (using plaintext store).');
-  const accountsFromStore = store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+  const accountsFromStore = store.get(savedAccountsKey(), []);
   const accountsWithPasswords = [];
   for (const acc of accountsFromStore) {
-    const storedPassword = store.get(`savedAccountPasswords.${acc.username}`);
+    const storedPassword = store.get(`${savedPasswordsKey()}.${acc.username}`);
     accountsWithPasswords.push({ ...acc, password: storedPassword || null });
     if (storedPassword) {
       log('warn', `[WINAPP AccMan Helper] Retrieved plaintext password for ${acc.username} from electron-store.`);
@@ -923,7 +1031,7 @@ ipcMain.handle('save-account', async (event, accountData) => {
     return { success: false, error: 'Invalid account data' };
   }
   try {
-    let savedAccountsMetadata = store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+    let savedAccountsMetadata = store.get(savedAccountsKey(), []);
     const accountMetadata = { username: accountData.username };
     const existingAccountIndex = savedAccountsMetadata.findIndex(acc => acc.username.toLowerCase() === accountData.username.toLowerCase());
     if (existingAccountIndex !== -1) {
@@ -933,9 +1041,9 @@ ipcMain.handle('save-account', async (event, accountData) => {
       savedAccountsMetadata.push(accountMetadata);
       log('info', `[AccMan] Added new account metadata: ${accountData.username}`);
     }
-    store.set(`savedAccountPasswords.${accountData.username}`, accountData.password);
+    store.set(`${savedPasswordsKey()}.${accountData.username}`, accountData.password);
     log('warn', `[WINAPP AccMan] Stored plaintext password for ${accountData.username} in electron-store.`);
-    store.set(STORE_KEY_SAVED_ACCOUNTS, savedAccountsMetadata);
+    store.set(savedAccountsKey(), savedAccountsMetadata);
     const updatedAccountsWithPasswords = await getSavedAccountsData();
     return { success: true, accounts: updatedAccountsWithPasswords };
   } catch (error) {
@@ -951,19 +1059,19 @@ ipcMain.handle('delete-account', async (event, username) => {
     return { success: false, error: 'Invalid username' };
   }
   try {
-    let savedAccountsMetadata = store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+    let savedAccountsMetadata = store.get(savedAccountsKey(), []);
     const initialLength = savedAccountsMetadata.length;
     savedAccountsMetadata = savedAccountsMetadata.filter(acc => acc.username.toLowerCase() !== username.toLowerCase());
     if (savedAccountsMetadata.length < initialLength) {
-      store.set(STORE_KEY_SAVED_ACCOUNTS, savedAccountsMetadata);
+      store.set(savedAccountsKey(), savedAccountsMetadata);
       log('info', `[AccMan] Deleted account metadata for: ${username}`);
-      store.delete(`savedAccountPasswords.${username}`);
+      store.delete(`${savedPasswordsKey()}.${username}`);
       log('warn', `[WINAPP AccMan] Deleted plaintext password for ${username} from electron-store.`);
       const updatedAccountsWithPasswords = await getSavedAccountsData();
       return { success: true, accounts: updatedAccountsWithPasswords };
     } else {
       log('warn', `[AccMan] Account metadata not found for deletion: ${username}`);
-      store.delete(`savedAccountPasswords.${username}`);
+      store.delete(`${savedPasswordsKey()}.${username}`);
       const updatedAccountsWithPasswords = await getSavedAccountsData();
       return { success: false, error: 'Account not found', accounts: updatedAccountsWithPasswords };
     }
@@ -976,9 +1084,9 @@ ipcMain.handle('delete-account', async (event, username) => {
 ipcMain.handle('delete-all-accounts', async () => {
   log('debug', '[AccMan] Handling delete-all-accounts request (non-pinned only)');
   try {
-    const savedAccountsMetadata = store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+    const savedAccountsMetadata = store.get(savedAccountsKey(), []);
     if (!Array.isArray(savedAccountsMetadata)) {
-      store.set(STORE_KEY_SAVED_ACCOUNTS, []);
+      store.set(savedAccountsKey(), []);
       return { success: true, deleted: 0 };
     }
 
@@ -988,11 +1096,11 @@ ipcMain.handle('delete-all-accounts', async () => {
 
     for (const account of nonPinned) {
       if (account && account.username) {
-        store.delete(`savedAccountPasswords.${account.username}`);
+        store.delete(`${savedPasswordsKey()}.${account.username}`);
       }
     }
 
-    store.set(STORE_KEY_SAVED_ACCOUNTS, pinned);
+    store.set(savedAccountsKey(), pinned);
     log('info', `[AccMan] Deleted non-pinned accounts (count: ${deletedCount}). Kept pinned: ${pinned.length}`);
 
     return { success: true, deleted: deletedCount, kept: pinned.length };
@@ -1009,7 +1117,7 @@ ipcMain.handle('toggle-pin-account', async (event, username) => {
     return { success: false, error: 'Invalid username' };
   }
   try {
-    let savedAccountsMetadata = store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+    let savedAccountsMetadata = store.get(savedAccountsKey(), []);
     const accountIndex = savedAccountsMetadata.findIndex(acc => acc.username.toLowerCase() === username.toLowerCase());
     
     if (accountIndex === -1) {
@@ -1019,7 +1127,7 @@ ipcMain.handle('toggle-pin-account', async (event, username) => {
     
     savedAccountsMetadata[accountIndex].pinned = !savedAccountsMetadata[accountIndex].pinned;
     
-    store.set(STORE_KEY_SAVED_ACCOUNTS, savedAccountsMetadata);
+    store.set(savedAccountsKey(), savedAccountsMetadata);
     log('info', `[AccMan] Toggled pin status for: ${username} to ${savedAccountsMetadata[accountIndex].pinned}`);
     
     const updatedAccountsWithPasswords = await getSavedAccountsData();
@@ -1050,7 +1158,7 @@ ipcMain.handle('import-accounts', async (event, accounts) => {
   }
 
   try {
-    let savedAccountsMetadata = store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+    let savedAccountsMetadata = store.get(savedAccountsKey(), []);
     let importedCount = 0;
 
     for (const account of accounts) {
@@ -1072,11 +1180,11 @@ ipcMain.handle('import-accounts', async (event, accounts) => {
         log('info', `[AccMan] Added new account: ${account.username}`);
       }
 
-      store.set(`savedAccountPasswords.${account.username}`, account.password);
+      store.set(`${savedPasswordsKey()}.${account.username}`, account.password);
       importedCount++;
     }
 
-    store.set(STORE_KEY_SAVED_ACCOUNTS, savedAccountsMetadata);
+    store.set(savedAccountsKey(), savedAccountsMetadata);
     log('info', `[AccMan] Import completed: ${importedCount} accounts imported`);
 
     const updatedAccountsWithPasswords = await getSavedAccountsData();

@@ -397,7 +397,7 @@ treat everything else in it as vanilla-plus-existing-mods, unchanged.
   clients route "u" replies through `AvatarManager.sjUserCommXtReply`
   (registered in `GamePlay` in place of `UserCommXtCommManager.handleXtReply`),
   which plays `sja:` anims on the sender and passes everything else on.
-  With broadcast 2 (the plugin's "Rejoin for non-SJ"), a non-action anim also rejoins the same room instance
+  With broadcast 2 (the plugin's "Show non-SJ too"), a non-action anim also rejoins the same room instance
   (`getLastGoodRoomName()`, e.g. `sarepia.room_main#6`, direct join) at the
   same spot (`setGotoSpawnLocation`, as vanilla does after NPC minigames),
   so the server sends everyone a fresh `ac`. `RoomManagerWorld.onRoomLoaded`
@@ -412,6 +412,104 @@ treat everything else in it as vanilla-plus-existing-mods, unchanged.
   comes within 15s, `AvatarManager.sjRejoinTimeout` clears the join state
   and the loading spiral. Dens are skipped because the server never answers
   a `dj` for the den you are in (tested 2026-10-13: the spiral stayed up).
+  Late arrivals: a broadcast anim (not the base idle) is remembered in
+  `_sjHeldAnim`, and `avatarCreateResponse` calls `sjResendHeldAnim` for each
+  avatar created after it. That sends the action or `sja:` message again, at
+  most every 2s, while `lastIdleAnim`/`lastIdleFlip` still match (walking
+  ends it).
+  Burrow (server as of 2026-10-15) keeps the anim from `au` and puts it in
+  every `ac`, like Animal Jam's servers, but its `enterRoom` ignores a join
+  to the room you are already in, so the rejoin would only time out. On
+  Burrow (`ModMenuFeatures.onBurrowServer()`) any broadcast instead sends
+  `ap` with the colours you already have (`sjBurrowRedraw`): Burrow answers
+  every colour change by redrawing you for the room (`refreshForOthers`:
+  `ar` then `ac` with the stored anim), with no reload on your side; at most once a second. Built
+  as `assets/flash/options/burrow-test.swf`; not yet tried in game.
+
+- Den item versions for the Burrow item finder (`src/gui/ModMenuFeatures.as`):
+  Burrow's `/api/give` always gives a den item's version 0, so the bridge
+  adds `sjModMenuBuyDenItem(defId, version)`, which buys it through
+  `DenXtCommManager.requestBuy` (the den shop's own purchase, which Burrow
+  takes for any den item), and `sjModMenuDenBuyStatus()`: 2 while waiting,
+  then 1 (bought) or 0 (refused). The preview of the versions is
+  `scripts/den-preview`.
+
+- Burrow server messages (`src/gamePlayFlow/GamePlay.as`,
+  `src/XtReplyDemuxer.as`, `src/avatar/NPCView.as`, `src/avatar/AvatarWorldView.as`).
+  `GamePlay` registers an `x` module for Burrow's `xtl` (a chat command's
+  answer, shown in an OK popup) and `xyn` (a yes/no question such as `!again`'s,
+  answered with `xyn [id, 1|0]`); every other `x` message is ignored, as the
+  stock client has no module for them. `!become`: Burrow sends the
+  Phantomizer's `dph` with the disguise's NPC id as one more field.
+  `XtReplyDemuxer` (otherwise the stock class) puts that id in
+  `NPCView.disguiseDefId` while the message is handled, and `NPCView` draws
+  that NPC in place of the phantom; `getNpcMC` answers `setVision` with a
+  stand-in for NPCs without it. `AvatarWorldView` hides the animal only once
+  the NPC has loaded, so a quick disguise doesn't leave the player invisible.
+  Burrow's own `MySettings`/`ItemWindowToggle`/`XtReplyDemuxer` can't be
+  copied in whole: they call functions only Burrow's `AJClient` has
+  (`wasdOn`, `openTool`, `showMessage`, `PaletteHelper.handleCustomColors`,
+  and more), and the Settings panel came up empty with them.
+- Settings on a Burrow server (`src/gui/MySettings.as`,
+  `src/gui/itemWindows/ItemWindowToggle.as`, otherwise the stock classes):
+  when `ModMenuFeatures.onBurrowServer()` (the launcher's
+  `sjModMenu.isBurrow`, from `modMenuConfig`) says so, the list starts with
+  the rows Burrow's own client has, for what this client can do: Item Finder
+  and Theme open the HTML mod menu's tabs (`ModMenuFeatures.openHtmlTab`,
+  `sjModMenu.openTab`), WASD and Graphics are the WASD Movement and HD
+  Graphics mods, and Hide blocked sets Burrow's user var 9001, which its
+  server applies. Rows borrow existing icons (`iconFrame`) and set their text
+  in code, so no new artwork is needed. Burrow's Chat Filter, Frame rate and
+  Camera rows are left out: this client has nothing behind them.
+
+- `src/avatar/CustomAvatarDef.as` (otherwise the stock class):
+  `onPatternsLoaded` keeps only pattern ids above 0. A custom animal's
+  patterns come from a generic list (`patternListRefId`); Burrow doesn't have
+  the official contents and builds the list from the def's single
+  `patternRefId`, which is 0 for the Frolicking Fox and several others (lists
+  748, 749, 756, 761 and 770). `AvatarEditor` then built `Item(0)`, threw in
+  `onMediaItemLoaded` and never took its loading spiral down: the inventory
+  of those animals loaded forever. With no ids the editor shows no special
+  patterns, and every other `patternRefIds` user checks the length first.
+  Without their pattern those animals are the plain animal (the Frolicking
+  Fox's animated extras are its pattern). So an empty list is filled from
+  `SJ_PATTERN_LISTS`: 748 Legendary Eagle 1963-1966, 749 Fearsome Falcon
+  1976, 756 Royal Red Panda 1981, 761 Frolicking Fox 2073, 770 Rainbow
+  Raccoon 2121, matched 2026-10-15 by which animal has each pattern's art
+  on Burrow's CDN (`imageArrays/(avatarType<<24|14<<16|layerDefId)`). Burrow
+  also starts those animals on pattern 0, so when `il` reports your own one
+  with pattern 0, `XtReplyDemuxer` calls `AvatarManager.sjEquipCustomPattern`,
+  which (on Burrow, once per animal) sends `iu [1, 0, -patternId]`. Burrow
+  takes any pattern there, saves it and redraws you for the room.
+
+- Hex colours on a Burrow server: `src/com/sbi/graphics/PaletteHelper.as` and
+  `src/gui/ColorTable.as` are Burrow's own (its swf-src), which depend only on
+  each other and stock classes. Burrow keeps "any hex colour" as an id from
+  0xFD000000 standing for four RGB values: the server sends the table in
+  `xcc` right after the login reply and announces each new entry.
+  `XtReplyDemuxer` passes `xcc` to `PaletteHelper.handleCustomColors` before
+  looking for a module, as Burrow's client does: at login no module (such as
+  `GamePlay`'s `x`) is registered yet, and the table would be dropped as an
+  undefined command. `PaletteHelper` tags
+  each game palette entry with its index in the top byte, so
+  `BuildAnimalPalette` can tell a custom id from the four entries it is given
+  and draw its RGB values instead; every reader of the palette elsewhere masks
+  the top byte off. `ColorTable` adds a hex box to the avatar editor's colour
+  tables that sends `xcc [rgb1..rgb4]` and uses the id the server answers
+  with; the box is only built when `ModMenuFeatures.onBurrowServer()`, since
+  Animal Jam's server doesn't know `xcc`. `onBurrowServer()` is true once the
+  server has sent `xcc` (`PaletteHelper.serverSentCustomColors`), or when the
+  launcher says so (`sjModMenu.isBurrow`). The HTML item finder's hex colours
+  go through `ModMenuFeatures`' `sjModMenuCustomColour(rgbs, ask)` bridge: it
+  returns the id of an existing entry, or sends `xcc` once and returns -1
+  until the server's answer is in the table.
+
+- `gui.EmoticonUtility`: Burrow has an extra emote, `emo_temp` (`:fever:`).
+  Its art ships in Burrow's `HUDAssets.swf`, and Burrow's client lists it last
+  (id 42). The stock lists are kept; `sjAddServerEmotes()` (called by every
+  public function) appends `emo_temp_sml`/`emo_temp` and the `:fever:` strings
+  once the HUD assets have loaded, and only if that art is in them. On Animal
+  Jam, which has no such art, the emote lists stay as they are.
 
 ## Rebuild (Windows, JDK + JPEXS Free Flash Decompiler installed)
 
@@ -427,7 +525,7 @@ cd ..\..\patches\tool
 javac PatchTool.java
 "C:\Program Files (x86)\FFDec\ffdec-cli.exe" -decompress ..\..\..\assets\flash\ajclient.swf raw.swf
 java -Xmx1600m ModMenuTool replace raw.swf mid.swf ..\..\modmenu\src
-java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics,..\src\shop,..\src\item,..\src\game,..\src\game\artStudioPainting,..\src\game\artStudioGridDrawing com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView,gui.MasterpiecesPopup,shop.Shop,item.ItemXtCommManager,room.RoomXtCommManager,game.ArtStudioKit,game.artStudioPainting.ArtStudioPainting,game.artStudioGridDrawing.ArtStudioGridDrawing
+java -Xmx1600m PatchTool replace mid.swf new-raw.swf ..\src,..\src\avatar,..\src\gui,..\src\buddy,..\src\room,..\src\gamePlayFlow,..\src\pet,..\src\den,..\src\gui\itemWindows,..\src\com\sbi\graphics,..\src\shop,..\src\item,..\src\game,..\src\game\artStudioPainting,..\src\game\artStudioGridDrawing com.sbi.graphics.LayerAnim,avatar.NameBar,avatar.AvatarManager,avatar.AvatarViewExt_Splash,pet.PetBase,pet.PetManager,den.DenXtCommManager,gui.ShopExplorerPopup,gui.MarketplacePopup,gui.TeleportPopup,gui.ModMenuFeatures,gui.GuiManager,buddy.BuddyCard,buddy.BuddyManager,gui.DenAndClothesItemSelect,gui.itemWindows.ItemWindowOriginal,gui.ChatHistory,MainFrame,room.RoomManagerWorld,gamePlayFlow.GamePlay,avatar.AvatarWorldView,gui.MasterpiecesPopup,shop.Shop,item.ItemXtCommManager,room.RoomXtCommManager,game.ArtStudioKit,game.artStudioPainting.ArtStudioPainting,game.artStudioGridDrawing.ArtStudioGridDrawing,avatar.NPCView,XtReplyDemuxer,avatar.CustomAvatarDef,gui.MySettings,gui.itemWindows.ItemWindowToggle,com.sbi.graphics.PaletteHelper,gui.ColorTable,gui.EmoticonUtility
 cd ..\..\modmenu\tool
 java -Xmx1600m SwfCompress ..\..\patches\tool\new-raw.swf ..\..\..\assets\flash\ajclient.swf
 ```

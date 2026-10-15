@@ -23,6 +23,7 @@ package avatar
    import game.MinigameManager;
    import gui.DarkenManager;
    import gui.GuiManager;
+   import gui.ModMenuFeatures;
    import gui.SharedAvatarAnimalConstants;
    import item.Item;
    import item.ItemXtCommManager;
@@ -1832,21 +1833,32 @@ package avatar
          }
          view.holdIdleAnim(anim,flip);
          var broadcast:int = int(data[4]);
+         _sjHeldAnim = 0;
          if(broadcast < 1 || gMainFrame.clientInfo.invisMode || MinigameManager.inMinigame() || QuestManager.isSideScrollQuest())
          {
             return;
          }
          var packed:* = anim | (flip ? 2147483648 : 0);
          gMainFrame.server.setXtObject_Str("au",["1",int(view.avatarPos.x),int(view.avatarPos.y),packed,"1"]);
-         for each(var act in avatar.AvatarWorldView._actionLookup)
+         if(anim != view.getBaseIdle())
          {
-            if(act.flip == flip && int(view.roomType == 0 ? act.land : act.water) == anim)
-            {
-               gMainFrame.server.sendMessage(act.name + UserCommXtCommManager.RAW_STR + 3 + UserCommXtCommManager.RAW_STR + anim);
-               return;
-            }
+            _sjHeldAnim = anim;
+            _sjHeldFlip = flip;
          }
-         gMainFrame.server.sendMessage("sja:" + anim + "," + (flip ? 1 : 0) + UserCommXtCommManager.RAW_STR + 3 + UserCommXtCommManager.RAW_STR + 0);
+         if(sjSendAnimMessage(view,anim,flip))
+         {
+            return;
+         }
+         // Burrow keeps the anim from the "au" above and puts it in every
+         // "ac" it sends, but ignores a join to the room you are in. A colour
+         // change (here the colours you already have) makes it redraw you for
+         // the room with "ar" + "ac", which shows the anim at once. Nothing
+         // reloads, so it is done for any broadcast there.
+         if(ModMenuFeatures.onBurrowServer())
+         {
+            sjBurrowRedraw();
+            return;
+         }
          var roomName:String = RoomManagerWorld.instance.getLastGoodRoomName();
          // The server never answers a "dj" for the den you are in, which leaves
          // the loading spiral up forever, so dens are skipped.
@@ -1862,6 +1874,112 @@ package avatar
          RoomXtCommManager.sendRoomJoinRequest(roomName,-1,false,false,true,RoomJoinType.DIRECT_JOIN_AND_HALT_ON_FAILURE);
          RoomXtCommManager.sjAllowSameRoom = false;
          setTimeout(sjRejoinTimeout,15000);
+      }
+
+      // Burrow gives the newer custom animals (Frolicking Fox and others)
+      // pattern 0, their defs' default, so they show as the plain animal.
+      // When it reports your own one that way, the animal's pattern
+      // (CustomAvatarDef's list) is put on with "iu", once per animal;
+      // Burrow saves it and redraws you for the room.
+      private static var _sjPatternFixed:Object = {};
+
+      public static function sjEquipCustomPattern(perUserAvId:int, userName:String) : void
+      {
+         var av:Avatar = playerAvatar;
+         var def:CustomAvatarDef = null;
+         try
+         {
+            if(av == null || av.customAvId == -1 || av.perUserAvId != perUserAvId || _sjPatternFixed[perUserAvId] || String(av.userName).toLowerCase() != userName.toLowerCase() || !ModMenuFeatures.onBurrowServer())
+            {
+               return;
+            }
+            def = gMainFrame.userInfo.getAvatarDefByAvatar(av) as CustomAvatarDef;
+            if(def == null || def.patternRefIds == null || def.patternRefIds.length == 0)
+            {
+               return;
+            }
+            _sjPatternFixed[perUserAvId] = true;
+            gMainFrame.server.setXtObject_Str("iu",[1,0,-int(def.patternRefIds[0])],gMainFrame.server.isWorldZone);
+         }
+         catch(e:Error)
+         {
+         }
+      }
+
+      private static var _sjRedrawAt:Number = 0;
+
+      private static function sjBurrowRedraw() : void
+      {
+         var av:Avatar = playerAvatar;
+         var now:Number = new Date().time;
+         // one redraw for a burst of clicks (others see you blink each time)
+         if(av == null || av.colors == null || av.colors.length < 3 || now - _sjRedrawAt < 1000)
+         {
+            return;
+         }
+         _sjRedrawAt = now;
+         AvatarXtCommManager.requestColorChange(av.colors,gMainFrame.userInfo.playerUserInfo.nameBarData,sjRedrawAnswered);
+      }
+
+      private static function sjRedrawAnswered(... rest) : void
+      {
+      }
+
+      // The anim as a chat action others play live: an action string when it is
+      // one (true, everyone sees it), else "sja:<id>,<flip>" (patched clients).
+      private static function sjSendAnimMessage(view:avatar.AvatarWorldView, anim:int, flip:Boolean) : Boolean
+      {
+         for each(var act in avatar.AvatarWorldView._actionLookup)
+         {
+            if(act.flip == flip && int(view.roomType == 0 ? act.land : act.water) == anim)
+            {
+               gMainFrame.server.sendMessage(act.name + UserCommXtCommManager.RAW_STR + 3 + UserCommXtCommManager.RAW_STR + anim);
+               return true;
+            }
+         }
+         gMainFrame.server.sendMessage("sja:" + anim + "," + (flip ? 1 : 0) + UserCommXtCommManager.RAW_STR + 3 + UserCommXtCommManager.RAW_STR + 0);
+         return false;
+      }
+
+      // The anim last broadcast, while you still hold it. Someone who enters the
+      // room later only gets the anim the server stored for you, and some servers
+      // (Burrow) store none, so it is sent again when a new avatar is created,
+      // at most every 2s. Walking (or any other idle) ends it.
+      private static var _sjHeldAnim:int = 0;
+
+      private static var _sjHeldFlip:Boolean;
+
+      private static var _sjHeldResentAt:Number = 0;
+
+      private static function sjResendHeldAnim(newSfsUserId:int) : void
+      {
+         var view:avatar.AvatarWorldView = playerAvatarWorldView;
+         if(_sjHeldAnim <= 0 || !view || newSfsUserId == _playerSfsUserId)
+         {
+            return;
+         }
+         if(view.lastIdleAnim != _sjHeldAnim || view.lastIdleFlip != _sjHeldFlip || joiningNewRoom)
+         {
+            _sjHeldAnim = 0;
+            return;
+         }
+         if(gMainFrame.clientInfo.invisMode || MinigameManager.inMinigame() || QuestManager.isSideScrollQuest())
+         {
+            return;
+         }
+         var now:Number = new Date().time;
+         if(now - _sjHeldResentAt < 2000)
+         {
+            return;
+         }
+         _sjHeldResentAt = now;
+         try
+         {
+            sjSendAnimMessage(view,_sjHeldAnim,_sjHeldFlip);
+         }
+         catch(e:Error)
+         {
+         }
       }
 
       // Undoes the join state if the server ignored the rejoin, so the game
@@ -1996,6 +2114,7 @@ package avatar
             _waitForLangPackSfsUserIdToACResponseDataMap[param1[2]] = param1;
             return;
          }
+         sjResendHeldAnim(int(param1[2]));
          var _loc40_:int = 2;
          var _loc13_:int = int(param1[_loc40_++]);
          var _loc47_:int = int(param1[_loc40_++]);

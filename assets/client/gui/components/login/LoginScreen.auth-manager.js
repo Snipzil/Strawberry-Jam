@@ -84,14 +84,23 @@
 
         console.log("[AUTH] Authentication successful");
 
-        const loginData = {
-          username: userData.username,
-          language: userData.language || 'en',
-          rememberMe: this.loginScreen.rememberMeElem.value,
-          authToken: userData.authToken,
-          refreshToken: userData.refreshToken,
-        };
-        window.ipc.send("loginSucceeded", loginData);
+        // A Burrow login's tokens stay out of the saved Animal Jam logins
+        if (!authResult.burrow) {
+          const loginData = {
+            username: userData.username,
+            language: userData.language || 'en',
+            rememberMe: this.loginScreen.rememberMeElem.value,
+            authToken: userData.authToken,
+            refreshToken: userData.refreshToken,
+          };
+          window.ipc.send("loginSucceeded", loginData);
+        } else {
+          window.ipc.send("burrowLoginSucceeded", {
+            username: userData.username,
+            rememberMe: this.loginScreen.rememberMeElem.value,
+            password: this.loginScreen.password,
+          });
+        }
 
         const theme = this.loginScreen._fruitThemes[this.loginScreen._fruitImages[this.loginScreen._currentFruitIndex]];
         theme.boxBackground = getComputedStyle(this.loginScreen.shadowRoot.host).getPropertyValue('--theme-box-background');
@@ -105,7 +114,9 @@
         this.loginScreen.hideLoginHelpPrompt();
         let userMessage = "Servers are down or Your IP is blocked. Please try again later.";
 
-        if (err.message) {
+        if (err.burrowMessage) {
+          userMessage = err.burrowMessage;
+        } else if (err.message) {
           switch (err.message) {
             case "USER_RENAME_NEEDED":
             case "OTP_NEEDED":

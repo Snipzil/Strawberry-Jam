@@ -26,6 +26,10 @@
         <div id="headerNotification" style="display: none; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 500; margin-right: 10px; white-space: nowrap; animation: fadeInLeft 0.2s ease-out forwards; cursor: default;"></div>
       </div>
       <div class="header-center" style="display: flex; align-items: center; gap: 8px; -webkit-app-region: no-drag; flex-shrink: 1; min-width: 0;">
+        <div id="serverSwitch" class="server-switch" role="group" aria-label="Game server">
+          <button type="button" data-server="animaljam" class="active" aria-pressed="true" title="Play on Animal Jam">AJ</button>
+          <button type="button" data-server="burrow" aria-pressed="false" title="Play on a Burrow private server (Burrow settings: Settings › Burrow)">Burrow</button>
+        </div>
         <button id="playGameBtn"
           class="play-btn flex items-center relative"
           style="white-space: nowrap; flex-shrink: 0;"
@@ -459,6 +463,52 @@
     @media (max-width: 480px) {
       .app-update-label { display: none; }
     }
+
+    /* ---- Header: game server switch (Animal Jam / Burrow, BurrowMode.js) ---- */
+    .server-switch {
+      display: inline-flex;
+      flex-shrink: 0;
+      padding: 2px;
+      gap: 2px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(156, 163, 175, 0.15);
+    }
+    .server-switch button {
+      padding: 4px 9px;
+      border: 0;
+      border-radius: 7px;
+      background: none;
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .server-switch button:hover { color: rgba(255, 255, 255, 0.8); }
+    .server-switch button.active {
+      color: #fff;
+      background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.28);
+    }
+    .server-switch button[data-server="burrow"].active { background: rgba(196, 140, 72, 0.45); }
+    .server-switch.busy { opacity: 0.6; pointer-events: none; }
+    body.burrow-mode .play-btn { border-color: rgba(196, 140, 72, 0.65); }
+    .burrow-plugin-note {
+      display: flex;
+      gap: 7px;
+      align-items: flex-start;
+      margin: 8px 4px 0;
+      padding: 7px 10px;
+      border-radius: 8px;
+      background: rgba(196, 140, 72, 0.1);
+      border: 1px solid rgba(196, 140, 72, 0.3);
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .burrow-plugin-note i { margin-top: 2px; color: #d4a36a; }
+    .burrow-plugin-note b { color: rgba(255, 255, 255, 0.8); font-weight: 600; cursor: help; }
 
     /* ---- Header: PLAY button ("jam" launcher button) ---- */
     .play-btn {

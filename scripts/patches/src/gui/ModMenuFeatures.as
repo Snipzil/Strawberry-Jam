@@ -1,6 +1,8 @@
 package gui
 {
    import com.sbi.client.KeepAlive;
+   import com.sbi.graphics.PaletteHelper;
+   import den.DenXtCommManager;
    import flash.external.ExternalInterface;
    import flash.utils.setTimeout;
    
@@ -647,6 +649,9 @@ package gui
             ExternalInterface.addCallback("sjModMenuSetScope",bridgeSetScope);
             ExternalInterface.addCallback("sjModMenuSetDenLogin",bridgeSetDenLogin);
             ExternalInterface.addCallback("sjModMenuOpenPopup",bridgeOpenPopup);
+            ExternalInterface.addCallback("sjModMenuBuyDenItem",bridgeBuyDenItem);
+            ExternalInterface.addCallback("sjModMenuDenBuyStatus",bridgeDenBuyStatus);
+            ExternalInterface.addCallback("sjModMenuCustomColour",bridgeCustomColour);
             _bridgeReady = true;
          }
          catch(e:Error)
@@ -654,6 +659,113 @@ package gui
          }
       }
       
+      // The Burrow item finder's den items in a chosen version (colour). Burrow's
+      // give call always gives version 0, so a version goes through the shop's
+      // own purchase (DenXtCommManager.requestBuy), which Burrow accepts for any
+      // den item. The reply arrives later: bridgeDenBuyStatus is 2 while waiting,
+      // then 1 (bought) or 0 (refused).
+      private static var _denBuyStatus:int = -1;
+
+      private static function bridgeBuyDenItem(defId:int, version:int) : Boolean
+      {
+         if(defId <= 0 || version < 0 || version > 255)
+         {
+            return false;
+         }
+         _denBuyStatus = 2;
+         try
+         {
+            DenXtCommManager.requestBuy(true,0,defId,onBridgeDenBought,null,0,null,version);
+            return true;
+         }
+         catch(e:Error)
+         {
+            _denBuyStatus = 0;
+         }
+         return false;
+      }
+
+      private static function onBridgeDenBought(status:int, ... rest) : void
+      {
+         _denBuyStatus = status == 1 ? 1 : 0;
+      }
+
+      private static function bridgeDenBuyStatus() : int
+      {
+         return _denBuyStatus;
+      }
+
+      // The item finder's hex colours: Burrow's id (0xFD000000 and up) for
+      // four RGB values, from the table the server sent at login. A new
+      // combination is asked for with "xcc" (once; the reply lands in that
+      // table), and -1 is returned until it is there. The finder asks again.
+      private static var _colourAsked:Object = {};
+
+      private static function bridgeCustomColour(rgbs:Array, ask:Boolean) : Number
+      {
+         var key:String = null;
+         var id:String = null;
+         var entry:Array = null;
+         if(rgbs == null || rgbs.length != 4 || !onBurrowServer())
+         {
+            return -1;
+         }
+         rgbs = [uint(rgbs[0]) & 0xFFFFFF,uint(rgbs[1]) & 0xFFFFFF,uint(rgbs[2]) & 0xFFFFFF,uint(rgbs[3]) & 0xFFFFFF];
+         key = rgbs.join(",");
+         for(id in PaletteHelper.customColors)
+         {
+            entry = PaletteHelper.customColors[id];
+            if(entry != null && entry.join(",") == key)
+            {
+               return Number(id);
+            }
+         }
+         if(ask && !_colourAsked[key])
+         {
+            try
+            {
+               gMainFrame.server.setXtObject_Str("xcc",rgbs);
+               _colourAsked[key] = true;
+            }
+            catch(e:Error)
+            {
+            }
+         }
+         return -1;
+      }
+
+      // Settings' Burrow rows (MySettings): whether the launcher logged in to a
+      // Burrow server, and opening one of its mod menu tabs ("burrow-items",
+      // "burrow"). Both false without the launcher.
+      public static function onBurrowServer() : Boolean
+      {
+         // Burrow sends its custom colour table ("xcc") at login
+         if(PaletteHelper.serverSentCustomColors)
+         {
+            return true;
+         }
+         try
+         {
+            return ExternalInterface.available && ExternalInterface.call("sjModMenu.isBurrow") === true;
+         }
+         catch(e:Error)
+         {
+         }
+         return false;
+      }
+
+      public static function openHtmlTab(tab:String) : Boolean
+      {
+         try
+         {
+            return ExternalInterface.available && ExternalInterface.call("sjModMenu.openTab",tab) === true;
+         }
+         catch(e:Error)
+         {
+         }
+         return false;
+      }
+
       // F10 asks the launcher to toggle the HTML menu; false means it is off or
       // unavailable and the caller falls back to the Flash menu.
       public static function toggleHtmlMenu() : Boolean

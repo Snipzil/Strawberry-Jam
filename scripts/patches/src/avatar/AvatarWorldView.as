@@ -1205,7 +1205,6 @@ package avatar
          }
          if(param1)
          {
-            hideAvatar();
             if(_avSwitchedNPC == null)
             {
                _avSwitchedNPC = new NPCView();
@@ -1217,6 +1216,13 @@ package avatar
             if(this.parent)
             {
                this.parent.addChild(_avSwitchedNPC);
+            }
+            // NPC art arrives asynchronously.  Keeping the animal visible
+            // until onNpcLoaded avoids the self avatar vanishing when a
+            // Burrow `!become` packet beats that asset into the client.
+            if(_avSwitchedNPC.npcState == NPCView.NPC_STATE_LOADED)
+            {
+               hideAvatar();
             }
          }
          else
@@ -1237,6 +1243,7 @@ package avatar
       {
          if(_avSwitchedNPC != null)
          {
+            hideAvatar();
             _avSwitchedNPC.x = x;
             _avSwitchedNPC.y = y;
             _avSwitchedNPC.getNpcMC().setVision(0);

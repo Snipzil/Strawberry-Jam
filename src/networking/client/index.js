@@ -14,6 +14,20 @@ const Message = require('../messages')
 const XmlMessage = require('../messages/XmlMessage')
 const XtMessage = require('../messages/XtMessage')
 const JsonMessage = require('../messages/JsonMessage')
+const GameServerTarget = require('../../services/network/GameServerTarget')
+
+/**
+ * Burrow reads system messages only in the client's own form,
+ * <msg t='sys'><body action='x' r='n'>, so the double-quoted headers that
+ * plugins (and modified messages) send are rewritten to single quotes.
+ * @param {string} message
+ * @returns {string}
+ */
+const toBurrowXml = message => message[0] !== '<'
+  ? message
+  : message
+    .replace(/^<msg t="([^"']*)">/, "<msg t='$1'>")
+    .replace(/<body action="([^"']*)" r="(-?\d+)">/, "<body action='$1' r='$2'>")
 
 /**
  * Connection message blacklist types
@@ -56,6 +70,17 @@ const HEARTBEAT_IDLE_MS = 60000
  * @constant
  */
 const CONNECTION_LOG_PATH = path.join(process.env.APPDATA || os.homedir(), 'strawberry-jam', 'logs', 'connection.log')
+
+/**
+ * TEMPORARY Burrow diagnostic: in Burrow mode every packet's direction and
+ * first 300 characters go here, to find what the client waits on forever
+ * (the fox inventory). Login messages are left out (they carry the token).
+ * Remove once that's found.
+ * @type {string}
+ * @constant
+ */
+const BURROW_PACKET_LOG_PATH = path.join(process.env.APPDATA || os.homedir(), 'strawberry-jam', 'logs', 'burrow-packets.log')
+const BURROW_PACKET_LOG_MAX = 4 * 1024 * 1024
 
 module.exports = class Client {
   /**
@@ -207,6 +232,10 @@ module.exports = class Client {
    * @private
    */
   async _attemptConnection () { // From jam-master
+    // A Burrow private server picked in Burrow mode (BurrowMode.js) replaces AJ as the upstream
+    const burrow = await GameServerTarget.resolveUpstream()
+    this._burrow = !!burrow
+
     return new Promise((resolve, reject) => {
       let connectionTimeout = null
       const timeoutDuration = (this._server && this._server.application && this._server.application.settings && this._server.application.settings.get('connectionTimeout')) || 10000;
@@ -231,7 +260,7 @@ module.exports = class Client {
         this._lastClientKa = null
         this._loginReply = null
         this._recentAjPackets = []
-        this._logConnection(`connected to ${smartfoxServer}:${serverPort} (${secureConnection ? 'tls' : 'tcp'})`)
+        this._logConnection(`connected to ${smartfoxServer}:${serverPort} (${secureConnection ? 'tls' : 'tcp'})${burrow ? ' [burrow]' : ''}`)
         clearInterval(this._heartbeat)
         this._heartbeat = setInterval(() => this._sendHeartbeat(), 15000)
 
@@ -258,28 +287,35 @@ module.exports = class Client {
         reject(new Error(`Connection timed out after ${timeoutDuration / 1000} seconds`))
       }, timeoutDuration)
 
-      const smartfoxServer = (this._server && this._server.application && this._server.application.settings && this._server.application.settings.get('smartfoxServer')) || 'lb-iss02-classic-prod.animaljam.com';
+      const smartfoxServer = burrow
+        ? burrow.host
+        : (this._server && this._server.application && this._server.application.settings && this._server.application.settings.get('smartfoxServer')) || 'lb-iss02-classic-prod.animaljam.com';
       
-      if (!smartfoxServer || typeof smartfoxServer !== 'string' || !smartfoxServer.includes('animaljam')) {
+      if (!burrow && (!smartfoxServer || typeof smartfoxServer !== 'string' || !smartfoxServer.includes('animaljam'))) {
         cleanupListeners();
         clearTimeout(connectionTimeout);
         reject(new Error('Invalid server address. Unable to connect.'));
         return;
       }
       
-      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : TCP_SERVER_PORTS[0]
+      const serverPort = burrow
+        ? burrow.port
+        : this._server && this._server.actualPort ? this._server.actualPort : TCP_SERVER_PORTS[0]
 
-      const secureConnection = this._server && this._server.application && this._server.application.settings
-        ? this._server.application.settings.get('secureConnection') !== false
-        : true
+      const secureConnection = burrow
+        ? burrow.secure
+        : this._server && this._server.application && this._server.application.settings
+          ? this._server.application.settings.get('secureConnection') !== false
+          : true
 
       if (secureConnection) {
-        // Proper TLS connect with SNI for load balancer routing
+        // Proper TLS connect with SNI for load balancer routing. A Burrow
+        // server's certificate is checked: the login token rides this socket.
         this._aj = tls.connect({
           host: smartfoxServer,
           port: serverPort,
           servername: smartfoxServer,
-          rejectUnauthorized: false
+          rejectUnauthorized: !!burrow
         }, onConnected)
         this._aj.once('error', onError)
       } else {
@@ -349,6 +385,7 @@ module.exports = class Client {
         message = message.toString() // Already done in DelimiterTransform, but good practice
         this._lastAjPacketAt = Date.now()
         this._trackAjPacket(message)
+        this._logBurrowPacket('in ', message)
         try {
           const validatedMessage = this.constructor.validate(message)
           if (validatedMessage) {
@@ -395,6 +432,7 @@ module.exports = class Client {
         if (/^%xt%[^%]*%ft%/.test(message)) this._clientIdleKick = true
         if (/^%xt%[oa]%ka%/.test(message)) this._lastClientKa = message
         this._lastClientPacketAt = Date.now()
+        this._logBurrowPacket('out', message)
         try {
           const validatedMessage = this.constructor.validate(message)
           if (validatedMessage) {
@@ -630,6 +668,7 @@ module.exports = class Client {
    */
   async _sendMessage (socket, message, { retries = 0, retryDelay = 200 } = {}) { // Kept from previous refactor, now calls _attemptSendInternal
     if (message instanceof Message) message = message.toMessage();
+    if (this._burrow && socket === this._aj && typeof message === 'string') message = toBurrowXml(message);
 
     if (!socket.writable || socket.destroyed) {
       console.error(`[Client] _sendMessage: Initial check failed. Socket not writable or destroyed. Writable: ${socket.writable}, Destroyed: ${socket.destroyed}`);
@@ -833,6 +872,17 @@ module.exports = class Client {
    * @param {string} line
    * @private
    */
+  _logBurrowPacket (direction, message) {
+    if (!this._burrow || /<login |action='login'|action="login"/.test(message)) return
+    try {
+      let size = 0
+      try { size = fs.statSync(BURROW_PACKET_LOG_PATH).size } catch (_) {}
+      if (size > BURROW_PACKET_LOG_MAX) fs.renameSync(BURROW_PACKET_LOG_PATH, `${BURROW_PACKET_LOG_PATH}.old`)
+      fs.appendFileSync(BURROW_PACKET_LOG_PATH, `${new Date().toISOString().slice(11, 23)} ${direction} ${message.length > 300 && !/^%xt%(il|ad|di)%/.test(message) ? `${message.slice(0, 300)}… (${message.length})` : message}
+`)
+    } catch (_) {}
+  }
+
   _logConnection (line) {
     try {
       fs.mkdirSync(path.dirname(CONNECTION_LOG_PATH), { recursive: true })

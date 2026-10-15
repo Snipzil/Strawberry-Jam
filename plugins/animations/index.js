@@ -96,8 +96,9 @@ function isLive(id, flip) {
 
 // The patched client handles %xt%jamanim% itself; it never reaches the server.
 // Broadcast 1: actions go out as the action, anything else as a hidden message
-// other Strawberry Jam clients play live. Broadcast 2 also rejoins the room for
-// anything that isn't an action, for players on the normal AJ client.
+// other Strawberry Jam clients play live. Broadcast 2 also shows anything that
+// isn't an action to players on the normal client: on Animal Jam by rejoining
+// the room, on Burrow by having the server redraw you (no reload).
 function playAnim(id, flip) {
   if (Date.now() < busyUntil) {
     statusText.textContent = 'Still rejoining the room, try again in a moment'
@@ -115,9 +116,9 @@ function playAnim(id, flip) {
     statusText.textContent = `${label}, everyone sees it`
   } else if (level === 2) {
     busyUntil = Date.now() + REJOIN_COOLDOWN_MS
-    statusText.textContent = `${label}, rejoining the room for non-SJ players`
+    statusText.textContent = `${label}, refreshing you for non-SJ players`
   } else {
-    statusText.textContent = `${label}, Strawberry Jam players see it`
+    statusText.textContent = `${label}, Strawberry Jam players see it (on Burrow, everyone)`
   }
 }
 
